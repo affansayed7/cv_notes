@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Computer Vision — Exam Notes</title>
+<meta name="description" content="Diagram-first revision notes for Computer Vision / Digital Image Processing." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body class="landing">
+
+<div class="shell" style="display:block">
+  <main style="margin:0 auto">
+    <header class="hero" style="border-bottom:none">
+      <div class="kick">Computer Vision · DIP</div>
+      <h2>Exam notes, <em>by module.</em></h2>
+      <p>Each page below is a self-contained set of revision notes for one part of the syllabus — short definitions, memory hooks, formulas and diagrams. Pages are numbered in the order topics were taught, so read top to bottom, or jump to what you need.</p>
+      <div class="meta">
+        <span class="chip"><b>2</b> modules so far</span>
+        <span class="chip">Gonzalez &amp; Woods · <b>Ch. 2–3</b></span>
+        <span class="chip">Diagrams + formulas</span>
+      </div>
+    </header>
+
+    <nav class="toc-grid" aria-label="Notes contents">
+
+      <a class="toc-card" href="01-fundamentals.html">
+        <span class="arrow">→</span>
+        <span class="tag">Module 01</span>
+        <h4>Image Processing Fundamentals</h4>
+        <p>How a digital image is built: representation, sampling &amp; quantization, resolution, interpolation, pixel neighbourhoods, connectivity, arithmetic/logical ops, geometry and distance measures.</p>
+        <div class="topics">
+          <span>f(x,y)</span><span>quantization</span><span>resolution</span>
+          <span>interpolation</span><span>adjacency</span><span>distance metrics</span>
+        </div>
+      </a>
+
+      <a class="toc-card" href="02-enhancement.html">
+        <span class="arrow">→</span>
+        <span class="tag">Module 02</span>
+        <h4>Image Enhancement</h4>
+        <p>Making images look/read better: gray-level transforms (negative, log, power-law/gamma, bit-plane slicing), histogram processing &amp; equalization, and spatial filtering — smoothing, order-statistics, sharpening, correlation vs convolution.</p>
+        <div class="topics">
+          <span>contrast stretching</span><span>gamma</span><span>histogram eq.</span>
+          <span>convolution</span><span>median filter</span><span>derivatives</span>
+        </div>
+      </a>
+
+      <a class="toc-card status-soon" href="#" aria-disabled="true">
+        <span class="tag">Module 03</span>
+        <h4>Frequency Domain &amp; Beyond</h4>
+        <p>Not covered yet — Fourier-domain enhancement, restoration, and later syllabus topics will land here as notes are added.</p>
+        <div class="topics"><span>coming soon</span></div>
+      </a>
+
+    </nav>
+
+    <footer>
+      <p class="mono">// exam notes index</p>
+      <p>Built for revision from the course deck (Dr. Harkeerat Kaur). References: Gonzalez &amp; Woods, <em>Digital Image Processing</em>; Forsyth &amp; Ponce, <em>Computer Vision: A Modern Approach</em>.</p>
+    </footer>
+  </main>
+</div>
+</body>
+</html>
