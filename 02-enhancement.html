@@ -380,13 +380,69 @@
       </ul>
 
       <h4>Gamma correction</h4>
-      <p>Many capture/display/print devices have an intensity-to-voltage response following a <strong>power law</strong>. CRT monitors, for example, have exponents roughly <span class="k">1.8 – 2.5</span>, making raw output look <strong>darker</strong> than the input.</p>
-      <div class="card">
-        <p style="margin:0"><strong>Gamma correction</strong> compensates: a simple gray-scale linear wedge input to a monitor produces a darker-than-input output; applying <span class="k">s = r^{1/2.5}</span> before display makes the monitor's output close in appearance to the original image. The same idea applies to scanners and printers — only the device-dependent γ value changes.</p>
+      <p>Many capture/display/print devices have an intensity-to-voltage response following a <strong>power law</strong>. CRT monitors, for example, have a response of roughly <span class="k">output = input^γ</span> with <span class="k">γ ≈ 1.8 – 2.5</span>.</p>
+
+      <div class="warn">
+        <span class="lab">The problem, concretely</span>
+        <p>Say you send a monitor the pixel value <span class="k">r = 0.5</span> (you want 50% gray, on a 0–1 scale). The monitor doesn't show 0.5 — it shows <span class="k">r^γ</span>. With <span class="k">γ = 2.5</span>: <span class="k">0.5^2.5 ≈ 0.177</span>. Because <span class="k">γ &gt; 1</span> and <span class="k">r &lt; 1</span>, raising it to a bigger power makes it <strong>smaller</strong> — so the monitor's actual output is much <strong>darker</strong> than what you asked for. Feed a smooth black→white ramp ("linear wedge") into the monitor, and it visibly darkens too fast through the middle.</p>
       </div>
+
+      <p>You can't change what the monitor does — so you <strong>pre-distort</strong> the image before sending it, so that after the monitor darkens it, you land back where you wanted:</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 190" role="img" aria-label="Pipeline: original value, gamma correction stage applying 1 over gamma, then device stage applying gamma, cancelling out to give correct output">
+            <g class="diag-mono" font-size="12" text-anchor="middle">
+              <rect x="20" y="60" width="140" height="70" rx="8" fill="#EDF0FF" stroke="#1F3BE8" stroke-width="1.6"/>
+              <text x="90" y="90" fill="#132a9c" font-weight="700">r = 0.5</text>
+              <text x="90" y="110" fill="#6B7480" font-size="10.5">desired gray</text>
+
+              <path d="M170 95 h50" stroke="#14171C" stroke-width="1.8"/>
+              <polygon points="226,95 214,89 214,101" fill="#14171C"/>
+
+              <rect x="230" y="60" width="180" height="70" rx="8" fill="#FFF6E6" stroke="#E08A00" stroke-width="1.6"/>
+              <text x="320" y="85" fill="#8a5200" font-weight="700">gamma correction</text>
+              <text x="320" y="105" fill="#8a5200">s = r^(1/2.5) ≈ 0.758</text>
+
+              <path d="M420 95 h50" stroke="#14171C" stroke-width="1.8"/>
+              <polygon points="476,95 464,89 464,101" fill="#14171C"/>
+
+              <rect x="480" y="60" width="140" height="70" rx="8" fill="#F5F5F5" stroke="#DBE0E7" stroke-width="1.6"/>
+              <text x="550" y="85" fill="#3A4048" font-weight="700">monitor</text>
+              <text x="550" y="105" fill="#3A4048">applies ^2.5</text>
+            </g>
+            <text x="550" y="155" class="diag-mono" font-size="13" fill="#3A7D44" font-weight="700" text-anchor="middle">0.758^2.5 ≈ 0.5 ✓ — back to the value you wanted</text>
+          </svg>
+        </div>
+        <figcaption>Two opposite powers cancel: pre-correct with 1/γ, the device applies γ, you get r back</figcaption>
+      </figure>
+
+      <div class="card">
+        <h4 style="margin-top:0">Worked example, step by step</h4>
+        <ol style="margin-bottom:0">
+          <li>You want the monitor to eventually display <span class="k">r = 0.5</span>.</li>
+          <li>Instead of sending 0.5 directly, pre-compute <span class="k">s = r^(1/γ) = 0.5^(1/2.5) = 0.5^0.4 ≈ 0.758</span>.</li>
+          <li>Send <strong>0.758</strong> to the monitor instead of 0.5.</li>
+          <li>The monitor applies its own response: <span class="k">0.758^2.5 ≈ 0.5</span>.</li>
+          <li>The two operations cancel: <span class="k">(r^{1/γ})^γ = r</span> — the final displayed brightness matches what you originally intended.</li>
+        </ol>
+      </div>
+
       <div class="remember">
-        <span class="lab">Remember</span>
-        <p><strong>Correction exponent = 1/device γ.</strong> Device response <span class="k">r^{2.5}</span> → correct with <span class="k">r^{1/2.5} = r^{0.4}</span>. Similar analysis applies to other imaging devices (scanner, printer) — the only difference is the device-dependent value of gamma.</p>
+        <span class="lab">Why it's 1/γ and not γ — the exact point people mix up</span>
+        <p>If the device darkens with exponent 2.5, correcting with exponent 2.5 <strong>again</strong> would darken it a second time — much worse. You need the <strong>reciprocal</strong> exponent (0.4), not the same one, because you're <strong>inverting</strong> the device's operation, not repeating it.</p>
+      </div>
+
+      <div class="tip">
+        <span class="lab">One-line intuition</span>
+        <p>Think of the monitor as wearing sunglasses that dim everything along a fixed curve. Gamma correction is you pre-brightening the image by the <strong>exact inverse</strong> curve, so that once the "sunglasses" (monitor) dim it back down, it lands exactly on the brightness you intended.</p>
+      </div>
+
+      <p>The same idea applies to scanners and printers — only the device-dependent <span class="k">γ</span> value changes.</p>
+
+      <div class="remember">
+        <span class="lab">Formula to memorise</span>
+        <p><strong>Correction exponent = 1/device γ.</strong> Device response <span class="k">r^{2.5}</span> → correct with <span class="k">r^{1/2.5} = r^{0.4}</span>. Same analysis applies to any other imaging device — only the device-dependent value of γ changes.</p>
       </div>
     </section>
 
