@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>03 · Spatial Filtering, Sharpening &amp; Edge Detection — CV Exam Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+<script>
+  window.MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+
+<button class="menu-btn" id="menuBtn" aria-label="Open contents"><span></span></button>
+<div class="scrim" id="scrim"></div>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <a class="brand" href="index.html">
+      <svg class="eye" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect width="40" height="40" rx="9" fill="#1F3BE8"/>
+        <path d="M6 20c4.5-6.5 9-9.5 14-9.5S29.5 13.5 34 20c-4.5 6.5-9 9.5-14 9.5S10.5 26.5 6 20Z" fill="#fff"/>
+        <circle cx="20" cy="20" r="6.2" fill="#1F3BE8"/>
+        <circle cx="20" cy="20" r="3" fill="#0d1b52"/>
+        <circle cx="17.6" cy="17.6" r="1.5" fill="#fff"/>
+      </svg>
+      <div><h1>Computer Vision</h1><div class="sub">Module 03</div></div>
+    </a>
+    <a class="back-link" href="index.html">← All modules</a>
+
+    <div class="nav-label">Spatial Filtering Fundamentals</div>
+    <nav class="nav" id="nav">
+      <a href="#t1"><span class="num">01</span> Spatial Frequencies &amp; Filter Family Tree</a>
+      <a href="#t2"><span class="num">02</span> Linear Spatial Filtering — How It Works</a>
+      <a href="#t3"><span class="num">03</span> General Formula &amp; Border Effects</a>
+      <a href="#t4"><span class="num">04</span> Zero-Padding vs No Padding</a>
+      <a href="#t5"><span class="num">05</span> Correlation vs Convolution</a>
+      <a href="#t6"><span class="num">06</span> Generating a Spatial Filter Mask</a>
+    </nav>
+    <div class="nav-label">Smoothing (Lowpass) Filters</div>
+    <nav class="nav">
+      <a href="#t7"><span class="num">07</span> Smoothing Spatial Filters — Why &amp; How</a>
+      <a href="#t8"><span class="num">08</span> The Box Filter — Step-by-Step</a>
+      <a href="#t9"><span class="num">09</span> Weighted Average Filter &amp; Examples</a>
+      <a href="#t10"><span class="num">10</span> Gaussian Filters</a>
+      <a href="#t11"><span class="num">11</span> Order-Statistics &amp; Median Filters</a>
+    </nav>
+    <div class="nav-label">Sharpening &amp; Edge Detection</div>
+    <nav class="nav">
+      <a href="#t12"><span class="num">12</span> Blurring vs Sharpening</a>
+      <a href="#t13"><span class="num">13</span> What Is an Edge? Edge Profile Types</a>
+      <a href="#t14"><span class="num">14</span> Derivative Operator &amp; 1st-Order Derivatives</a>
+      <a href="#t15"><span class="num">15</span> Edge Detection via the Gradient</a>
+      <a href="#t16"><span class="num">16</span> Gradient Masks: Roberts, Prewitt, Sobel</a>
+      <a href="#t17"><span class="num">17</span> Effects of Noise &amp; Smoothing First</a>
+      <a href="#t18"><span class="num">18</span> Sobel: Smoothed vs Unsmoothed</a>
+      <a href="#t19"><span class="num">19</span> Second-Order Derivatives &amp; the Laplacian</a>
+      <a href="#t20"><span class="num">20</span> Laplacian Masks</a>
+      <a href="#t21"><span class="num">21</span> Effect of the Laplacian Operator</a>
+      <a href="#t22"><span class="num">22</span> Sharpening with the Laplacian &amp; High-Boost</a>
+      <a href="#t23"><span class="num">23</span> LoG &amp; the Marr-Hildreth Algorithm</a>
+      <a href="#t24"><span class="num">24</span> Finding Zero Crossings</a>
+    </nav>
+  </aside>
+
+  <main>
+    <header class="hero">
+      <div class="kick">Module 03 of 3 · Full Chapter 3</div>
+      <h2>Spatial Filtering, <em>Sharpening &amp; Edge Detection.</em></h2>
+      <p>The complete chapter: how a filter mask actually slides across an image, correlation vs convolution, box/weighted-average/Gaussian smoothing, median filtering, and the full sharpening/edge-detection pipeline — gradients (Roberts, Prewitt, Sobel), noise handling, the Laplacian, and the Marr-Hildreth (LoG) edge detector.</p>
+      <div class="meta">
+        <span class="chip">24 <b>topics</b></span>
+        <span class="chip">Gonzalez &amp; Woods · <b>Ch. 3, 10</b></span>
+        <span class="chip">Full derivations + worked examples</span>
+      </div>
+    </header>
+
+    <!-- T1 -->
+    <section id="t1">
+      <div class="eyebrow">Topic 01</div>
+      <h3>Spatial Frequencies &amp; the Filter Family Tree</h3>
+      <p><strong>Spatial frequency</strong> = the number of changes in intensity value per unit distance for any particular part of the image. An image is composed of:</p>
+      <ul>
+        <li><strong>Low-frequency details</strong> — basic details, few changes over a given area</li>
+        <li><strong>High-frequency details</strong> — fine details, dramatic changes over a given area</li>
+      </ul>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 170" role="img" aria-label="Zero, low and high spatial frequency image swatches">
+            <g transform="translate(20,20)">
+              <rect width="170" height="100" fill="#9a9a9a"/>
+              <text x="85" y="118" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">zero freq. — flat</text>
+            </g>
+            <g transform="translate(230,20)">
+              <rect width="170" height="100" fill="url(#gsmooth)"/>
+              <defs><linearGradient id="gsmooth"><stop offset="0" stop-color="#1a1a1a"/><stop offset="1" stop-color="#f0f0f0"/></linearGradient></defs>
+              <text x="85" y="118" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">low freq. — smooth</text>
+            </g>
+            <g transform="translate(440,20)">
+              <g>
+                <rect x="0" y="0" width="21" height="21" fill="#111"/><rect x="21" y="0" width="21" height="21" fill="#fff"/><rect x="42" y="0" width="21" height="21" fill="#111"/><rect x="63" y="0" width="21" height="21" fill="#fff"/><rect x="84" y="0" width="21" height="21" fill="#111"/><rect x="105" y="0" width="21" height="21" fill="#fff"/><rect x="126" y="0" width="21" height="21" fill="#111"/><rect x="147" y="0" width="21" height="21" fill="#fff"/>
+                <rect x="0" y="21" width="21" height="21" fill="#fff"/><rect x="21" y="21" width="21" height="21" fill="#111"/><rect x="42" y="21" width="21" height="21" fill="#fff"/><rect x="63" y="21" width="21" height="21" fill="#111"/><rect x="84" y="21" width="21" height="21" fill="#fff"/><rect x="105" y="21" width="21" height="21" fill="#111"/><rect x="126" y="21" width="21" height="21" fill="#fff"/><rect x="147" y="21" width="21" height="21" fill="#111"/>
+                <rect x="0" y="42" width="21" height="21" fill="#111"/><rect x="21" y="42" width="21" height="21" fill="#fff"/><rect x="42" y="42" width="21" height="21" fill="#111"/><rect x="63" y="42" width="21" height="21" fill="#fff"/><rect x="84" y="42" width="21" height="21" fill="#111"/><rect x="105" y="42" width="21" height="21" fill="#fff"/><rect x="126" y="42" width="21" height="21" fill="#111"/><rect x="147" y="42" width="21" height="21" fill="#fff"/>
+                <rect x="0" y="63" width="21" height="21" fill="#fff"/><rect x="21" y="63" width="21" height="21" fill="#111"/><rect x="42" y="63" width="21" height="21" fill="#fff"/><rect x="63" y="63" width="21" height="21" fill="#111"/><rect x="84" y="63" width="21" height="21" fill="#fff"/><rect x="105" y="63" width="21" height="21" fill="#111"/><rect x="126" y="63" width="21" height="21" fill="#fff"/><rect x="147" y="63" width="21" height="21" fill="#111"/>
+                <rect x="0" y="84" width="21" height="21" fill="#111"/><rect x="21" y="84" width="21" height="21" fill="#fff"/><rect x="42" y="84" width="21" height="21" fill="#111"/><rect x="63" y="84" width="21" height="21" fill="#fff"/><rect x="84" y="84" width="21" height="21" fill="#111"/><rect x="105" y="84" width="21" height="21" fill="#fff"/><rect x="126" y="84" width="21" height="21" fill="#111"/><rect x="147" y="84" width="21" height="21" fill="#fff"/>
+              </g>
+              <text x="85" y="118" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">high freq. — checkerboard</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>Zero → low → high spatial frequency, left to right. Radical intensity change over small areas = high frequency; slowly varying change = low frequency</figcaption>
+      </figure>
+
+      <h4>The spatial-filter family tree</h4>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 230" role="img" aria-label="Spatial filtering split into linear and non-linear filters, with sub-branches">
+            <text x="320" y="18" class="diag-mono" font-size="13" fill="#14171C" text-anchor="middle">Spatial Filtering</text>
+            <line x1="320" y1="26" x2="320" y2="40" stroke="#DBE0E7"/>
+            <line x1="160" y1="40" x2="480" y2="40" stroke="#DBE0E7"/>
+            <line x1="160" y1="40" x2="160" y2="54" stroke="#DBE0E7"/>
+            <line x1="480" y1="40" x2="480" y2="54" stroke="#DBE0E7"/>
+            <text x="160" y="70" class="diag-mono" font-size="12" fill="#1F3BE8" text-anchor="middle" font-weight="700">Linear Filters</text>
+            <text x="480" y="70" class="diag-mono" font-size="12" fill="#E08A00" text-anchor="middle" font-weight="700">Non-linear Filters</text>
+
+            <line x1="160" y1="76" x2="160" y2="90" stroke="#DBE0E7"/>
+            <line x1="60" y1="90" x2="260" y2="90" stroke="#DBE0E7"/>
+            <line x1="60" y1="90" x2="60" y2="104" stroke="#DBE0E7"/>
+            <line x1="260" y1="90" x2="260" y2="104" stroke="#DBE0E7"/>
+            <rect x="10" y="104" width="100" height="100" rx="8" fill="#EDF0FF" stroke="#C9D2FF"/>
+            <text x="60" y="124" class="diag-mono" font-size="10.5" fill="#3A4048" text-anchor="middle" font-weight="700">Smoothing</text>
+            <text x="60" y="142" class="diag-mono" font-size="9.5" fill="#3A4048" text-anchor="middle">Averaging /</text>
+            <text x="60" y="156" class="diag-mono" font-size="9.5" fill="#3A4048" text-anchor="middle">Lowpass</text>
+            <text x="60" y="174" class="diag-mono" font-size="9.5" fill="#3A4048" text-anchor="middle">Weighted Avg</text>
+            <text x="60" y="192" class="diag-mono" font-size="9.5" fill="#3A4048" text-anchor="middle">Topics 07–10</text>
+
+            <rect x="210" y="104" width="100" height="100" rx="8" fill="#FFF6E6" stroke="#F3D9A6"/>
+            <text x="260" y="124" class="diag-mono" font-size="10.5" fill="#8a5200" text-anchor="middle" font-weight="700">Sharpening</text>
+            <text x="260" y="142" class="diag-mono" font-size="9.5" fill="#8a5200" text-anchor="middle">High-boost /</text>
+            <text x="260" y="156" class="diag-mono" font-size="9.5" fill="#8a5200" text-anchor="middle">Derivative</text>
+            <text x="260" y="174" class="diag-mono" font-size="9.5" fill="#8a5200" text-anchor="middle">Filters</text>
+            <text x="260" y="192" class="diag-mono" font-size="9.5" fill="#8a5200" text-anchor="middle">Topics 12–24</text>
+
+            <line x1="480" y1="76" x2="480" y2="104" stroke="#DBE0E7"/>
+            <rect x="420" y="104" width="120" height="70" rx="8" fill="#F5F5F5" stroke="#DBE0E7"/>
+            <text x="480" y="128" class="diag-mono" font-size="10.5" fill="#3A4048" text-anchor="middle" font-weight="700">Order-Statistics</text>
+            <text x="480" y="146" class="diag-mono" font-size="9.5" fill="#3A4048" text-anchor="middle">(median, max, min)</text>
+            <text x="480" y="164" class="diag-mono" font-size="9.5" fill="#6B7480" text-anchor="middle">Topic 11</text>
+          </svg>
+        </div>
+        <figcaption>Smoothing filters blur/reduce noise; sharpening filters highlight fine detail or restore blur; order-statistics filters rank neighbourhood pixels</figcaption>
+      </figure>
+    </section>
+
+    <!-- T2 -->
+    <section id="t2">
+      <div class="eyebrow">Topic 02</div>
+      <h3>Linear Spatial Filtering — How It Works</h3>
+      <p>The process consists simply of <strong>moving the filter mask from point to point</strong> in an image. At each point <span class="k">(x,y)</span>, the response of the filter is calculated using a predefined relationship. The response is a <strong>sum of products</strong> of the filter coefficients and the corresponding image pixels in the area spanned by the mask.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 230" role="img" aria-label="3x3 mask sliding over image, sum of products at each position, mask centered at x,y">
+            <text x="150" y="20" class="diag-mono" font-size="12" fill="#6B7480" text-anchor="middle">image f(x,y)</text>
+            <g stroke="#DBE0E7" fill="none">
+              <rect x="30" y="30" width="240" height="160"/>
+              <line x1="70" y1="30" x2="70" y2="190"/><line x1="110" y1="30" x2="110" y2="190"/><line x1="150" y1="30" x2="150" y2="190"/>
+              <line x1="190" y1="30" x2="190" y2="190"/><line x1="230" y1="30" x2="230" y2="190"/>
+              <line x1="30" y1="70" x2="270" y2="70"/><line x1="30" y1="110" x2="270" y2="110"/><line x1="30" y1="150" x2="270" y2="150"/>
+            </g>
+            <rect x="70" y="70" width="120" height="80" fill="none" stroke="#1F3BE8" stroke-width="2.4"/>
+            <rect x="110" y="110" width="40" height="40" fill="#E08A00" opacity=".35"/>
+            <text x="130" y="135" class="diag-mono" font-size="11" fill="#132a9c" text-anchor="middle">(x,y)</text>
+
+            <text x="450" y="20" class="diag-mono" font-size="12" fill="#6B7480" text-anchor="middle">3×3 mask w(s,t)</text>
+            <g class="diag-mono" font-size="12" fill="#132a9c" text-anchor="middle">
+              <rect x="390" y="40" width="120" height="120" fill="#EDF0FF" stroke="#1F3BE8" stroke-width="1.6"/>
+              <line x1="430" y1="40" x2="430" y2="160" stroke="#C9D2FF"/><line x1="470" y1="40" x2="470" y2="160" stroke="#C9D2FF"/>
+              <line x1="390" y1="80" x2="510" y2="80" stroke="#C9D2FF"/><line x1="390" y1="120" x2="510" y2="120" stroke="#C9D2FF"/>
+              <text x="410" y="65">w(-1,-1)</text><text x="450" y="65">w(0,-1)</text><text x="490" y="65">w(1,-1)</text>
+              <text x="410" y="105">w(-1,0)</text><text x="450" y="105" font-weight="700">w(0,0)</text><text x="490" y="105">w(1,0)</text>
+              <text x="410" y="145">w(-1,1)</text><text x="450" y="145">w(0,1)</text><text x="490" y="145">w(1,1)</text>
+            </g>
+            <text x="320" y="210" class="diag-txt" font-size="12" fill="#6B7480" text-anchor="middle">R = Σ w(s,t)·f(x+s, y+t) — the mask's centre w(0,0) coincides with f(x,y)</text>
+          </svg>
+        </div>
+        <figcaption>The coefficient w(0,0) coincides with image value f(x,y), meaning the mask is centred at (x,y) during computation</figcaption>
+      </figure>
+
+      <div class="formula">
+        <span class="cap">Response of a 3×3 mask at point (x,y)</span>
+        $$ R = w(-1,-1)f(x-1,y-1)+w(-1,0)f(x-1,y)+\dots+w(0,0)f(x,y)+\dots+w(1,0)f(x+1,y)+w(1,1)f(x+1,y+1) $$
+      </div>
+      <p>For a mask of size <span class="k">m×n</span>, we write <span class="k">m=2a+1</span> and <span class="k">n=2b+1</span>, where <span class="k">a</span> and <span class="k">b</span> are nonnegative integers. The smallest meaningful mask size is <strong>3×3</strong>.</p>
+    </section>
+
+    <!-- T3 -->
+    <section id="t3">
+      <div class="eyebrow">Topic 03</div>
+      <h3>The General Linear Filtering Formula &amp; Border Effects</h3>
+      <div class="formula">
+        <span class="cap">General linear filtering, image f (M×N), mask (m×n)</span>
+        $$ g(x,y)=\sum_{s=-a}^{a}\sum_{t=-b}^{b} w(s,t)\,f(x+s,y+t), \qquad a=\frac{m-1}{2},\ b=\frac{n-1}{2} $$
+      </div>
+      <p>This equation must be applied for <span class="k">x=0,1,…,M−1</span> and <span class="k">y=0,1,…,N−1</span> to generate the complete filtered image — this way every pixel gets processed.</p>
+
+      <div class="warn">
+        <span class="lab">Border effects — special consideration</span>
+        <p>For small <span class="k">m,n</span> this isn't a big problem; otherwise we may lose substantial data. Three common procedures:</p>
+        <ul style="margin-bottom:0">
+          <li>Add <strong>border strips</strong> and set them to zero</li>
+          <li>Treat rows/columns as <strong>wrapping around</strong></li>
+          <li><strong>Limit</strong> the mask centre's excursion to a distance no less than <span class="k">(n−1)/2</span> pixels from the border — the output image ends up smaller than the original, but every pixel was processed with the <strong>full</strong> mask</li>
+        </ul>
+      </div>
+      <p class="tip" style="display:block"><span class="lab">Note</span> Non-linear spatial filters operate on neighbourhoods with the same sliding mechanics, but they don't explicitly use coefficients in a sum-of-products (e.g. median filters rank instead).</p>
+    </section>
+
+    <!-- T4 -->
+    <section id="t4">
+      <div class="eyebrow">Topic 04</div>
+      <h3>Convolution: Zero-Padding vs No Padding</h3>
+      <p>When a mask hangs off the image border, this determines the <strong>output image size</strong>.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 200" role="img" aria-label="Zero padding example: 7x7 padded array with a sharpening kernel, output value 114 at top-left corner">
+            <text x="150" y="18" class="diag-mono" font-size="12" fill="#1F3BE8" text-anchor="middle">With zero-padding — 5×5 image, border padded to 7×7</text>
+            <g class="diag-mono" font-size="10" text-anchor="middle">
+              <rect x="30" y="30" width="196" height="140" fill="#EDF0FF" stroke="#1F3BE8"/>
+              <text fill="#1F3BE8" x="52" y="46">0</text><text fill="#1F3BE8" x="80" y="46">0</text><text fill="#132a9c" x="108" y="46">0</text><text fill="#132a9c" x="136" y="46">0</text><text fill="#132a9c" x="164" y="46">0</text><text fill="#132a9c" x="192" y="46">0</text><text fill="#1F3BE8" x="214" y="46">0</text>
+              <text fill="#1F3BE8" x="52" y="66">0</text><text fill="#132a9c" x="80" y="66">60</text><text fill="#132a9c" x="108" y="66">113</text><text fill="#132a9c" x="136" y="66">56</text><text fill="#132a9c" x="164" y="66">139</text><text fill="#132a9c" x="192" y="66">85</text><text fill="#1F3BE8" x="214" y="66">0</text>
+              <text fill="#1F3BE8" x="52" y="86">0</text><text fill="#132a9c" x="80" y="86">73</text><text fill="#132a9c" x="108" y="86">121</text><text fill="#132a9c" x="136" y="86">54</text><text fill="#132a9c" x="164" y="86">84</text><text fill="#132a9c" x="192" y="86">128</text><text fill="#1F3BE8" x="214" y="86">0</text>
+              <text fill="#1F3BE8" x="52" y="106">0</text><text fill="#132a9c" x="80" y="106">131</text><text fill="#132a9c" x="108" y="106">99</text><text fill="#132a9c" x="136" y="106">70</text><text fill="#132a9c" x="164" y="106">129</text><text fill="#132a9c" x="192" y="106">127</text><text fill="#1F3BE8" x="214" y="106">0</text>
+              <text fill="#1F3BE8" x="52" y="126">0</text><text fill="#132a9c" x="80" y="126">80</text><text fill="#132a9c" x="108" y="126">57</text><text fill="#132a9c" x="136" y="126">115</text><text fill="#132a9c" x="164" y="126">69</text><text fill="#132a9c" x="192" y="126">134</text><text fill="#1F3BE8" x="214" y="126">0</text>
+              <text fill="#1F3BE8" x="52" y="146">0</text><text fill="#132a9c" x="80" y="146">104</text><text fill="#132a9c" x="108" y="146">126</text><text fill="#132a9c" x="136" y="146">123</text><text fill="#132a9c" x="164" y="146">95</text><text fill="#132a9c" x="192" y="146">130</text><text fill="#1F3BE8" x="214" y="146">0</text>
+              <text fill="#1F3BE8" x="52" y="164">0</text><text fill="#1F3BE8" x="80" y="164">0</text><text fill="#1F3BE8" x="108" y="164">0</text><text fill="#1F3BE8" x="136" y="164">0</text><text fill="#1F3BE8" x="164" y="164">0</text><text fill="#1F3BE8" x="192" y="164">0</text><text fill="#1F3BE8" x="214" y="164">0</text>
+            </g>
+            <text x="330" y="80" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">kernel</text>
+            <g class="diag-mono" font-size="12" fill="#8a5200" text-anchor="middle">
+              <rect x="300" y="90" width="90" height="90" fill="#FFF6E6" stroke="#E08A00"/>
+              <line x1="330" y1="90" x2="330" y2="180" stroke="#F3D9A6"/><line x1="360" y1="90" x2="360" y2="180" stroke="#F3D9A6"/>
+              <line x1="300" y1="120" x2="390" y2="120" stroke="#F3D9A6"/><line x1="300" y1="150" x2="390" y2="150" stroke="#F3D9A6"/>
+              <text x="315" y="108">0</text><text x="345" y="108">−1</text><text x="375" y="108">0</text>
+              <text x="315" y="138">−1</text><text x="345" y="138" font-weight="700">5</text><text x="375" y="138">−1</text>
+              <text x="315" y="168">0</text><text x="345" y="168">−1</text><text x="375" y="168">0</text>
+            </g>
+            <g class="diag-mono" font-size="13" fill="#3A7D44" text-anchor="middle">
+              <rect x="440" y="60" width="180" height="100" fill="#EFF9F0" stroke="#3A7D44"/>
+              <rect x="440" y="60" width="36" height="36" fill="#D7F0DA" stroke="#3A7D44" stroke-width="1.6"/>
+              <text x="458" y="83" font-weight="700">114</text>
+            </g>
+            <text x="530" y="180" class="diag-txt" font-size="11" fill="#6B7480" text-anchor="middle">output image, SAME size (5×5) as original</text>
+          </svg>
+        </div>
+        <figcaption>Zero-padding: mask always has neighbours to read → output stays the same size as input</figcaption>
+      </figure>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 220" role="img" aria-label="Convolution without zero padding: 5x5 binary image with 3x3 kernel produces smaller 3x3 output, first value 4">
+            <text x="150" y="18" class="diag-mono" font-size="12" fill="#E08A00" text-anchor="middle">Without zero-padding ("valid")</text>
+            <g class="diag-mono" font-size="13" text-anchor="middle">
+              <rect x="30" y="30" width="250" height="150" fill="#FFF6E6" stroke="#E08A00"/>
+              <line x1="80" y1="30" x2="80" y2="180" stroke="#F3D9A6"/><line x1="130" y1="30" x2="130" y2="180" stroke="#F3D9A6"/>
+              <line x1="180" y1="30" x2="180" y2="180" stroke="#F3D9A6"/><line x1="230" y1="30" x2="230" y2="180" stroke="#F3D9A6"/>
+              <line x1="30" y1="60" x2="280" y2="60" stroke="#F3D9A6"/><line x1="30" y1="90" x2="280" y2="90" stroke="#F3D9A6"/>
+              <line x1="30" y1="120" x2="280" y2="120" stroke="#F3D9A6"/><line x1="30" y1="150" x2="280" y2="150" stroke="#F3D9A6"/>
+              <rect x="30" y="30" width="150" height="90" fill="#E08A00" opacity=".15"/>
+              <text fill="#8a5200" x="55" y="50">1</text><text fill="#8a5200" x="105" y="50">1</text><text fill="#8a5200" x="155" y="50">1</text><text fill="#8a5200" x="205" y="50">0</text><text fill="#8a5200" x="255" y="50">0</text>
+              <text fill="#8a5200" x="55" y="80">0</text><text fill="#8a5200" x="105" y="80">1</text><text fill="#8a5200" x="155" y="80">1</text><text fill="#8a5200" x="205" y="80">1</text><text fill="#8a5200" x="255" y="80">0</text>
+              <text fill="#8a5200" x="55" y="110">0</text><text fill="#8a5200" x="105" y="110">0</text><text fill="#8a5200" x="155" y="110">1</text><text fill="#8a5200" x="205" y="110">1</text><text fill="#8a5200" x="255" y="110">1</text>
+              <text fill="#8a5200" x="55" y="140">0</text><text fill="#8a5200" x="105" y="140">0</text><text fill="#8a5200" x="155" y="140">1</text><text fill="#8a5200" x="205" y="140">1</text><text fill="#8a5200" x="255" y="140">0</text>
+              <text fill="#8a5200" x="55" y="170">0</text><text fill="#8a5200" x="105" y="170">1</text><text fill="#8a5200" x="155" y="170">1</text><text fill="#8a5200" x="205" y="170">0</text><text fill="#8a5200" x="255" y="170">0</text>
+            </g>
+            <text x="150" y="196" class="diag-txt" font-size="11" fill="#6B7480" text-anchor="middle">5×5 image, kernel [[1,0,1],[0,1,0],[1,0,1]]</text>
+
+            <text x="470" y="18" class="diag-mono" font-size="12" fill="#3A7D44" text-anchor="middle">Convolved feature (3×3)</text>
+            <g class="diag-mono" font-size="13" fill="#3A7D44" text-anchor="middle">
+              <rect x="410" y="30" width="120" height="120" fill="#EFF9F0" stroke="#3A7D44"/>
+              <rect x="410" y="30" width="40" height="40" fill="#D7F0DA" stroke="#3A7D44" stroke-width="1.6"/>
+              <text x="430" y="55" font-weight="700">4</text>
+            </g>
+            <text x="470" y="170" class="diag-txt" font-size="11" fill="#6B7480" text-anchor="middle">output is smaller: (5−3+1)×(5−3+1) = 3×3</text>
+          </svg>
+        </div>
+        <figcaption>No padding ("valid" convolution): the mask only slides where it fully fits → smaller output</figcaption>
+      </figure>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Mode</th><th>Output size (n×n image, k×k mask)</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Zero-padding</strong> ("same")</td><td><span class="k">n × n</span> — unchanged</td></tr>
+            <tr><td><strong>No padding</strong> ("valid")</td><td><span class="k">(n−k+1) × (n−k+1)</span> — smaller</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- T5 -->
+    <section id="t5">
+      <div class="eyebrow">Topic 05</div>
+      <h3>Correlation vs Convolution</h3>
+      <p><strong>Correlation</strong> is the process of moving a filter mask over the image and computing the sum of products at each location. The mechanics of <strong>convolution</strong> are the same, except that the filter is first <strong>rotated by 180°</strong>.</p>
+
+      <div class="formula">
+        <span class="cap">Correlation vs Convolution</span>
+        $$ \text{correlation: } w(x,y)\!\star\! f(x,y)=\sum_{s=-a}^{a}\sum_{t=-b}^{b} w(s,t)\,f(x+s,y+t) $$
+        $$ \text{convolution: } w(x,y)\!*\! f(x,y)=\sum_{s=-a}^{a}\sum_{t=-b}^{b} w(s,t)\,f(x-s,y-t) $$
+      </div>
+      <p>The minus sign denotes the 180° rotation of <span class="k">f</span>, done for notational simplicity and to follow convention.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 200" role="img" aria-label="Mask before and after 180 degree rotation used for convolution">
+            <text x="140" y="20" class="diag-mono" font-size="12" fill="#1F3BE8" text-anchor="middle">mask as stored</text>
+            <g class="diag-mono" font-size="13" fill="#132a9c" text-anchor="middle">
+              <rect x="60" y="35" width="150" height="100" fill="#EDF0FF" stroke="#1F3BE8" stroke-width="1.5"/>
+              <line x1="110" y1="35" x2="110" y2="135" stroke="#C9D2FF"/><line x1="160" y1="35" x2="160" y2="135" stroke="#C9D2FF"/>
+              <line x1="60" y1="68" x2="210" y2="68" stroke="#C9D2FF"/><line x1="60" y1="101" x2="210" y2="101" stroke="#C9D2FF"/>
+              <text x="85" y="55">1</text><text x="135" y="55">2</text><text x="185" y="55">3</text>
+              <text x="85" y="88">4</text><text x="135" y="88">5</text><text x="185" y="88">6</text>
+              <text x="85" y="121">7</text><text x="135" y="121">8</text><text x="185" y="121">9</text>
+            </g>
+            <path d="M235 85 h50" stroke="#14171C" stroke-width="1.8"/>
+            <polygon points="291,85 279,79 279,91" fill="#14171C"/>
+            <text x="260" y="70" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">rotate 180°</text>
+
+            <text x="480" y="20" class="diag-mono" font-size="12" fill="#E08A00" text-anchor="middle">rotated for convolution</text>
+            <g class="diag-mono" font-size="13" fill="#8a5200" text-anchor="middle">
+              <rect x="400" y="35" width="150" height="100" fill="#FFF6E6" stroke="#E08A00" stroke-width="1.5"/>
+              <line x1="450" y1="35" x2="450" y2="135" stroke="#F3D9A6"/><line x1="500" y1="35" x2="500" y2="135" stroke="#F3D9A6"/>
+              <line x1="400" y1="68" x2="550" y2="68" stroke="#F3D9A6"/><line x1="400" y1="101" x2="550" y2="101" stroke="#F3D9A6"/>
+              <text x="425" y="55">9</text><text x="475" y="55">8</text><text x="525" y="55">7</text>
+              <text x="425" y="88">6</text><text x="475" y="88">5</text><text x="525" y="88">4</text>
+              <text x="425" y="121">3</text><text x="475" y="121">2</text><text x="525" y="121">1</text>
+            </g>
+            <text x="320" y="175" class="diag-txt" font-size="12" fill="#6B7480" text-anchor="middle">if the mask is symmetric, correlation and convolution give the same result</text>
+          </svg>
+        </div>
+        <figcaption>Convolving with an impulse copies the mask at the impulse's location — this is the geometric meaning of the rotation</figcaption>
+      </figure>
+
+      <div class="remember">
+        <span class="lab">Terminology &amp; practical note</span>
+        <p>Using correlation or convolution to filter is a <strong>matter of preference</strong> — either can perform the other's job via a simple mask rotation. What matters is that the mask is specified in a way that matches the <strong>intended operation</strong>. The linear spatial filtering in this course is based on convolution — "convolution filter / mask / kernel" is often used loosely to mean any spatial filter (the sliding sum-of-products process), not necessarily true mathematical convolution.</p>
+      </div>
+    </section>
+
+    <!-- T6 -->
+    <section id="t6">
+      <div class="eyebrow">Topic 06</div>
+      <h3>Generating a Spatial Filter Mask</h3>
+      <div class="card">
+        <h4 style="margin-top:0">Worked example</h4>
+        <p>Consider the image: <span class="k">[[0,1,0],[1,1,1],[0,0,1]]</span>. Suppose the <strong>second row</strong> of the image is to be highlighted — what mask is needed?</p>
+        <p style="margin:0"><strong>Answer approach:</strong> design a mask that weights the centre row heavily (e.g. positive weights on the middle row, zero/negative elsewhere) so that convolving it with the image boosts exactly that row's contribution to the output.</p>
+      </div>
+
+      <h4>Predicting the overall effect from the mask's coefficients</h4>
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Sum of coefficients</th><th>Effect</th></tr></thead>
+          <tbody>
+            <tr><td><strong>= 1</strong></td><td>average brightness of the image is <strong>retained</strong></td></tr>
+            <tr><td><strong>= 0</strong></td><td>average brightness is <strong>lost</strong> → will return a <strong>dark image</strong></td></tr>
+            <tr><td><strong>alternating +/−</strong></td><td>the mask is a filter that will <strong>sharpen</strong> an image</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="remember">
+        <span class="lab">Exam one-liner</span>
+        <p>Overall effect can be predicted from the <strong>general pattern</strong> of a convolution mask, without running it: check the coefficient sum (1 vs 0) and the sign pattern (all-positive vs alternating) before you even convolve.</p>
+      </div>
+    </section>
+
+    <!-- T7 -->
+    <section id="t7">
+      <div class="eyebrow">Topic 07 · Smoothing Filters</div>
+      <h3>Smoothing Spatial Filters — Why &amp; How</h3>
+      <p>Used for <strong>blurring</strong> and <strong>noise reduction</strong>. Blurring is used in preprocessing steps such as:</p>
+      <ul>
+        <li>Removal of small details from an image prior to large-object extraction</li>
+        <li>Bridging of small gaps in lines or curves</li>
+      </ul>
+      <p>Noise reduction can be accomplished by blurring with a linear filter and also by non-linear filtering (Topic 11). Also called <strong>Averaging Filters</strong> or <strong>Lowpass filters</strong>.</p>
+
+      <h4>Smoothing Linear Filters</h4>
+      <p>Replacing the value of every pixel by the <strong>average</strong> of the gray levels in its neighbourhood reduces the "sharp" transitions in gray levels. Sharp intensity transitions come from:</p>
+      <ul>
+        <li>random <strong>noise</strong> in the image</li>
+        <li><strong>edges</strong> of objects in the image</li>
+      </ul>
+      <p>Thus, smoothing can reduce noise (<strong>desirable</strong>) and blur edges (<strong>undesirable</strong>). The response of a smoothing linear filter is simply the <strong>average</strong> of the pixels in the mask's neighbourhood.</p>
+      <div class="tip">
+        <span class="lab">Other uses of smoothing</span>
+        <p>Smoothing false contours resulting from an insufficient number of intensity levels; reducing irrelevant detail in an image (pixel regions small relative to the filter size).</p>
+      </div>
+
+      <div class="formula">
+        <span class="cap">General smoothing-mask form (m×n, m and n odd)</span>
+        $$ g(x,y)=\frac{\sum_{s=-a}^{a}\sum_{t=-b}^{b} w(s,t)\,f(x+s,y+t)}{\sum_{s=-a}^{a}\sum_{t=-b}^{b} w(s,t)} $$
+      </div>
+      <p>The denominator (sum of all mask coefficients) is computed <strong>once</strong>. The complete filtered image is obtained by applying this for <span class="k">x=0,…,M−1</span>, <span class="k">y=0,…,N−1</span>.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 190" role="img" aria-label="Box averaging filter vs weighted average filter coefficient grids">
+            <text x="140" y="20" class="diag-mono" font-size="12" fill="#1F3BE8" text-anchor="middle">Box filter (uniform)</text>
+            <g class="diag-mono" font-size="13" fill="#132a9c" text-anchor="middle">
+              <rect x="60" y="35" width="150" height="100" fill="#EDF0FF" stroke="#1F3BE8" stroke-width="1.5"/>
+              <line x1="110" y1="35" x2="110" y2="135" stroke="#C9D2FF"/><line x1="160" y1="35" x2="160" y2="135" stroke="#C9D2FF"/>
+              <line x1="60" y1="68" x2="210" y2="68" stroke="#C9D2FF"/><line x1="60" y1="101" x2="210" y2="101" stroke="#C9D2FF"/>
+              <g font-size="11"><text x="85" y="55">1</text><text x="135" y="55">1</text><text x="185" y="55">1</text>
+              <text x="85" y="88">1</text><text x="135" y="88">1</text><text x="185" y="88">1</text>
+              <text x="85" y="121">1</text><text x="135" y="121">1</text><text x="185" y="121">1</text></g>
+            </g>
+            <text x="140" y="155" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">× 1/9 — every neighbour equal weight</text>
+
+            <text x="480" y="20" class="diag-mono" font-size="12" fill="#E08A00" text-anchor="middle">Weighted average</text>
+            <g class="diag-mono" font-size="13" fill="#8a5200" text-anchor="middle">
+              <rect x="400" y="35" width="150" height="100" fill="#FFF6E6" stroke="#E08A00" stroke-width="1.5"/>
+              <line x1="450" y1="35" x2="450" y2="135" stroke="#F3D9A6"/><line x1="500" y1="35" x2="500" y2="135" stroke="#F3D9A6"/>
+              <line x1="400" y1="68" x2="550" y2="68" stroke="#F3D9A6"/><line x1="400" y1="101" x2="550" y2="101" stroke="#F3D9A6"/>
+              <g font-size="11"><text x="425" y="55">1</text><text x="475" y="55">2</text><text x="525" y="55">1</text>
+              <text x="425" y="88">2</text><text x="475" y="88">4</text><text x="525" y="88">2</text>
+              <text x="425" y="121">1</text><text x="475" y="121">2</text><text x="525" y="121">1</text></g>
+            </g>
+            <text x="480" y="155" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">× 1/16 — centre weighted highest</text>
+          </svg>
+        </div>
+        <figcaption>The box filter treats every neighbour equally; the weighted average favours the centre</figcaption>
+      </figure>
+    </section>
+
+    <!-- T8 -->
+    <section id="t8">
+      <div class="eyebrow">Topic 08</div>
+      <h3>The Box Filter — Step-by-Step Convolution</h3>
+      <p>The classic teaching demo: slide a 3×3 all-ones box-filter kernel across a synthetic image (a bright block of value 90 on a background of 0) and watch the output build up, pixel by pixel.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 260" role="img" aria-label="Box filter sliding over a bright block on a dark background, producing a ramped/blurred triangular output profile">
+            <text x="150" y="18" class="diag-mono" font-size="12" fill="#6B7480" text-anchor="middle">input: sharp block of value 90</text>
+            <g class="diag-mono" font-size="10" text-anchor="middle" fill="#3A4048">
+              <rect x="30" y="30" width="240" height="80" fill="#fff" stroke="#DBE0E7"/>
+              <rect x="126" y="30" width="96" height="80" fill="#1F3BE8" opacity=".75"/>
+              <line x1="54" y1="30" x2="54" y2="110" stroke="#E9EDF2"/><line x1="78" y1="30" x2="78" y2="110" stroke="#E9EDF2"/>
+              <line x1="102" y1="30" x2="102" y2="110" stroke="#E9EDF2"/><line x1="126" y1="30" x2="126" y2="110" stroke="#E9EDF2"/>
+              <line x1="150" y1="30" x2="150" y2="110" stroke="#E9EDF2"/><line x1="174" y1="30" x2="174" y2="110" stroke="#E9EDF2"/>
+              <line x1="198" y1="30" x2="198" y2="110" stroke="#E9EDF2"/><line x1="222" y1="30" x2="222" y2="110" stroke="#E9EDF2"/><line x1="246" y1="30" x2="246" y2="110" stroke="#E9EDF2"/>
+            </g>
+            <text x="150" y="125" class="diag-txt" font-size="10.5" fill="#6B7480" text-anchor="middle">values: 0 0 0 0 90 90 90 90 90 0</text>
+
+            <path d="M300 70 h50" stroke="#14171C" stroke-width="1.8"/>
+            <polygon points="356,70 344,64 344,76" fill="#14171C"/>
+            <text x="325" y="55" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">3×3 box</text>
+            <text x="325" y="90" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">kernel, ÷9</text>
+
+            <text x="500" y="18" class="diag-mono" font-size="12" fill="#E08A00" text-anchor="middle">output: ramped/blurred edges</text>
+            <line x1="390" y1="110" x2="630" y2="110" stroke="#DBE0E7"/>
+            <path d="M390 108 L414 108 L438 98 L462 78 L486 58 L510 55 L534 58 L558 78 L582 98 L606 108 L630 108" fill="none" stroke="#E08A00" stroke-width="2.4"/>
+            <text x="500" y="125" class="diag-txt" font-size="10.5" fill="#6B7480" text-anchor="middle">values: 0 10 20 30 30 30 20 10 0</text>
+
+            <text x="320" y="160" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">…and the full 2-D result is a blurred square:</text>
+            <g transform="translate(220,175)">
+              <rect x="0" y="0" width="200" height="70" fill="url(#blurbox)"/>
+              <defs>
+                <radialGradient id="blurbox" cx="50%" cy="50%" r="65%">
+                  <stop offset="0%" stop-color="#1c1c1c"/>
+                  <stop offset="55%" stop-color="#1c1c1c"/>
+                  <stop offset="100%" stop-color="#f2f2f2"/>
+                </radialGradient>
+              </defs>
+              <rect x="0" y="0" width="200" height="70" fill="none" stroke="#DBE0E7"/>
+            </g>
+          </svg>
+        </div>
+        <figcaption>Sliding a 3×3 box filter over a sharp step turns it into a ramped/blurred triangular transition — the essence of smoothing</figcaption>
+      </figure>
+
+      <div class="remember">
+        <span class="lab">What the demo teaches</span>
+        <p>Each output pixel = average of the 9 pixels in its neighbourhood. Near a sharp edge, some of those 9 pixels are inside the bright block and some are outside — averaging them produces the ramped transition. This is exactly why box filtering <strong>blurs edges</strong>.</p>
+      </div>
+
+      <div class="card">
+        <h4 style="margin-top:0">Some more realistic examples</h4>
+        <p style="margin:0">Applying this same 3×3 box filter to a real photograph (e.g. a portrait) and to a textured photo produces a visibly softened, slightly blurred version of each — random pixel-level noise/texture is smoothed away, while large-scale structure remains recognisable.</p>
+      </div>
+    </section>
+
+    <!-- T9 -->
+    <section id="t9">
+      <div class="eyebrow">Topic 09</div>
+      <h3>Weighted Average Filter &amp; Worked Examples</h3>
+      <p>The basic strategy: weight the <strong>centre point highest</strong>, then reduce the coefficients as a function of increasing distance from the origin. This is an attempt to <strong>reduce blurring</strong> in the smoothing process compared to a plain box filter.</p>
+
+      <h4>Example 1 — mask size vs blur amount</h4>
+      <p>(a) Original image of size 500×500 pixels. (b)–(f) Results of smoothing with square averaging filter masks of sizes <span class="k">n = 3, 5, 9, 15, 35</span> respectively.</p>
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Observation</th><th>Detail</th></tr></thead>
+          <tbody>
+            <tr><td>Detail size vs mask size</td><td>details of approximately the <strong>same size</strong> as the filter mask are affected considerably more</td></tr>
+            <tr><td>Mask size ↔ object size removed</td><td>the size of the mask establishes the <strong>relative size</strong> of objects that will be blended with the background</td></tr>
+            <tr><td>Practical use</td><td>a <strong>big mask</strong> is used to eliminate small objects from an image</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>Example 2 — before/after</h4>
+      <p>A "before smoothing" / "after smoothing" comparison shows visibly reduced graininess/noise at the cost of some detail sharpness.</p>
+
+      <h4>Example 3 — smoothing + thresholding</h4>
+      <p>Original image → result after smoothing with a <span class="k">15×15</span> averaging mask → result of thresholding. After smoothing and thresholding, <strong>the remains are the largest and brightest objects</strong> in the image — small dim details get averaged away below the threshold.</p>
+      <div class="tip">
+        <span class="lab">Exam pattern to remember</span>
+        <p><strong>Smooth first, then threshold</strong> is a common pipeline: smoothing removes small/noisy bright spots so that thresholding only keeps genuinely large, bright regions.</p>
+      </div>
+    </section>
+
+    <!-- T10 -->
+    <section id="t10">
+      <div class="eyebrow">Topic 10</div>
+      <h3>Gaussian Filters</h3>
+      <p>A smoothing filter whose weights follow a <strong>Gaussian (bell curve)</strong> function of distance from the centre, rather than a flat box or simple linear weighting.</p>
+      <div class="formula">
+        <span class="cap">1-D and 2-D Gaussian</span>
+        $$ G(x)=\frac{1}{\sqrt{2\pi}\,\sigma}e^{-\frac{x^2}{2\sigma^2}} \qquad\qquad G(x,y)=\frac{1}{2\pi\sigma^2}e^{-\frac{x^2+y^2}{2\sigma^2}} $$
+      </div>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 200" role="img" aria-label="Bell curve and a 5x5 discrete Gaussian kernel with sigma 1">
+            <text x="140" y="20" class="diag-mono" font-size="12" fill="#1F3BE8" text-anchor="middle">bell curve (falls off smoothly)</text>
+            <line x1="30" y1="160" x2="270" y2="160" stroke="#DBE0E7"/>
+            <path d="M30 158 C 80 158, 100 40, 150 40 C 200 40, 220 158, 270 158" fill="none" stroke="#1F3BE8" stroke-width="2.4"/>
+            <text x="150" y="180" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">centre = highest weight</text>
+
+            <text x="480" y="20" class="diag-mono" font-size="12" fill="#E08A00" text-anchor="middle">discrete 5×5 kernel, σ=1 (÷273)</text>
+            <g class="diag-mono" font-size="12" fill="#8a5200" text-anchor="middle">
+              <rect x="370" y="35" width="220" height="120" fill="#FFF6E6" stroke="#E08A00" stroke-width="1.5"/>
+              <line x1="414" y1="35" x2="414" y2="155" stroke="#F3D9A6"/><line x1="458" y1="35" x2="458" y2="155" stroke="#F3D9A6"/>
+              <line x1="502" y1="35" x2="502" y2="155" stroke="#F3D9A6"/><line x1="546" y1="35" x2="546" y2="155" stroke="#F3D9A6"/>
+              <line x1="370" y1="59" x2="590" y2="59" stroke="#F3D9A6"/><line x1="370" y1="83" x2="590" y2="83" stroke="#F3D9A6"/>
+              <line x1="370" y1="107" x2="590" y2="107" stroke="#F3D9A6"/><line x1="370" y1="131" x2="590" y2="131" stroke="#F3D9A6"/>
+              <g font-size="11">
+                <text x="392" y="51">1</text><text x="436" y="51">4</text><text x="480" y="51">7</text><text x="524" y="51">4</text><text x="568" y="51">1</text>
+                <text x="392" y="75">4</text><text x="436" y="75">16</text><text x="480" y="75">26</text><text x="524" y="75">16</text><text x="568" y="75">4</text>
+                <text x="392" y="99" font-weight="700">7</text><text x="436" y="99" font-weight="700">26</text><text x="480" y="99" font-weight="700">41</text><text x="524" y="99" font-weight="700">26</text><text x="568" y="99" font-weight="700">7</text>
+                <text x="392" y="123">4</text><text x="436" y="123">16</text><text x="480" y="123">26</text><text x="524" y="123">16</text><text x="568" y="123">4</text>
+                <text x="392" y="147">1</text><text x="436" y="147">4</text><text x="480" y="147">7</text><text x="524" y="147">4</text><text x="568" y="147">1</text>
+              </g>
+            </g>
+            <text x="480" y="175" class="diag-txt" font-size="10.5" fill="#6B7480" text-anchor="middle">centre weight 41 is highest, corners lowest — a discrete bell shape</text>
+          </svg>
+        </div>
+        <figcaption>Sum of all 25 entries = 273, so dividing by 273 keeps average brightness unchanged</figcaption>
+      </figure>
+
+      <div class="remember">
+        <span class="lab">Gaussian vs box averaging</span>
+        <p>A box filter blurs everything the same amount and can produce blocky/ringing artefacts. A <strong>Gaussian</strong> blurs more gently at the centre, less at the mask edges — visually smoother, more natural-looking blur, which is why it's preferred over a box filter in most pipelines.</p>
+      </div>
+
+      <h4>Effect of varying σ</h4>
+      <p>As <span class="k">σ</span> increases, the blurring effect increases. Applying Gaussian filters with progressively larger <span class="k">σ</span> (e.g. σ=1px → σ=2px → σ=4px → σ=8px) to the same photo shows the image getting <strong>progressively blurrier</strong> — larger σ spreads the kernel's weight over a wider neighbourhood.</p>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 130" role="img" aria-label="Four versions of an image with increasing sigma, progressively blurrier">
+            <g transform="translate(10,10)"><rect width="140" height="100" fill="#333"/><circle cx="70" cy="50" r="24" fill="#000"/><text x="70" y="118" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">σ = 1px</text></g>
+            <g transform="translate(170,10)"><rect width="140" height="100" fill="#3a3a3a" filter="url(#b1)"/><circle cx="70" cy="50" r="24" fill="#0a0a0a" opacity=".85"/><text x="70" y="118" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">σ = 2px</text></g>
+            <g transform="translate(330,10)"><rect width="140" height="100" fill="#404040"/><circle cx="70" cy="50" r="24" fill="#1a1a1a" opacity=".6" style="filter:blur(4px)"/><text x="70" y="118" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">σ = 4px</text></g>
+            <g transform="translate(490,10)"><rect width="140" height="100" fill="#454545"/><circle cx="70" cy="50" r="24" fill="#2a2a2a" opacity=".4" style="filter:blur(9px)"/><text x="70" y="118" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">σ = 8px</text></g>
+          </svg>
+        </div>
+        <figcaption>Larger σ → wider, flatter kernel → stronger blur</figcaption>
+      </figure>
+    </section>
+
+    <!-- T11 -->
+    <section id="t11">
+      <div class="eyebrow">Topic 11</div>
+      <h3>Order-Statistics &amp; Median Filters</h3>
+      <p><strong>Non-linear</strong> spatial filters. The response is based on <strong>ordering (ranking)</strong> the pixels in the mask's neighbourhood, then replacing the centre pixel with a value chosen from that ranking.</p>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Filter</th><th>Rule (n×n mask, zₖ = ranked pixels)</th><th>Percentile</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Median</strong> (most popular)</td><td><span class="k">R = median{zₖ | k=1,…,n×n}</span></td><td>50th</td></tr>
+            <tr><td><strong>Max</strong></td><td><span class="k">R = max{zₖ}</span></td><td>100th</td></tr>
+            <tr><td><strong>Min</strong></td><td><span class="k">R = min{zₖ}</span></td><td>0th</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Original value of the pixel <strong>is included</strong> in the computation. For a 3×3 neighbourhood, median = the <strong>5th largest</strong> value; for 5×5, the <strong>13th largest</strong>.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 200" role="img" aria-label="3x3 neighbourhood pixels sorted and the median selected as the centre replacement">
+            <text x="140" y="20" class="diag-mono" font-size="12" fill="#6B7480" text-anchor="middle">3×3 neighbourhood</text>
+            <g class="diag-mono" font-size="13" fill="#14171C" text-anchor="middle">
+              <rect x="60" y="35" width="150" height="100" fill="#fff" stroke="#DBE0E7"/>
+              <line x1="110" y1="35" x2="110" y2="135" stroke="#E9EDF2"/><line x1="160" y1="35" x2="160" y2="135" stroke="#E9EDF2"/>
+              <line x1="60" y1="68" x2="210" y2="68" stroke="#E9EDF2"/><line x1="60" y1="101" x2="210" y2="101" stroke="#E9EDF2"/>
+              <text x="85" y="55">12</text><text x="135" y="55">14</text><text x="185" y="55">250</text>
+              <text x="85" y="88">10</text><text x="135" y="88" fill="#C0492B" font-weight="700">11</text><text x="185" y="88">13</text>
+              <text x="85" y="121">15</text><text x="135" y="121">9</text><text x="185" y="121">16</text>
+            </g>
+            <text x="135" y="150" class="diag-mono" font-size="10" fill="#C0492B" text-anchor="middle">centre = noise spike (11 is fine, 250 is the outlier)</text>
+            <path d="M235 85 h55" stroke="#14171C" stroke-width="1.8"/>
+            <polygon points="296,85 284,79 284,91" fill="#14171C"/>
+            <text x="262" y="70" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">sort &amp; pick median</text>
+            <g class="diag-mono" font-size="12" fill="#132a9c">
+              <text x="330" y="60">sorted: 9,10,12,13,14,15,16,250</text>
+              <rect x="330" y="75" width="270" height="40" fill="#EDF0FF" stroke="#1F3BE8"/>
+              <text x="465" y="100" text-anchor="middle" font-weight="700">median (5th) = 13</text>
+            </g>
+            <text x="320" y="160" class="diag-txt" font-size="12" fill="#6B7480" text-anchor="middle">the 250 outlier (salt-and-pepper noise) never reaches the output</text>
+          </svg>
+        </div>
+        <figcaption>Median filtering discards the outlier entirely — unlike averaging, which would blend it in</figcaption>
+      </figure>
+
+      <h4>Why median filters are popular</h4>
+      <ul>
+        <li>Excellent for <strong>impulse noise</strong> (salt-and-pepper), with <strong>less blurring</strong> than a same-size linear smoothing filter.</li>
+        <li>Forces pixels with very distinct gray levels to look more like their neighbours.</li>
+        <li>An <strong>n×n</strong> median filter <strong>eliminates</strong> isolated bright/dark clusters whose area is <strong>less than n²/2</strong> (one-half the filter area) — they are forced to have the value equal to the median intensity of the neighbours. <strong>Larger clusters</strong> are affected considerably less.</li>
+      </ul>
+
+      <div class="card">
+        <h4 style="margin-top:0">Example 1 — X-ray circuit board</h4>
+        <p style="margin:0">(a) X-ray image corrupted by salt-and-pepper noise. (b) Noise reduction with a 3×3 <strong>averaging</strong> mask — less noise reduction but more blurring. (c) Noise reduction with a 3×3 <strong>median</strong> filter — cleaner result, sharper edges preserved.</p>
+      </div>
+      <div class="card">
+        <h4 style="margin-top:0">Example 2 — brain MRI</h4>
+        <p style="margin:0">Before/after: the smoothed MR brain image obtained by using median filtering over a fixed 3×3 neighbourhood — noise reduced while structural edges stay comparatively crisp.</p>
+      </div>
+    </section>
+
+    <!-- T12 -->
+    <section id="t12">
+      <div class="eyebrow">Topic 12 · Sharpening &amp; Edge Detection</div>
+      <h3>Blurring vs Sharpening</h3>
+      <p><strong>Sharpening</strong> highlights fine detail in an image, or enhances detail that has been blurred (either in error or as a natural effect of a particular image-acquisition method).</p>
+      <div class="formula">
+        <span class="cap">The logic chain</span>
+        $$ \text{Blurring} \approx \text{spatial averaging} \approx \text{integration} \quad\Longrightarrow\quad \text{Sharpening} \approx \text{spatial differentiation} $$
+      </div>
+      <p>Since blurring can be done in the spatial domain by pixel averaging (analogous to integration), we can guess that sharpening must be accomplished by <strong>spatial differentiation</strong>.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 220" role="img" aria-label="A building edge that looks crisp from a distance is a gradual pixel-by-pixel transition when zoomed in">
+            <text x="150" y="18" class="diag-mono" font-size="12" fill="#6B7480" text-anchor="middle">normal view — looks like a crisp edge</text>
+            <rect x="30" y="35" width="240" height="150" fill="#dcdcdc"/>
+            <rect x="30" y="35" width="140" height="150" fill="#5a5a5a"/>
+            <rect x="150" y="90" width="30" height="30" fill="none" stroke="#C0492B" stroke-width="2"/>
+            <text x="480" y="18" class="diag-mono" font-size="12" fill="#E08A00" text-anchor="middle">zoomed in — a gradual pixel transition</text>
+            <g transform="translate(390,50)">
+              <rect x="0" y="0" width="18" height="120" fill="#3a3a3a"/>
+              <rect x="18" y="0" width="18" height="120" fill="#4a4a4a"/>
+              <rect x="36" y="0" width="18" height="120" fill="#6a6a6a"/>
+              <rect x="54" y="0" width="18" height="120" fill="#8f8f8f"/>
+              <rect x="72" y="0" width="18" height="120" fill="#b5b5b5"/>
+              <rect x="90" y="0" width="18" height="120" fill="#d5d5d5"/>
+              <rect x="108" y="0" width="18" height="120" fill="#e5e5e5"/>
+              <rect x="126" y="0" width="18" height="120" fill="#eeeeee"/>
+              <g stroke="#fff" stroke-width="0.5">
+                <line x1="18" y1="0" x2="18" y2="120"/><line x1="36" y1="0" x2="36" y2="120"/><line x1="54" y1="0" x2="54" y2="120"/>
+                <line x1="72" y1="0" x2="72" y2="120"/><line x1="90" y1="0" x2="90" y2="120"/><line x1="108" y1="0" x2="108" y2="120"/><line x1="126" y1="0" x2="126" y2="120"/>
+              </g>
+            </g>
+            <text x="480" y="185" class="diag-txt" font-size="10.5" fill="#6B7480" text-anchor="middle">each pixel column is a slightly different gray level — no single sharp line exists at the pixel level</text>
+          </svg>
+        </div>
+        <figcaption>Zooming into a photographed building edge: the "crisp" line is really several pixels of gradual transition — exactly what derivative operators detect</figcaption>
+      </figure>
+
+      <div class="tip">
+        <span class="lab">Closeup of edges — the takeaway</span>
+        <p>What looks like a crisp line at normal viewing distance is actually a <strong>gradual pixel-by-pixel transition</strong> across a handful of pixels. This is why edge detectors work on <strong>derivatives</strong> rather than looking for a single "edge pixel" — there usually isn't one.</p>
+      </div>
+    </section>
+
+    <!-- T13 -->
+    <section id="t13">
+      <div class="eyebrow">Topic 13</div>
+      <h3>What Is an Edge? Edge Profile Types</h3>
+      <p>An <strong>edge</strong> = a discontinuity of intensities in the image — a place of <strong>rapid change</strong> in the image intensity function.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 220" role="img" aria-label="A vertical dark stripe on white, and the intensity dip along a horizontal scanline">
+            <text x="140" y="20" class="diag-mono" font-size="12" fill="#6B7480" text-anchor="middle">image + scanline</text>
+            <rect x="40" y="35" width="200" height="140" fill="#fff" stroke="#DBE0E7"/>
+            <rect x="105" y="35" width="70" height="140" fill="#161616"/>
+            <line x1="40" y1="105" x2="240" y2="105" stroke="#C0492B" stroke-width="2.4"/>
+            <text x="450" y="20" class="diag-mono" font-size="12" fill="#6B7480" text-anchor="middle">intensity along scanline</text>
+            <line x1="330" y1="180" x2="570" y2="180" stroke="#DBE0E7"/>
+            <path d="M330 60 L400 60 L420 165 L480 165 L500 60 L570 60" fill="none" stroke="#1F3BE8" stroke-width="2.2"/>
+            <text x="410" y="195" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">falling edge</text>
+            <text x="490" y="195" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">rising edge</text>
+          </svg>
+        </div>
+        <figcaption>The dark stripe produces two rapid transitions in the 1-D intensity profile — these are the edges</figcaption>
+      </figure>
+
+      <h4>Four canonical edge profile types</h4>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 170" role="img" aria-label="Four canonical edge intensity profiles: step, ramp, ridge/line, and roof">
+            <g transform="translate(10,10)">
+              <text x="65" y="10" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">(a) Step</text>
+              <line x1="10" y1="120" x2="120" y2="120" stroke="#DBE0E7"/>
+              <path d="M10 100 L60 100 L60 40 L120 40" fill="none" stroke="#1F3BE8" stroke-width="2"/>
+            </g>
+            <g transform="translate(170,10)">
+              <text x="65" y="10" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">(b) Ramp</text>
+              <line x1="10" y1="120" x2="120" y2="120" stroke="#DBE0E7"/>
+              <path d="M10 100 L45 100 L85 40 L120 40" fill="none" stroke="#1F3BE8" stroke-width="2"/>
+            </g>
+            <g transform="translate(330,10)">
+              <text x="65" y="10" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">(c) Ridge / Line</text>
+              <line x1="10" y1="120" x2="120" y2="120" stroke="#DBE0E7"/>
+              <path d="M10 100 L50 100 L65 40 L80 100 L120 100" fill="none" stroke="#1F3BE8" stroke-width="2"/>
+            </g>
+            <g transform="translate(490,10)">
+              <text x="65" y="10" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">(d) Roof</text>
+              <line x1="10" y1="120" x2="120" y2="120" stroke="#DBE0E7"/>
+              <path d="M10 100 L45 100 L65 45 L85 100 L120 100" fill="none" stroke="#1F3BE8" stroke-width="2"/>
+            </g>
+          </svg>
+        </div>
+        <figcaption>Step = abrupt jump · Ramp = gradual slope · Ridge/Line = thin bright/dark stripe · Roof = a peak (like a thin ridge but smoother, e.g. a road centre-line seen from afar)</figcaption>
+      </figure>
+      <div class="remember">
+        <span class="lab">Why this matters</span>
+        <p>Real edges are rarely pure steps — acquisition blur turns most step edges into <strong>ramps</strong>. Recognising which profile you're looking at helps you predict how a derivative filter will respond to it (see Topic 14).</p>
+      </div>
+    </section>
+
+    <!-- T14 -->
+    <section id="t14">
+      <div class="eyebrow">Topic 14</div>
+      <h3>Derivative Operator &amp; First-Order Image Derivatives</h3>
+      <p>The strength of the response of a derivative operator is proportional to the degree of intensity discontinuity of the image at the point where the operator is applied. Thus, image differentiation:</p>
+      <ul>
+        <li><strong>enhances</strong> edges and other discontinuities (noise)</li>
+        <li><strong>deemphasizes</strong> areas with slowly varying gray-level values</li>
+      </ul>
+
+      <div class="formula">
+        <span class="cap">First- and second-order derivatives (discrete)</span>
+        $$ \frac{\partial f}{\partial x}=f(x+1)-f(x) \qquad \frac{\partial^2 f}{\partial x^2}=f(x+1)+f(x-1)-2f(x) $$
+      </div>
+
+      <h4>Required properties of each derivative order</h4>
+      <div class="twrap">
+        <table>
+          <thead><tr><th></th><th>Flat region</th><th>Onset of step/ramp</th><th>Along a ramp</th></tr></thead>
+          <tbody>
+            <tr><td><strong>1st derivative</strong></td><td>must be zero</td><td>must be nonzero</td><td>must be nonzero</td></tr>
+            <tr><td><strong>2nd derivative</strong></td><td>must be zero</td><td>nonzero (onset &amp; end)</td><td>must be zero</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>First-order image derivatives &amp; the gradient</h4>
+      <p>First derivatives are implemented using the <strong>magnitude of the gradient</strong>. For a function <span class="k">f(x,y)</span>, the gradient at coordinates <span class="k">(x,y)</span> is the 2-D column vector <span class="k">∇f = [gₓ, g_y]ᵀ</span>.</p>
+      <div class="formula">
+        <span class="cap">Gradient magnitude and direction</span>
+        $$ M(x,y)=\text{mag}(\nabla f)=\sqrt{g_x^2+g_y^2} \qquad\qquad \alpha(x,y)=\tan^{-1}\!\left(\frac{g_y}{g_x}\right) $$
+      </div>
+      <p><span class="k">M(x,y)</span> is an image of the same size as the original, called the <strong>gradient image</strong> (or simply "gradient") — it's the value of the rate of change at every pixel. <span class="k">α(x,y)</span> gives the direction of the gradient vector at that point; the direction of an <strong>edge</strong> at <span class="k">(x,y)</span> is perpendicular to the direction of the gradient vector.</p>
+
+      <div class="tip">
+        <span class="lab">Computational note</span>
+        <p>Computing <span class="k">M(x,y)</span> exactly requires a square root, which is computationally expensive over an entire image — <span class="k">M(x,y) ≈ |gₓ|+|g_y|</span> is a common, much cheaper approximation (already used by Roberts, Prewitt and Sobel in Topic 16).</p>
+      </div>
+    </section>
+
+    <!-- T15 -->
+    <section id="t15">
+      <div class="eyebrow">Topic 15</div>
+      <h3>Edge Detection via the Gradient</h3>
+      <p>Computation of the gradient of an image is based on obtaining the partial derivatives <span class="k">gₓ</span> and <span class="k">g_y</span> at <strong>every</strong> pixel location. It is always possible to implement these derivatives in digital form in different ways.</p>
+
+      <div class="formula">
+        <span class="cap">Simplest first-order approximations</span>
+        $$ g_x(x,y)=\frac{\partial f}{\partial x}=f(x+1,y)-f(x,y) \qquad g_y(x,y)=\frac{\partial f}{\partial y}=f(x,y+1)-f(x,y) $$
+      </div>
+
+      <p>Standard notation for a 3×3 neighbourhood used in every gradient/Laplacian mask below:</p>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 400 170" role="img" aria-label="3x3 neighbourhood labelled z1 to z9, centre z5 is f(x,y)">
+            <g class="diag-mono" font-size="13" fill="#14171C" text-anchor="middle">
+              <rect x="100" y="20" width="200" height="120" fill="#fff" stroke="#DBE0E7"/>
+              <line x1="167" y1="20" x2="167" y2="140" stroke="#E9EDF2"/><line x1="233" y1="20" x2="233" y2="140" stroke="#E9EDF2"/>
+              <line x1="100" y1="60" x2="300" y2="60" stroke="#E9EDF2"/><line x1="100" y1="100" x2="300" y2="100" stroke="#E9EDF2"/>
+              <text x="133" y="45">z1</text><text x="200" y="45">z2</text><text x="267" y="45">z3</text>
+              <text x="133" y="85">z4</text><text x="200" y="85" font-weight="700" fill="#1F3BE8">z5</text><text x="267" y="85">z6</text>
+              <text x="133" y="125">z7</text><text x="200" y="125">z8</text><text x="267" y="125">z9</text>
+            </g>
+            <text x="200" y="160" class="diag-txt" font-size="11" fill="#6B7480" text-anchor="middle">z5 = f(x,y); z1 = f(x−1,y−1); and so on</text>
+          </svg>
+        </div>
+        <figcaption>This z1…z9 labelling is used for every gradient/Laplacian mask that follows</figcaption>
+      </figure>
+
+      <h4>What the gradient image actually looks like</h4>
+      <p>Computing <span class="k">M(x,y)</span> at every pixel produces a new image the same size as the original — the <strong>gradient image</strong>. It is <strong>not</strong> a picture of the scene anymore; it's a map of <strong>how fast intensity is changing</strong> at each point.</p>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 200" role="img" aria-label="Original building image next to its gradient magnitude image, which is mostly dark with bright edge lines">
+            <text x="150" y="18" class="diag-mono" font-size="12" fill="#6B7480" text-anchor="middle">original image f(x,y)</text>
+            <rect x="30" y="30" width="240" height="140" fill="#c9c9c9"/>
+            <rect x="30" y="30" width="130" height="140" fill="#8a8a8a"/>
+            <rect x="90" y="60" width="30" height="60" fill="#e5e5e5"/>
+            <rect x="180" y="90" width="50" height="80" fill="#5a5a5a"/>
+
+            <path d="M290 100 h40" stroke="#14171C" stroke-width="1.8"/>
+            <polygon points="336,100 324,94 324,106" fill="#14171C"/>
+            <text x="310" y="88" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">∇f</text>
+
+            <text x="480" y="18" class="diag-mono" font-size="12" fill="#E08A00" text-anchor="middle">gradient magnitude image M(x,y)</text>
+            <rect x="360" y="30" width="240" height="140" fill="#0d0d0d"/>
+            <line x1="490" y1="30" x2="490" y2="170" stroke="#fff" stroke-width="2"/>
+            <rect x="420" y="60" width="30" height="60" fill="none" stroke="#fff" stroke-width="2"/>
+            <rect x="510" y="90" width="50" height="80" fill="none" stroke="#fff" stroke-width="2"/>
+          </svg>
+        </div>
+        <figcaption>Flat, uniform regions of the original become near-black in M(x,y); every boundary between regions becomes a bright line</figcaption>
+      </figure>
+
+      <div class="remember">
+        <span class="lab">Practical use — thresholding the gradient</span>
+        <p>Because <span class="k">M(x,y)</span> is near-zero everywhere except at real intensity discontinuities, a common next step is to <strong>threshold</strong> the gradient image: keep only pixels where <span class="k">M(x,y)</span> exceeds some value, producing a clean <strong>binary edge map</strong>. This is exactly the pipeline used later in Topic 18 (Sobel on smoothed vs unsmoothed images).</p>
+      </div>
+    </section>
+
+    <!-- T16 -->
+    <section id="t16">
+      <div class="eyebrow">Topic 16</div>
+      <h3>Gradient Masks: Roberts, Prewitt, Sobel</h3>
+      <p>Three classic ways to implement <span class="k">gₓ, g_y</span> as convolution masks — each a different trade-off of simplicity vs noise robustness.</p>
+
+      <h4>Roberts Cross-Gradient (2×2, diagonal)</h4>
+      <p>Used when a <strong>diagonal</strong> edge is of interest — needs 2-D kernels. Sum of the magnitude of differences of the <strong>diagonal</strong> neighbours:</p>
+      <div class="formula">
+        <span class="cap">Roberts</span>
+        $$ g_x = z_9 - z_5 \qquad g_y = z_8 - z_6 $$
+      </div>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 400 130" role="img" aria-label="Two 2x2 Roberts masks">
+            <g class="diag-mono" font-size="13" fill="#132a9c" text-anchor="middle">
+              <rect x="40" y="20" width="100" height="70" fill="#EDF0FF" stroke="#1F3BE8"/>
+              <line x1="90" y1="20" x2="90" y2="90" stroke="#C9D2FF"/><line x1="40" y1="55" x2="140" y2="55" stroke="#C9D2FF"/>
+              <text x="65" y="42">−1</text><text x="115" y="42">0</text>
+              <text x="65" y="77">0</text><text x="115" y="77">1</text>
+              <rect x="200" y="20" width="100" height="70" fill="#EDF0FF" stroke="#1F3BE8"/>
+              <line x1="250" y1="20" x2="250" y2="90" stroke="#C9D2FF"/><line x1="200" y1="55" x2="300" y2="55" stroke="#C9D2FF"/>
+              <text x="225" y="42">0</text><text x="275" y="42">−1</text>
+              <text x="225" y="77">1</text><text x="275" y="77">0</text>
+            </g>
+            <text x="200" y="112" class="diag-txt" font-size="11" fill="#6B7480" text-anchor="middle">Roberts operators (gₓ mask, g_y mask)</text>
+          </svg>
+        </div>
+        <figcaption>Simple and fast, but 2×2 masks have no clear centre — awkward to implement, and they mark <em>that</em> an edge exists but not its orientation</figcaption>
+      </figure>
+
+      <h4>Prewitt Operators (3×3)</h4>
+      <div class="formula">
+        <span class="cap">Prewitt</span>
+        $$ g_x=(z_7+z_8+z_9)-(z_1+z_2+z_3) \qquad g_y=(z_3+z_6+z_9)-(z_1+z_4+z_7) $$
+      </div>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 400 150" role="img" aria-label="Prewitt gx and gy 3x3 masks">
+            <g class="diag-mono" font-size="12" fill="#132a9c" text-anchor="middle">
+              <rect x="30" y="20" width="150" height="100" fill="#EDF0FF" stroke="#1F3BE8"/>
+              <line x1="80" y1="20" x2="80" y2="120" stroke="#C9D2FF"/><line x1="130" y1="20" x2="130" y2="120" stroke="#C9D2FF"/>
+              <line x1="30" y1="53" x2="180" y2="53" stroke="#C9D2FF"/><line x1="30" y1="87" x2="180" y2="87" stroke="#C9D2FF"/>
+              <text x="55" y="40">−1</text><text x="105" y="40">−1</text><text x="155" y="40">−1</text>
+              <text x="55" y="74">0</text><text x="105" y="74">0</text><text x="155" y="74">0</text>
+              <text x="55" y="108">1</text><text x="105" y="108">1</text><text x="155" y="108">1</text>
+              <rect x="220" y="20" width="150" height="100" fill="#EDF0FF" stroke="#1F3BE8"/>
+              <line x1="270" y1="20" x2="270" y2="120" stroke="#C9D2FF"/><line x1="320" y1="20" x2="320" y2="120" stroke="#C9D2FF"/>
+              <line x1="220" y1="53" x2="370" y2="53" stroke="#C9D2FF"/><line x1="220" y1="87" x2="370" y2="87" stroke="#C9D2FF"/>
+              <text x="245" y="40">−1</text><text x="295" y="40">0</text><text x="345" y="40">1</text>
+              <text x="245" y="74">−1</text><text x="295" y="74">0</text><text x="345" y="74">1</text>
+              <text x="245" y="108">−1</text><text x="295" y="108">0</text><text x="345" y="108">1</text>
+            </g>
+            <text x="105" y="140" class="diag-mono" font-size="10.5" fill="#6B7480" text-anchor="middle">gₓ mask</text>
+            <text x="295" y="140" class="diag-mono" font-size="10.5" fill="#6B7480" text-anchor="middle">g_y mask</text>
+          </svg>
+        </div>
+        <figcaption>All coefficients weighted equally (±1) — simple average difference</figcaption>
+      </figure>
+
+      <h4>Sobel Operators (3×3, most common)</h4>
+      <div class="formula">
+        <span class="cap">Sobel</span>
+        $$ g_x=(z_7+2z_8+z_9)-(z_1+2z_2+z_3) \qquad g_y=(z_3+2z_6+z_9)-(z_1+2z_4+z_7) $$
+      </div>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 400 150" role="img" aria-label="Sobel gx and gy 3x3 masks with center weight 2">
+            <g class="diag-mono" font-size="12" fill="#8a5200" text-anchor="middle">
+              <rect x="30" y="20" width="150" height="100" fill="#FFF6E6" stroke="#E08A00"/>
+              <line x1="80" y1="20" x2="80" y2="120" stroke="#F3D9A6"/><line x1="130" y1="20" x2="130" y2="120" stroke="#F3D9A6"/>
+              <line x1="30" y1="53" x2="180" y2="53" stroke="#F3D9A6"/><line x1="30" y1="87" x2="180" y2="87" stroke="#F3D9A6"/>
+              <text x="55" y="40">−1</text><text x="105" y="40">−2</text><text x="155" y="40">−1</text>
+              <text x="55" y="74">0</text><text x="105" y="74">0</text><text x="155" y="74">0</text>
+              <text x="55" y="108">1</text><text x="105" y="108">2</text><text x="155" y="108">1</text>
+              <rect x="220" y="20" width="150" height="100" fill="#FFF6E6" stroke="#E08A00"/>
+              <line x1="270" y1="20" x2="270" y2="120" stroke="#F3D9A6"/><line x1="320" y1="20" x2="320" y2="120" stroke="#F3D9A6"/>
+              <line x1="220" y1="53" x2="370" y2="53" stroke="#F3D9A6"/><line x1="220" y1="87" x2="370" y2="87" stroke="#F3D9A6"/>
+              <text x="245" y="40">−1</text><text x="295" y="40">0</text><text x="345" y="40">1</text>
+              <text x="245" y="74">−2</text><text x="295" y="74">0</text><text x="345" y="74">2</text>
+              <text x="245" y="108">−1</text><text x="295" y="108">0</text><text x="345" y="108">1</text>
+            </g>
+            <text x="105" y="140" class="diag-mono" font-size="10.5" fill="#6B7480" text-anchor="middle">gₓ mask</text>
+            <text x="295" y="140" class="diag-mono" font-size="10.5" fill="#6B7480" text-anchor="middle">g_y mask</text>
+          </svg>
+        </div>
+        <figcaption>Weight 2 at the row/column nearest the centre — a bit of smoothing baked in, so it's less noise-sensitive than Prewitt</figcaption>
+      </figure>
+
+      <div class="card">
+        <h4 style="margin-top:0">Worked example, in a nutshell</h4>
+        <p style="margin:0">On a photo of a brick building filtered with Sobel: <span class="k">|gₓ|</span> lights up mostly <strong>vertical</strong> edges (window/door frames), <span class="k">|g_y|</span> lights up mostly <strong>horizontal</strong> edges (brick courses, roofline), and the combined gradient image <span class="k">|gₓ|+|g_y|</span> shows the full edge map with both orientations.</p>
+      </div>
+
+      <div class="remember">
+        <span class="lab">Exam comparison table</span>
+        <table style="width:100%;border-collapse:collapse;margin-top:6px">
+          <tr><td style="padding:4px 8px"><strong>Roberts</strong></td><td style="padding:4px 8px">2×2, diagonal, no clear centre, fastest, most noise-sensitive; marks edge points only, NOT orientation</td></tr>
+          <tr><td style="padding:4px 8px"><strong>Prewitt</strong></td><td style="padding:4px 8px">3×3, equal weights, simple average</td></tr>
+          <tr><td style="padding:4px 8px"><strong>Sobel</strong></td><td style="padding:4px 8px">3×3, centre row/col weighted ×2, mild built-in smoothing → most robust of the three</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- T17 -->
+    <section id="t17">
+      <div class="eyebrow">Topic 17</div>
+      <h3>Effects of Noise &amp; Why We Smooth First</h3>
+      <p><strong>Difference (derivative) filters respond strongly to noise.</strong> Image noise makes pixels look very different from their neighbours — exactly what a derivative is designed to detect. The larger the noise, the stronger the (spurious) response. Consider a single row or column of the image: plotting intensity as a function of position gives a signal — with even a little noise added, it becomes hard to tell <strong>where the true edge is</strong> just by looking at the raw derivative.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 280" role="img" aria-label="Noisy signal, gaussian kernel, their convolution, and the derivative of the smoothed result showing a clean peak at the edge">
+            <text x="60" y="18" class="diag-mono" font-size="11" fill="#6B7480">f — noisy signal (step edge)</text>
+            <line x1="20" y1="55" x2="600" y2="55" stroke="#DBE0E7"/>
+            <path d="M20 60 q5 -3 10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 t10 0 L340 60 Q350 20 360 20 l240 0" fill="none" stroke="#14171C" stroke-width="1.6"/>
+            <text x="60" y="88" class="diag-mono" font-size="11" fill="#1F3BE8">g — Gaussian smoothing kernel</text>
+            <path d="M120 130 C 150 100, 180 100, 210 130" fill="none" stroke="#1F3BE8" stroke-width="2"/>
+            <text x="60" y="160" class="diag-mono" font-size="11" fill="#8a5200">f * g — smoothed result (noise gone)</text>
+            <path d="M20 175 L300 175 C 330 175, 350 130, 380 130 L600 130" fill="none" stroke="#E08A00" stroke-width="2.2"/>
+            <text x="60" y="220" class="diag-mono" font-size="11" fill="#C0492B">d/dx (f*g) — one clean peak = the edge</text>
+            <line x1="20" y1="260" x2="600" y2="260" stroke="#DBE0E7"/>
+            <path d="M20 258 L310 258 C 330 258, 340 210, 350 210 C 360 210, 370 258, 390 258 L600 258" fill="none" stroke="#C0492B" stroke-width="2.2"/>
+          </svg>
+        </div>
+        <figcaption>Smooth first (Gaussian), then differentiate — noise is averaged away before the derivative amplifies it</figcaption>
+      </figure>
+
+      <div class="remember">
+        <span class="lab">The fix, in one line</span>
+        <p><strong>Solution: smooth first.</strong> Convolve with a Gaussian <span class="k">g</span> before taking the derivative — to find edges, look for <strong>peaks</strong> in <span class="k">d/dx(f*g)</span> rather than in <span class="k">d/dx(f)</span> directly.</p>
+      </div>
+    </section>
+
+    <!-- T18 -->
+    <section id="t18">
+      <div class="eyebrow">Topic 18</div>
+      <h3>Sobel: Smoothed vs Unsmoothed</h3>
+      <p>Applying Sobel directly to a raw (unsmoothed) image produces edges everywhere noise happens to spike — a cluttered, unreliable edge map. Applying a smoothing step <strong>first</strong>, then Sobel, gives:</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 220" role="img" aria-label="Sobel edge map on an unsmoothed noisy image looks cluttered; Sobel on a smoothed image gives a clean edge map">
+            <text x="150" y="18" class="diag-mono" font-size="12" fill="#C0492B" text-anchor="middle">Sobel on UNSMOOTHED image</text>
+            <rect x="30" y="30" width="240" height="150" fill="#0d0d0d"/>
+            <g stroke="#fff" stroke-width="1.4" opacity="0.9">
+              <line x1="150" y1="30" x2="150" y2="180"/>
+              <line x1="60" y1="90" x2="240" y2="90"/>
+            </g>
+            <g stroke="#fff" stroke-width="0.6" opacity="0.55">
+              <line x1="40" y1="45" x2="46" y2="52"/><line x1="70" y1="60" x2="65" y2="68"/><line x1="95" y1="35" x2="102" y2="42"/>
+              <line x1="120" y1="150" x2="127" y2="158"/><line x1="180" y1="120" x2="188" y2="115"/><line x1="210" y1="165" x2="204" y2="172"/>
+              <line x1="250" y1="60" x2="244" y2="55"/><line x1="55" y1="140" x2="62" y2="145"/><line x1="200" y1="45" x2="195" y2="52"/>
+              <line x1="80" y1="110" x2="86" y2="118"/><line x1="230" y1="130" x2="224" y2="124"/><line x1="45" y1="100" x2="52" y2="107"/>
+            </g>
+            <text x="150" y="200" class="diag-txt" font-size="10.5" fill="#6B7480" text-anchor="middle">real edges + dozens of noise speckles</text>
+
+            <text x="480" y="18" class="diag-mono" font-size="12" fill="#3A7D44" text-anchor="middle">Sobel on SMOOTHED (Gaussian first) image</text>
+            <rect x="360" y="30" width="240" height="150" fill="#0d0d0d"/>
+            <g stroke="#fff" stroke-width="1.6">
+              <line x1="480" y1="30" x2="480" y2="180"/>
+              <line x1="390" y1="90" x2="570" y2="90"/>
+            </g>
+            <text x="480" y="200" class="diag-txt" font-size="10.5" fill="#6B7480" text-anchor="middle">only the two real edges remain, cleanly</text>
+          </svg>
+        </div>
+        <figcaption>Same underlying image, same Sobel operator — smoothing first is the only difference between a noisy mess and a clean edge map</figcaption>
+      </figure>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Input to Sobel</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Unsmoothed</strong> image</td><td>many spurious edges from noise; thresholding still leaves noisy clutter</td></tr>
+            <tr><td><strong>Smoothed</strong> image (Gaussian first)</td><td><strong>fewer</strong> edges after thresholding, and the remaining edges are <strong>sharper</strong> and more meaningful</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tip">
+        <span class="lab">This is exactly why LoG exists</span>
+        <p>Combining a smoothing step with a derivative step is such a common and useful pattern that it gets its own name later in this module: the <strong>Laplacian of Gaussian (LoG)</strong> — smoothing and (second-order) differentiation baked into a single kernel.</p>
+      </div>
+    </section>
+
+    <!-- T19 -->
+    <section id="t19">
+      <div class="eyebrow">Topic 19</div>
+      <h3>Second-Order Derivatives &amp; the Laplacian</h3>
+      <p><strong>Aim:</strong> define a discrete second-order derivative and build a filter mask from it. The filter should be <strong>isotropic</strong>: its response is independent of the <strong>direction</strong> of discontinuities in the image (it enhances detail equally in every direction). Isotropic filters are <strong>rotation invariant</strong> — rotating the image and then applying the filter gives the same result as applying the filter first and then rotating the result.</p>
+
+      <div class="formula">
+        <span class="cap">From gradient to Laplacian</span>
+        $$ \text{Gradient: } \nabla f = \frac{\partial f}{\partial x}+\frac{\partial f}{\partial y} \qquad\qquad \text{Laplacian (linear op.): } \nabla^2 f = \frac{\partial^2 f}{\partial x^2}+\frac{\partial^2 f}{\partial y^2} $$
+      </div>
+      <p>The Laplacian is the <strong>simplest isotropic derivative operator</strong>. Since it's built from second derivatives, it needs to be expressed in discrete form before it can become a filter mask.</p>
+
+      <h4>Observations: comparing 1st- and 2nd-order derivative behaviour</h4>
+      <p>Consider a 1-D intensity profile containing a <strong>ramp</strong> (a gradual step), a <strong>flat</strong> region, and an <strong>isolated noise point</strong> (a single spike). Plotting the profile alongside its first and second derivatives reveals the properties every exam question on this topic hinges on:</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 260" role="img" aria-label="Intensity profile with a ramp and isolated noise point, compared against its first and second derivative responses">
+            <text x="320" y="16" class="diag-mono" font-size="12" fill="#6B7480" text-anchor="middle">intensity profile: flat → ramp → flat → isolated noise point → flat</text>
+            <line x1="20" y1="70" x2="620" y2="70" stroke="#DBE0E7"/>
+            <path d="M20 60 L120 60 L220 25 L300 25 L360 25 L370 5 L380 25 L460 25 L540 25 L540 55 L620 55" fill="none" stroke="#14171C" stroke-width="2"/>
+            <text x="55" y="88" class="diag-mono" font-size="10" fill="#6B7480">flat</text>
+            <text x="160" y="88" class="diag-mono" font-size="10" fill="#6B7480">ramp</text>
+            <text x="370" y="20" class="diag-mono" font-size="10" fill="#C0492B" text-anchor="middle">noise point</text>
+
+            <text x="320" y="130" class="diag-mono" font-size="11" fill="#1F3BE8" text-anchor="middle">1st derivative — nonzero along the ENTIRE ramp → "thick" edge</text>
+            <line x1="20" y1="160" x2="620" y2="160" stroke="#DBE0E7"/>
+            <path d="M20 160 L120 160 L120 140 L220 140 L220 160 L360 160 L370 100 L380 160 L540 160 L540 130 L560 190 L620 160" fill="none" stroke="#1F3BE8" stroke-width="2"/>
+
+            <text x="320" y="215" class="diag-mono" font-size="11" fill="#E08A00" text-anchor="middle">2nd derivative — nonzero only at onset &amp; end of ramp (double edge, zero crossing)</text>
+            <line x1="20" y1="240" x2="620" y2="240" stroke="#DBE0E7"/>
+            <path d="M20 240 L118 240 L120 220 L122 240 L218 240 L220 260 L222 240 L365 240 L370 195 L375 240 L538 240 L540 210 L545 245 L558 260 L562 240 L620 240" fill="none" stroke="#E08A00" stroke-width="2"/>
+          </svg>
+        </div>
+        <figcaption>Second derivative spikes far more sharply at the noise point than the first — this is the noise-sensitivity trade-off</figcaption>
+      </figure>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Observation</th><th>What it means</th></tr></thead>
+          <tbody>
+            <tr><td>1st derivative is <strong>nonzero along the entire ramp</strong>; 2nd derivative is nonzero <strong>only at the onset and end</strong> of the ramp</td><td>Because edges resemble this ramp transition: <strong>1st-order derivatives produce "thick" edges</strong>; <strong>2nd-order derivatives produce finer (thinner) edges</strong></td></tr>
+            <tr><td>At an <strong>isolated noise point</strong>, the response is much <strong>stronger for the 2nd derivative</strong> than for the 1st derivative</td><td>The 2nd derivative <strong>enhances fine detail (and noise) much more</strong> than the 1st derivative does — this is exactly why derivative-based edge detectors are noise-sensitive, and why smoothing first (Topic 17) matters so much more for 2nd-order methods like the Laplacian</td></tr>
+            <tr><td>At a genuine gray-level <strong>step</strong>, the response of both derivatives is <strong>the same</strong>; but for a step whose transition doesn't start from zero, the <strong>2nd derivative response is weaker</strong></td><td>The 2nd derivative is less reliable than the 1st at picking up gradual transitions that don't start from a flat baseline</td></tr>
+            <tr><td>The <strong>sign of the 2nd derivative changes</strong> (from positive to negative, or vice versa) at the onset and end of a step or ramp</td><td>This <strong>zero-crossing</strong> is a genuinely useful property for precisely <strong>locating edges</strong> — it's the entire basis of the LoG / Marr-Hildreth method (Topics 23–24)</td></tr>
+            <tr><td>Because the 2nd derivative has a transition from positive back to negative around a thin feature</td><td>It produces a <strong>double edge, one pixel thick, separated by zeros</strong> — worth remembering as a visual signature of 2nd-order edge detection</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="remember">
+        <span class="lab">Exam summary line</span>
+        <p>1st-order derivatives give <strong>thick</strong> edges and are <strong>less</strong> noise-sensitive; 2nd-order derivatives give <strong>thin/double</strong> edges, are <strong>far more</strong> noise-sensitive, but provide <strong>zero-crossings</strong> for precise edge location — exactly what the Laplacian (and later, LoG) exploits.</p>
+      </div>
+    </section>
+
+    <!-- T20 -->
+    <section id="t20">
+      <div class="eyebrow">Topic 20</div>
+      <h3>Laplacian Masks</h3>
+      <p>Four equivalent-family implementations, depending on which neighbours are included and the sign convention used:</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 260" role="img" aria-label="Four Laplacian mask variants: 4-neighbor and 8-neighbor, each in positive and negative center forms">
+            <g class="diag-mono" font-size="13" text-anchor="middle">
+              <text x="105" y="18" fill="#1F3BE8">(a) 4-neighbour</text>
+              <rect x="45" y="30" width="120" height="90" fill="#EDF0FF" stroke="#1F3BE8"/>
+              <line x1="85" y1="30" x2="85" y2="120" stroke="#C9D2FF"/><line x1="125" y1="30" x2="125" y2="120" stroke="#C9D2FF"/>
+              <line x1="45" y1="60" x2="165" y2="60" stroke="#C9D2FF"/><line x1="45" y1="90" x2="165" y2="90" stroke="#C9D2FF"/>
+              <text x="65" y="50" fill="#132a9c">0</text><text x="105" y="50" fill="#132a9c">1</text><text x="145" y="50" fill="#132a9c">0</text>
+              <text x="65" y="80" fill="#132a9c">1</text><text x="105" y="80" fill="#132a9c" font-weight="700">−4</text><text x="145" y="80" fill="#132a9c">1</text>
+              <text x="65" y="110" fill="#132a9c">0</text><text x="105" y="110" fill="#132a9c">1</text><text x="145" y="110" fill="#132a9c">0</text>
+
+              <text x="325" y="18" fill="#1F3BE8">(b) 8-neighbour (diagonals too)</text>
+              <rect x="265" y="30" width="120" height="90" fill="#EDF0FF" stroke="#1F3BE8"/>
+              <line x1="305" y1="30" x2="305" y2="120" stroke="#C9D2FF"/><line x1="345" y1="30" x2="345" y2="120" stroke="#C9D2FF"/>
+              <line x1="265" y1="60" x2="385" y2="60" stroke="#C9D2FF"/><line x1="265" y1="90" x2="385" y2="90" stroke="#C9D2FF"/>
+              <text x="285" y="50" fill="#132a9c">1</text><text x="325" y="50" fill="#132a9c">1</text><text x="365" y="50" fill="#132a9c">1</text>
+              <text x="285" y="80" fill="#132a9c">1</text><text x="325" y="80" fill="#132a9c" font-weight="700">−8</text><text x="365" y="80" fill="#132a9c">1</text>
+              <text x="285" y="110" fill="#132a9c">1</text><text x="325" y="110" fill="#132a9c">1</text><text x="365" y="110" fill="#132a9c">1</text>
+
+              <text x="105" y="155" fill="#E08A00">(c) sign-flipped of (a)</text>
+              <rect x="45" y="167" width="120" height="90" fill="#FFF6E6" stroke="#E08A00"/>
+              <line x1="85" y1="167" x2="85" y2="257" stroke="#F3D9A6"/><line x1="125" y1="167" x2="125" y2="257" stroke="#F3D9A6"/>
+              <line x1="45" y1="197" x2="165" y2="197" stroke="#F3D9A6"/><line x1="45" y1="227" x2="165" y2="227" stroke="#F3D9A6"/>
+              <text x="65" y="187" fill="#8a5200">0</text><text x="105" y="187" fill="#8a5200">−1</text><text x="145" y="187" fill="#8a5200">0</text>
+              <text x="65" y="217" fill="#8a5200">−1</text><text x="105" y="217" fill="#8a5200" font-weight="700">4</text><text x="145" y="217" fill="#8a5200">−1</text>
+              <text x="65" y="247" fill="#8a5200">0</text><text x="105" y="247" fill="#8a5200">−1</text><text x="145" y="247" fill="#8a5200">0</text>
+
+              <text x="325" y="155" fill="#E08A00">(d) sign-flipped of (b)</text>
+              <rect x="265" y="167" width="120" height="90" fill="#FFF6E6" stroke="#E08A00"/>
+              <line x1="305" y1="167" x2="305" y2="257" stroke="#F3D9A6"/><line x1="345" y1="167" x2="345" y2="257" stroke="#F3D9A6"/>
+              <line x1="265" y1="197" x2="385" y2="197" stroke="#F3D9A6"/><line x1="265" y1="227" x2="385" y2="227" stroke="#F3D9A6"/>
+              <text x="285" y="187" fill="#8a5200">−1</text><text x="325" y="187" fill="#8a5200">−1</text><text x="365" y="187" fill="#8a5200">−1</text>
+              <text x="285" y="217" fill="#8a5200">−1</text><text x="325" y="217" fill="#8a5200" font-weight="700">8</text><text x="365" y="217" fill="#8a5200">−1</text>
+              <text x="285" y="247" fill="#8a5200">−1</text><text x="325" y="247" fill="#8a5200">−1</text><text x="365" y="247" fill="#8a5200">−1</text>
+            </g>
+            <text x="510" y="140" class="diag-txt" font-size="12" fill="#6B7480" text-anchor="middle" style="max-width:120px">(b) includes diagonal neighbours → isotropic for 45° increments too</text>
+          </svg>
+        </div>
+        <figcaption>(a) and (c) are equivalent up to a sign flip — same for (b) and (d)</figcaption>
+      </figure>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Mask</th><th>Neighbours used</th><th>Note</th></tr></thead>
+          <tbody>
+            <tr><td>(a) centre <span class="k">−4</span></td><td>4 (edge) neighbours</td><td>the basic digital Laplacian</td></tr>
+            <tr><td>(b) centre <span class="k">−8</span></td><td>all 8 neighbours (incl. diagonals)</td><td>extension including diagonals — isotropic for 45° increments too</td></tr>
+            <tr><td>(c), (d)</td><td>same as (a), (b)</td><td>signs flipped (centre positive)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="warn">
+        <span class="lab">Sign matters</span>
+        <p>(a)/(c) — and (b)/(d) — yield equivalent results, but the <strong>sign difference must be kept in mind</strong> when combining (adding/subtracting) a Laplacian-filtered image with another image, e.g. for sharpening (Topic 22).</p>
+      </div>
+    </section>
+
+    <!-- T21 -->
+    <section id="t21">
+      <div class="eyebrow">Topic 21</div>
+      <h3>Effect of the Laplacian Operator</h3>
+      <p>As it is a derivative operator, the Laplacian:</p>
+      <ul>
+        <li><strong>highlights</strong> gray-level discontinuities in an image</li>
+        <li><strong>deemphasizes</strong> regions with slowly varying gray levels</li>
+      </ul>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 200" role="img" aria-label="An image and its raw Laplacian output, showing grey edge lines on a dark featureless background">
+            <text x="150" y="18" class="diag-mono" font-size="12" fill="#6B7480" text-anchor="middle">original image f(x,y)</text>
+            <rect x="30" y="30" width="240" height="140" fill="#c9c9c9"/>
+            <rect x="30" y="30" width="130" height="140" fill="#8a8a8a"/>
+            <rect x="90" y="60" width="30" height="60" fill="#e5e5e5"/>
+            <rect x="180" y="90" width="50" height="80" fill="#5a5a5a"/>
+
+            <path d="M290 100 h40" stroke="#14171C" stroke-width="1.8"/>
+            <polygon points="336,100 324,94 324,106" fill="#14171C"/>
+            <text x="310" y="88" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">∇²f</text>
+
+            <text x="480" y="18" class="diag-mono" font-size="12" fill="#E08A00" text-anchor="middle">raw Laplacian output</text>
+            <rect x="360" y="30" width="240" height="140" fill="#141414"/>
+            <line x1="490" y1="30" x2="490" y2="170" stroke="#9a9a9a" stroke-width="1.6"/>
+            <rect x="420" y="60" width="30" height="60" fill="none" stroke="#9a9a9a" stroke-width="1.6"/>
+            <rect x="510" y="90" width="50" height="80" fill="none" stroke="#9a9a9a" stroke-width="1.6"/>
+          </svg>
+        </div>
+        <figcaption>Grey (not bright white) edge lines on a dark, near-featureless background — this dimness is the visual signature the exam expects you to name</figcaption>
+      </figure>
+
+      <div class="remember">
+        <span class="lab">Signature visual effect</span>
+        <p>The Laplacian tends to produce images that have <strong>grey edge lines and other discontinuities, all superimposed on a dark, featureless background</strong>. This is why the raw Laplacian output is rarely used alone — it needs to be <strong>added back to the original image</strong> to be useful (Topic 22, Sharpening).</p>
+      </div>
+    </section>
+
+    <!-- T22 -->
+    <section id="t22">
+      <div class="eyebrow">Topic 22 · Use of Laplacian #1</div>
+      <h3>Sharpening with the Laplacian &amp; High-Boost Filtering</h3>
+      <p>Since the Laplacian is a derivative operator, adding/subtracting its response back onto the original image sharpens it (highlights the edges the Laplacian detected):</p>
+      <div class="formula">
+        <span class="cap">Laplacian sharpening</span>
+        $$ g(x,y) = f(x,y) + c\,\nabla^2 f(x,y) $$
+      </div>
+      <p>The sign of <span class="k">c</span> depends on which mask convention you used:</p>
+      <div class="twrap">
+        <table>
+          <thead><tr><th>If the mask's centre coefficient is…</th><th>Use</th></tr></thead>
+          <tbody>
+            <tr><td><strong>negative</strong> (e.g. −4 or −8, masks a/b)</td><td><span class="k">g = f − ∇²f</span></td></tr>
+            <tr><td><strong>positive</strong> (e.g. +4 or +8, masks c/d)</td><td><span class="k">g = f + ∇²f</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>Composite masks — sharpening in one convolution</h4>
+      <p>Instead of computing the Laplacian and adding it to <span class="k">f</span> in two steps, both are folded into a single "composite" mask:</p>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 170" role="img" aria-label="Two composite sharpening masks, one for 4-neighbor Laplacian and one for 8-neighbor">
+            <g class="diag-mono" font-size="13" text-anchor="middle">
+              <text x="105" y="18" fill="#1F3BE8">(a) 4-neighbour composite</text>
+              <rect x="45" y="30" width="120" height="90" fill="#EDF0FF" stroke="#1F3BE8"/>
+              <line x1="85" y1="30" x2="85" y2="120" stroke="#C9D2FF"/><line x1="125" y1="30" x2="125" y2="120" stroke="#C9D2FF"/>
+              <line x1="45" y1="60" x2="165" y2="60" stroke="#C9D2FF"/><line x1="45" y1="90" x2="165" y2="90" stroke="#C9D2FF"/>
+              <text x="65" y="50" fill="#132a9c">0</text><text x="105" y="50" fill="#132a9c">−1</text><text x="145" y="50" fill="#132a9c">0</text>
+              <text x="65" y="80" fill="#132a9c">−1</text><text x="105" y="80" fill="#132a9c" font-weight="700">5</text><text x="145" y="80" fill="#132a9c">−1</text>
+              <text x="65" y="110" fill="#132a9c">0</text><text x="105" y="110" fill="#132a9c">−1</text><text x="145" y="110" fill="#132a9c">0</text>
+
+              <text x="325" y="18" fill="#E08A00">(b) 8-neighbour composite</text>
+              <rect x="265" y="30" width="120" height="90" fill="#FFF6E6" stroke="#E08A00"/>
+              <line x1="305" y1="30" x2="305" y2="120" stroke="#F3D9A6"/><line x1="345" y1="30" x2="345" y2="120" stroke="#F3D9A6"/>
+              <line x1="265" y1="60" x2="385" y2="60" stroke="#F3D9A6"/><line x1="265" y1="90" x2="385" y2="90" stroke="#F3D9A6"/>
+              <text x="285" y="50" fill="#8a5200">−1</text><text x="325" y="50" fill="#8a5200">−1</text><text x="365" y="50" fill="#8a5200">−1</text>
+              <text x="285" y="80" fill="#8a5200">−1</text><text x="325" y="80" fill="#8a5200" font-weight="700">9</text><text x="365" y="80" fill="#8a5200">−1</text>
+              <text x="285" y="110" fill="#8a5200">−1</text><text x="325" y="110" fill="#8a5200">−1</text><text x="365" y="110" fill="#8a5200">−1</text>
+            </g>
+            <text x="500" y="75" class="diag-txt" font-size="12" fill="#6B7480" text-anchor="middle" style="max-width:120px">(b) is noticeably sharper than (a) on the same image</text>
+          </svg>
+        </div>
+        <figcaption>Coefficients sum to 1 in both → average brightness is preserved (recall the diagnostic rule from Topic 06)</figcaption>
+      </figure>
+      <div class="remember">
+        <span class="lab">Worked result</span>
+        <p>Filtering the same scanning-electron-microscope image with mask (a) vs mask (b): mask (b) (8-neighbour, centre 9) is <strong>visibly sharper</strong> than mask (a) (4-neighbour, centre 5) — including diagonals gives a stronger sharpening effect.</p>
+      </div>
+      <div class="tip">
+        <span class="lab">To simplify implementation</span>
+        <p>In practice, we can combine both operations — Laplacian filtering and adding back the original — into a <strong>single mask</strong>, which is exactly what the composite masks above do. This avoids computing an intermediate Laplacian image.</p>
+      </div>
+
+      <h4>High-Boost Filtering — an alternative sharpening technique</h4>
+      <p>High-boost filtering is the other named sharpening technique in the linear-filter family tree (Topic 01) — it sharpens while <strong>keeping</strong> the original low-frequency content, rather than losing it the way a pure Laplacian/derivative filter tends to.</p>
+      <div class="formula">
+        <span class="cap">High-boost from an unsharp mask</span>
+        $$ f_{hb} = A\cdot f(x,y) - f_{blur}(x,y) = (A-1)f(x,y) + \big[f(x,y)-f_{blur}(x,y)\big] $$
+      </div>
+      <p>Take the original image <span class="k">f</span>, subtract a <strong>blurred</strong> version of it (<span class="k">f_blur</span>, from any smoothing filter in Topics 07–10) to isolate the high-frequency edge detail, then add that detail back on top of an <strong>amplified copy</strong> of the original (amplification factor <span class="k">A ≥ 1</span>).</p>
+      <div class="twrap">
+        <table>
+          <thead><tr><th><span class="k">A</span></th><th>Effect</th></tr></thead>
+          <tbody>
+            <tr><td><span class="k">A = 1</span></td><td>ordinary sharpening (unsharp masking) — the plain edge detail only</td></tr>
+            <tr><td><span class="k">A &gt; 1</span></td><td>"high-boost" — original image is preserved and edges are emphasised on top of it, rather than replaced by them</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="remember">
+        <span class="lab">Why it matters — vs Laplacian sharpening</span>
+        <p>Recall from Topic 21: a pure Laplacian/derivative filter tends to produce a <strong>dark, featureless</strong> result (its coefficients sum to 0). <strong>High-boost fixes this</strong> by blending sharpened detail back with a scaled copy of the original, so the output still looks like a recognisable, brighter image — just crisper. The Laplacian composite masks in this topic (coefficient sum = 1) already solve the same problem in a different way — high-boost is a more tunable alternative, since <span class="k">A</span> lets you dial the sharpening strength continuously.</p>
+      </div>
+    </section>
+
+    <!-- T23 -->
+    <section id="t23">
+      <div class="eyebrow">Topic 23 · Use of Laplacian #2</div>
+      <h3>LoG &amp; the Marr-Hildreth Algorithm</h3>
+      <p>Marr and Hildreth proposed combining a <strong>Gaussian filter</strong> with the <strong>Laplacian</strong> for edge detection — smoothing (to fight noise, Topic 17) and second-derivative edge sensitivity (Topic 19) in a single operator: the <strong>Laplacian of Gaussian (LoG)</strong>.</p>
+
+      <div class="formula">
+        <span class="cap">Deriving the LoG</span>
+        $$ \nabla^2 G(x,y) = \frac{\partial^2 G}{\partial x^2}+\frac{\partial^2 G}{\partial y^2} = \left(\frac{x^2+y^2-2\sigma^2}{\sigma^4}\right)e^{-\frac{x^2+y^2}{2\sigma^2}} $$
+      </div>
+      <p>The Marr-Hildreth algorithm convolves this LoG kernel directly with the input image:</p>
+      <div class="formula">
+        <span class="cap">Applying LoG</span>
+        $$ g(x,y) = \big[\nabla^2 G(x,y)\big] * f(x,y) $$
+      </div>
+
+      <h4>The Marr-Hildreth algorithm, step by step</h4>
+      <ol>
+        <li>Filter the input image with an <span class="k">n×n</span> Gaussian lowpass kernel.</li>
+        <li>Compute the Laplacian of the result from Step 1 (or equivalently, convolve with the combined LoG kernel directly).</li>
+        <li>Find the <strong>zero crossings</strong> of the image from Step 2 — these locations are the edges.</li>
+      </ol>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 220" role="img" aria-label="The Mexican hat shape of the negative LoG, its 1D cross-section with zero crossings, and the discrete 5x5 kernel">
+            <text x="130" y="18" class="diag-mono" font-size="12" fill="#1F3BE8" text-anchor="middle">"Mexican hat" (−LoG), 1-D cross-section</text>
+            <line x1="20" y1="120" x2="260" y2="120" stroke="#DBE0E7"/>
+            <path d="M20 118 C 60 118, 80 60, 100 60 C 110 60, 120 160, 140 160 C 160 160, 170 60, 180 60 C 200 60, 220 118, 260 118" fill="none" stroke="#1F3BE8" stroke-width="2.2"/>
+            <circle cx="115" cy="130" r="3.5" fill="#C0492B"/>
+            <circle cx="165" cy="130" r="3.5" fill="#C0492B"/>
+            <text x="115" y="150" class="diag-mono" font-size="9.5" fill="#C0492B" text-anchor="middle">zero crossing</text>
+            <text x="165" y="150" class="diag-mono" font-size="9.5" fill="#C0492B" text-anchor="middle">zero crossing</text>
+
+            <text x="480" y="18" class="diag-mono" font-size="12" fill="#E08A00" text-anchor="middle">discrete 5×5 LoG kernel approximation</text>
+            <g class="diag-mono" font-size="12" fill="#8a5200" text-anchor="middle">
+              <rect x="360" y="35" width="240" height="140" fill="#FFF6E6" stroke="#E08A00" stroke-width="1.5"/>
+              <line x1="408" y1="35" x2="408" y2="175" stroke="#F3D9A6"/><line x1="456" y1="35" x2="456" y2="175" stroke="#F3D9A6"/>
+              <line x1="504" y1="35" x2="504" y2="175" stroke="#F3D9A6"/><line x1="552" y1="35" x2="552" y2="175" stroke="#F3D9A6"/>
+              <line x1="360" y1="63" x2="600" y2="63" stroke="#F3D9A6"/><line x1="360" y1="91" x2="600" y2="91" stroke="#F3D9A6"/>
+              <line x1="360" y1="119" x2="600" y2="119" stroke="#F3D9A6"/><line x1="360" y1="147" x2="600" y2="147" stroke="#F3D9A6"/>
+              <g font-size="11">
+                <text x="384" y="53">0</text><text x="432" y="53">0</text><text x="480" y="53">−1</text><text x="528" y="53">0</text><text x="576" y="53">0</text>
+                <text x="384" y="81">0</text><text x="432" y="81">−1</text><text x="480" y="81">−2</text><text x="528" y="81">−1</text><text x="576" y="81">0</text>
+                <text x="384" y="109" font-weight="700">−1</text><text x="432" y="109" font-weight="700">−2</text><text x="480" y="109" font-weight="700">16</text><text x="528" y="109" font-weight="700">−2</text><text x="576" y="109" font-weight="700">−1</text>
+                <text x="384" y="137">0</text><text x="432" y="137">−1</text><text x="480" y="137">−2</text><text x="528" y="137">−1</text><text x="576" y="137">0</text>
+                <text x="384" y="165">0</text><text x="432" y="165">0</text><text x="480" y="165">−1</text><text x="528" y="165">0</text><text x="576" y="165">0</text>
+              </g>
+            </g>
+          </svg>
+        </div>
+        <figcaption>The "Mexican hat" cross-section — negative side-lobes give the zero crossings used to locate edges</figcaption>
+      </figure>
+
+      <div class="remember">
+        <span class="lab">Why it's called that</span>
+        <p>The 3-D plot of <strong>−LoG</strong> looks like a sombrero / Mexican hat — a tall central peak surrounded by a shallow negative ring. In practice, the <strong>negative</strong> of this kernel is what's actually convolved with the image.</p>
+      </div>
+    </section>
+
+    <!-- T24 -->
+    <section id="t24">
+      <div class="eyebrow">Topic 24</div>
+      <h3>Finding Zero Crossings</h3>
+      <p>The final step of Marr-Hildreth: locate where the LoG-filtered image <span class="k">g(x,y)</span> crosses zero — these mark the edges.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 200" role="img" aria-label="3x3 neighbourhood around pixel p, checking four opposing pairs for a sign change">
+            <g class="diag-mono" font-size="13" fill="#14171C" text-anchor="middle">
+              <rect x="230" y="20" width="180" height="120" fill="#fff" stroke="#DBE0E7"/>
+              <line x1="290" y1="20" x2="290" y2="140" stroke="#E9EDF2"/><line x1="350" y1="20" x2="350" y2="140" stroke="#E9EDF2"/>
+              <line x1="230" y1="60" x2="410" y2="60" stroke="#E9EDF2"/><line x1="230" y1="100" x2="410" y2="100" stroke="#E9EDF2"/>
+              <text x="260" y="45" fill="#1F3BE8">+2</text><text x="320" y="45" fill="#C0492B">−1</text><text x="380" y="45" fill="#1F3BE8">+3</text>
+              <text x="260" y="85" fill="#1F3BE8">+1</text><text x="320" y="85" font-weight="700">p</text><text x="380" y="85" fill="#C0492B">−2</text>
+              <text x="260" y="125" fill="#C0492B">−1</text><text x="320" y="125" fill="#1F3BE8">+1</text><text x="380" y="125" fill="#1F3BE8">+2</text>
+            </g>
+            <text x="320" y="165" class="diag-txt" font-size="12" fill="#6B7480" text-anchor="middle">left/right, up/down and both diagonals — 4 opposing pairs checked around p</text>
+          </svg>
+        </div>
+        <figcaption>Any opposing pair with a sign change (e.g. left=+1, right=−2) flags p as a zero-crossing pixel</figcaption>
+      </figure>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Neighbourhood</strong></td><td>use a <span class="k">3×3</span> window centred at pixel <span class="k">p</span></td></tr>
+            <tr><td><strong>Zero-crossing condition</strong></td><td>the signs of <strong>at least two opposing neighbours</strong> must differ — 4 pairs to test: left/right, up/down, and the two diagonals</td></tr>
+            <tr><td><strong>With a threshold</strong> (common)</td><td>signs must differ <strong>AND</strong> the absolute difference between the opposing values must <strong>exceed the threshold</strong> before <span class="k">p</span> counts as a zero-crossing pixel</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tip">
+        <span class="lab">Why threshold at all?</span>
+        <p>Without a magnitude threshold, tiny sign flips caused by residual noise would be flagged as edges. Requiring the difference to exceed a threshold keeps only <strong>significant</strong> zero crossings — i.e. real edges.</p>
+      </div>
+    </section>
+
+    <footer>
+      <p class="mono">// end of module 03 — <a class="inl" href="index.html">back to all modules</a></p>
+      <p>Built for revision from the course deck (Dr. Harkeerat Kaur). References: Gonzalez &amp; Woods, <em>Digital Image Processing</em>; Forsyth &amp; Ponce, <em>Computer Vision: A Modern Approach</em>.</p>
+    </footer>
+
+  </main>
+</div>
+
+<script src="nav.js"></script>
+</body>
+</html>
