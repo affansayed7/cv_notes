@@ -65,6 +65,10 @@
       <a href="#t23"><span class="num">23</span> LoG &amp; the Marr-Hildreth Algorithm</a>
       <a href="#t24"><span class="num">24</span> Finding Zero Crossings</a>
     </nav>
+    <div class="nav-label">Revision</div>
+    <nav class="nav">
+      <a href="#glossary"><span class="num">★</span> All Definitions — Cram Sheet</a>
+    </nav>
   </aside>
 
   <main>
@@ -83,6 +87,7 @@
     <section id="t1">
       <div class="eyebrow">Topic 01</div>
       <h3>Spatial Frequencies &amp; the Filter Family Tree</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>Spatial frequency is the number of changes in intensity value per unit distance for any particular part of an image. Spatial filtering is an image-processing technique in which the value of every output pixel is obtained by applying an operation to the values of the pixels in the neighbourhood of the corresponding input pixel. Spatial filters are broadly classified into Linear Filters and Non-linear Filters.</p></div>
       <p><strong>Spatial frequency</strong> = the number of changes in intensity value per unit distance for any particular part of the image. An image is composed of:</p>
       <ul>
         <li><strong>Low-frequency details</strong> — basic details, few changes over a given area</li>
@@ -161,6 +166,7 @@
     <section id="t2">
       <div class="eyebrow">Topic 02</div>
       <h3>Linear Spatial Filtering — How It Works</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>Linear spatial filtering is the process of moving a filter mask (also called a kernel, template, or window) from point to point across an image, and at each point (x,y) computing the response as the sum of products of the filter coefficients and the corresponding image pixels in the area spanned by the mask.</p></div>
       <p>The process consists simply of <strong>moving the filter mask from point to point</strong> in an image. At each point <span class="k">(x,y)</span>, the response of the filter is calculated using a predefined relationship. The response is a <strong>sum of products</strong> of the filter coefficients and the corresponding image pixels in the area spanned by the mask.</p>
 
       <figure>
@@ -203,6 +209,7 @@
     <section id="t3">
       <div class="eyebrow">Topic 03</div>
       <h3>The General Linear Filtering Formula &amp; Border Effects</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>For an image f of size M×N filtered by a mask of size m×n (with m=2a+1, n=2b+1), the general linear filtering equation is g(x,y) = Σ w(s,t) f(x+s, y+t) summed over s=−a..a and t=−b..b, applied for every pixel x=0,1,…,M−1 and y=0,1,…,N−1 to produce the complete filtered image.</p></div>
       <div class="formula">
         <span class="cap">General linear filtering, image f (M×N), mask (m×n)</span>
         $$ g(x,y)=\sum_{s=-a}^{a}\sum_{t=-b}^{b} w(s,t)\,f(x+s,y+t), \qquad a=\frac{m-1}{2},\ b=\frac{n-1}{2} $$
@@ -225,6 +232,7 @@
     <section id="t4">
       <div class="eyebrow">Topic 04</div>
       <h3>Convolution: Zero-Padding vs No Padding</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>Zero-padding extends an image's border with pixels of value zero before filtering, so the mask always has valid neighbours to read even at the boundary; the output image is then the same size as the input. Convolution without padding ("valid" convolution) restricts the mask to positions that lie entirely within the original image, producing an output image smaller than the input.</p></div>
       <p>When a mask hangs off the image border, this determines the <strong>output image size</strong>.</p>
 
       <figure>
@@ -307,6 +315,7 @@
     <section id="t5">
       <div class="eyebrow">Topic 05</div>
       <h3>Correlation vs Convolution</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>Correlation is the process of moving a filter mask over an image and computing the sum of products at each location. Convolution is mechanically identical to correlation except that the filter mask is first rotated by 180° before being moved across the image.</p></div>
       <p><strong>Correlation</strong> is the process of moving a filter mask over the image and computing the sum of products at each location. The mechanics of <strong>convolution</strong> are the same, except that the filter is first <strong>rotated by 180°</strong>.</p>
 
       <div class="formula">
@@ -357,6 +366,7 @@
     <section id="t6">
       <div class="eyebrow">Topic 06</div>
       <h3>Generating a Spatial Filter Mask</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>A spatial filter mask can be designed for a specific purpose (e.g. highlighting a particular feature or row) by choosing coefficients such that convolving the mask with the image produces the desired emphasis. The overall brightening, darkening, or sharpening effect of any mask can be predicted in advance from the sum and sign pattern of its coefficients, without running the convolution.</p></div>
       <div class="card">
         <h4 style="margin-top:0">Worked example</h4>
         <p>Consider the image: <span class="k">[[0,1,0],[1,1,1],[0,0,1]]</span>. Suppose the <strong>second row</strong> of the image is to be highlighted — what mask is needed?</p>
@@ -384,6 +394,7 @@
     <section id="t7">
       <div class="eyebrow">Topic 07 · Smoothing Filters</div>
       <h3>Smoothing Spatial Filters — Why &amp; How</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>Smoothing filters, also called averaging filters or lowpass filters, are used for blurring and for noise reduction. The output of a smoothing linear spatial filter is simply the average of the pixel values contained in the neighbourhood spanned by the filter mask.</p></div>
       <p>Used for <strong>blurring</strong> and <strong>noise reduction</strong>. Blurring is used in preprocessing steps such as:</p>
       <ul>
         <li>Removal of small details from an image prior to large-object extraction</li>
@@ -443,6 +454,7 @@
     <section id="t8">
       <div class="eyebrow">Topic 08</div>
       <h3>The Box Filter — Step-by-Step Convolution</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>The box filter is a smoothing filter in which every coefficient of the mask is equal (typically 1), so that the output at each pixel is the unweighted arithmetic mean of all pixel values in the neighbourhood spanned by the mask.</p></div>
       <p>The classic teaching demo: slide a 3×3 all-ones box-filter kernel across a synthetic image (a bright block of value 90 on a background of 0) and watch the output build up, pixel by pixel.</p>
 
       <figure>
@@ -501,6 +513,7 @@
     <section id="t9">
       <div class="eyebrow">Topic 09</div>
       <h3>Weighted Average Filter &amp; Worked Examples</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>A weighted average filter is a smoothing filter in which the centre coefficient is given the highest weight, and the weight of the surrounding coefficients decreases as a function of increasing distance from the centre — an attempt to reduce the amount of blurring introduced during smoothing compared to a plain box filter.</p></div>
       <p>The basic strategy: weight the <strong>centre point highest</strong>, then reduce the coefficients as a function of increasing distance from the origin. This is an attempt to <strong>reduce blurring</strong> in the smoothing process compared to a plain box filter.</p>
 
       <h4>Example 1 — mask size vs blur amount</h4>
@@ -531,6 +544,7 @@
     <section id="t10">
       <div class="eyebrow">Topic 10</div>
       <h3>Gaussian Filters</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>A Gaussian filter is a smoothing filter whose coefficients are samples of a two-dimensional Gaussian (bell-shaped) function, G(x,y) = (1/2πσ²)·e^(−(x²+y²)/2σ²), where σ (the standard deviation) controls the amount of smoothing — a larger σ produces a wider kernel and a stronger blurring effect.</p></div>
       <p>A smoothing filter whose weights follow a <strong>Gaussian (bell curve)</strong> function of distance from the centre, rather than a flat box or simple linear weighting.</p>
       <div class="formula">
         <span class="cap">1-D and 2-D Gaussian</span>
@@ -590,6 +604,7 @@
     <section id="t11">
       <div class="eyebrow">Topic 11</div>
       <h3>Order-Statistics &amp; Median Filters</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>Order-statistics filters are non-linear spatial filters whose response is based on ordering (ranking) the pixels contained in the neighbourhood encompassed by the filter, and then replacing the value of the centre pixel with the value determined by that ranking. The median filter — the most popular order-statistics filter — replaces a pixel's value with the median (50th percentile) of the gray levels in its neighbourhood.</p></div>
       <p><strong>Non-linear</strong> spatial filters. The response is based on <strong>ordering (ranking)</strong> the pixels in the mask's neighbourhood, then replacing the centre pixel with a value chosen from that ranking.</p>
 
       <div class="twrap">
@@ -652,6 +667,7 @@
     <section id="t12">
       <div class="eyebrow">Topic 12 · Sharpening &amp; Edge Detection</div>
       <h3>Blurring vs Sharpening</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>Sharpening is the process used to highlight fine detail in an image, or to enhance detail that has been blurred either in error or as a natural effect of a particular method of image acquisition. Since blurring in the spatial domain is achieved by pixel averaging (analogous to integration), sharpening is achieved by spatial differentiation.</p></div>
       <p><strong>Sharpening</strong> highlights fine detail in an image, or enhances detail that has been blurred (either in error or as a natural effect of a particular image-acquisition method).</p>
       <div class="formula">
         <span class="cap">The logic chain</span>
@@ -697,6 +713,7 @@
     <section id="t13">
       <div class="eyebrow">Topic 13</div>
       <h3>What Is an Edge? Edge Profile Types</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>An edge is a set of connected pixels that lie on the boundary between two regions — defined as a place of rapid, discontinuous change in the image intensity function.</p></div>
       <p>An <strong>edge</strong> = a discontinuity of intensities in the image — a place of <strong>rapid change</strong> in the image intensity function.</p>
 
       <figure>
@@ -754,6 +771,7 @@
     <section id="t14">
       <div class="eyebrow">Topic 14</div>
       <h3>Derivative Operator &amp; First-Order Image Derivatives</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>A derivative operator is one whose response is proportional to the degree of intensity discontinuity in the image at the point where it is applied. Consequently, image differentiation enhances edges and other discontinuities (including noise) and deemphasizes areas of slowly varying gray-level values.</p></div>
       <p>The strength of the response of a derivative operator is proportional to the degree of intensity discontinuity of the image at the point where the operator is applied. Thus, image differentiation:</p>
       <ul>
         <li><strong>enhances</strong> edges and other discontinuities (noise)</li>
@@ -794,6 +812,7 @@
     <section id="t15">
       <div class="eyebrow">Topic 15</div>
       <h3>Edge Detection via the Gradient</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>The gradient of an image f at coordinates (x,y) is the two-dimensional column vector ∇f = [gₓ, g_y]ᵀ = [∂f/∂x, ∂f/∂y]ᵀ. Its magnitude M(x,y) gives the rate of change of intensity at (x,y) — the strength of an edge — and its direction α(x,y) gives the direction of the maximum rate of change, which is perpendicular to the edge itself.</p></div>
       <p>Computation of the gradient of an image is based on obtaining the partial derivatives <span class="k">gₓ</span> and <span class="k">g_y</span> at <strong>every</strong> pixel location. It is always possible to implement these derivatives in digital form in different ways.</p>
 
       <div class="formula">
@@ -854,6 +873,7 @@
     <section id="t16">
       <div class="eyebrow">Topic 16</div>
       <h3>Gradient Masks: Roberts, Prewitt, Sobel</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>Gradient masks — the Roberts, Prewitt, and Sobel operators — are convolution kernels used to digitally approximate the partial derivatives gₓ and g_y required to compute the image gradient at every pixel.</p></div>
       <p>Three classic ways to implement <span class="k">gₓ, g_y</span> as convolution masks — each a different trade-off of simplicity vs noise robustness.</p>
 
       <h4>Roberts Cross-Gradient (2×2, diagonal)</h4>
@@ -958,6 +978,7 @@
     <section id="t17">
       <div class="eyebrow">Topic 17</div>
       <h3>Effects of Noise &amp; Why We Smooth First</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>Because derivative (difference) filters compute differences between neighbouring pixel values, they respond strongly to noise, since a noisy pixel by definition looks very different from its neighbours. The standard solution is to smooth the image (e.g. with a Gaussian filter) before applying any derivative operator.</p></div>
       <p><strong>Difference (derivative) filters respond strongly to noise.</strong> Image noise makes pixels look very different from their neighbours — exactly what a derivative is designed to detect. The larger the noise, the stronger the (spurious) response. Consider a single row or column of the image: plotting intensity as a function of position gives a signal — with even a little noise added, it becomes hard to tell <strong>where the true edge is</strong> just by looking at the raw derivative.</p>
 
       <figure>
@@ -988,6 +1009,7 @@
     <section id="t18">
       <div class="eyebrow">Topic 18</div>
       <h3>Sobel: Smoothed vs Unsmoothed</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>Smoothing an image before applying the Sobel operator suppresses noise-induced spurious gradients, so that after thresholding, only genuine, high-contrast edges remain in the output edge map.</p></div>
       <p>Applying Sobel directly to a raw (unsmoothed) image produces edges everywhere noise happens to spike — a cluttered, unreliable edge map. Applying a smoothing step <strong>first</strong>, then Sobel, gives:</p>
 
       <figure>
@@ -1038,6 +1060,7 @@
     <section id="t19">
       <div class="eyebrow">Topic 19</div>
       <h3>Second-Order Derivatives &amp; the Laplacian</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>The Laplacian of a two-variable function f(x,y) is defined as ∇²f = ∂²f/∂x² + ∂²f/∂y². It is a linear operator, and it is the simplest isotropic derivative operator — meaning its response is independent of the direction of the discontinuities in the image to which the filter is applied.</p></div>
       <p><strong>Aim:</strong> define a discrete second-order derivative and build a filter mask from it. The filter should be <strong>isotropic</strong>: its response is independent of the <strong>direction</strong> of discontinuities in the image (it enhances detail equally in every direction). Isotropic filters are <strong>rotation invariant</strong> — rotating the image and then applying the filter gives the same result as applying the filter first and then rotating the result.</p>
 
       <div class="formula">
@@ -1094,6 +1117,7 @@
     <section id="t20">
       <div class="eyebrow">Topic 20</div>
       <h3>Laplacian Masks</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>A Laplacian mask is a filter mask that implements the digital Laplacian operator. Standard 3×3 implementations exist for 4-neighbour connectivity (centre coefficient −4) and 8-neighbour connectivity (centre coefficient −8, which also includes the diagonal terms and gives isotropic results for 45° increments as well).</p></div>
       <p>Four equivalent-family implementations, depending on which neighbours are included and the sign convention used:</p>
 
       <figure>
@@ -1158,6 +1182,7 @@
     <section id="t21">
       <div class="eyebrow">Topic 21</div>
       <h3>Effect of the Laplacian Operator</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>As it is a derivative operator, the Laplacian highlights gray-level discontinuities in an image and deemphasizes regions of slowly varying gray levels — causing it to produce images with grey edge lines and other discontinuities, all superimposed on a dark, featureless background.</p></div>
       <p>As it is a derivative operator, the Laplacian:</p>
       <ul>
         <li><strong>highlights</strong> gray-level discontinuities in an image</li>
@@ -1197,6 +1222,7 @@
     <section id="t22">
       <div class="eyebrow">Topic 22 · Use of Laplacian #1</div>
       <h3>Sharpening with the Laplacian &amp; High-Boost Filtering</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>Laplacian sharpening is accomplished by adding (or subtracting) a Laplacian-filtered image to (or from) the original image, according to g(x,y) = f(x,y) + c∇²f(x,y), so as to restore the gray-level tonality lost through differentiation while retaining the Laplacian's edge-enhancing effect.</p></div>
       <p>Since the Laplacian is a derivative operator, adding/subtracting its response back onto the original image sharpens it (highlights the edges the Laplacian detected):</p>
       <div class="formula">
         <span class="cap">Laplacian sharpening</span>
@@ -1275,6 +1301,7 @@
     <section id="t23">
       <div class="eyebrow">Topic 23 · Use of Laplacian #2</div>
       <h3>LoG &amp; the Marr-Hildreth Algorithm</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>The Marr-Hildreth edge detector combines Gaussian smoothing with the Laplacian operator into a single kernel called the Laplacian of Gaussian (LoG). Edges are located by finding the zero crossings of the image obtained by convolving the LoG kernel with the input image.</p></div>
       <p>Marr and Hildreth proposed combining a <strong>Gaussian filter</strong> with the <strong>Laplacian</strong> for edge detection — smoothing (to fight noise, Topic 17) and second-derivative edge sensitivity (Topic 19) in a single operator: the <strong>Laplacian of Gaussian (LoG)</strong>.</p>
 
       <div class="formula">
@@ -1335,6 +1362,7 @@
     <section id="t24">
       <div class="eyebrow">Topic 24</div>
       <h3>Finding Zero Crossings</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span><p>A zero crossing is said to occur at a pixel p when the signs of at least two of its opposing neighbouring pixels (within a 3×3 neighbourhood centred at p) differ. When a threshold is used, the absolute numerical difference between the opposing pixels must also exceed the threshold before p is classified as a zero-crossing (edge) pixel.</p></div>
       <p>The final step of Marr-Hildreth: locate where the LoG-filtered image <span class="k">g(x,y)</span> crosses zero — these mark the edges.</p>
 
       <figure>
@@ -1368,6 +1396,108 @@
         <span class="lab">Why threshold at all?</span>
         <p>Without a magnitude threshold, tiny sign flips caused by residual noise would be flagged as edges. Requiring the difference to exceed a threshold keeps only <strong>significant</strong> zero crossings — i.e. real edges.</p>
       </div>
+    </section>
+
+    <section id="glossary">
+      <div class="eyebrow">Cram Sheet</div>
+      <h3>All 24 Definitions, In One Place</h3>
+      <p>Every "Definition — memorise this" box from the topics above, gathered here for a final memorization pass before the exam.</p>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">01. Spatial Frequencies & the Filter Family Tree</h4>
+          <p style="margin:0;font-size:14px">Spatial frequency is the number of changes in intensity value per unit distance for any particular part of an image. Spatial filtering is an image-processing technique in which the value of every output pixel is obtained by applying an operation to the values of the pixels in the neighbourhood of the corresponding input pixel. Spatial filters are broadly classified into Linear Filters and Non-linear Filters.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">02. Linear Spatial Filtering — How It Works</h4>
+          <p style="margin:0;font-size:14px">Linear spatial filtering is the process of moving a filter mask (also called a kernel, template, or window) from point to point across an image, and at each point (x,y) computing the response as the sum of products of the filter coefficients and the corresponding image pixels in the area spanned by the mask.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">03. The General Linear Filtering Formula & Border Effects</h4>
+          <p style="margin:0;font-size:14px">For an image f of size M×N filtered by a mask of size m×n (with m=2a+1, n=2b+1), the general linear filtering equation is g(x,y) = Σ w(s,t) f(x+s, y+t) summed over s=−a..a and t=−b..b, applied for every pixel x=0,1,…,M−1 and y=0,1,…,N−1 to produce the complete filtered image.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">04. Convolution: Zero-Padding vs No Padding</h4>
+          <p style="margin:0;font-size:14px">Zero-padding extends an image's border with pixels of value zero before filtering, so the mask always has valid neighbours to read even at the boundary; the output image is then the same size as the input. Convolution without padding ("valid" convolution) restricts the mask to positions that lie entirely within the original image, producing an output image smaller than the input.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">05. Correlation vs Convolution</h4>
+          <p style="margin:0;font-size:14px">Correlation is the process of moving a filter mask over an image and computing the sum of products at each location. Convolution is mechanically identical to correlation except that the filter mask is first rotated by 180° before being moved across the image.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">06. Generating a Spatial Filter Mask</h4>
+          <p style="margin:0;font-size:14px">A spatial filter mask can be designed for a specific purpose (e.g. highlighting a particular feature or row) by choosing coefficients such that convolving the mask with the image produces the desired emphasis. The overall brightening, darkening, or sharpening effect of any mask can be predicted in advance from the sum and sign pattern of its coefficients, without running the convolution.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">07. Smoothing Spatial Filters — Why & How</h4>
+          <p style="margin:0;font-size:14px">Smoothing filters, also called averaging filters or lowpass filters, are used for blurring and for noise reduction. The output of a smoothing linear spatial filter is simply the average of the pixel values contained in the neighbourhood spanned by the filter mask.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">08. The Box Filter — Step-by-Step Convolution</h4>
+          <p style="margin:0;font-size:14px">The box filter is a smoothing filter in which every coefficient of the mask is equal (typically 1), so that the output at each pixel is the unweighted arithmetic mean of all pixel values in the neighbourhood spanned by the mask.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">09. Weighted Average Filter & Worked Examples</h4>
+          <p style="margin:0;font-size:14px">A weighted average filter is a smoothing filter in which the centre coefficient is given the highest weight, and the weight of the surrounding coefficients decreases as a function of increasing distance from the centre — an attempt to reduce the amount of blurring introduced during smoothing compared to a plain box filter.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">10. Gaussian Filters</h4>
+          <p style="margin:0;font-size:14px">A Gaussian filter is a smoothing filter whose coefficients are samples of a two-dimensional Gaussian (bell-shaped) function, G(x,y) = (1/2πσ²)·e^(−(x²+y²)/2σ²), where σ (the standard deviation) controls the amount of smoothing — a larger σ produces a wider kernel and a stronger blurring effect.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">11. Order-Statistics & Median Filters</h4>
+          <p style="margin:0;font-size:14px">Order-statistics filters are non-linear spatial filters whose response is based on ordering (ranking) the pixels contained in the neighbourhood encompassed by the filter, and then replacing the value of the centre pixel with the value determined by that ranking. The median filter — the most popular order-statistics filter — replaces a pixel's value with the median (50th percentile) of the gray levels in its neighbourhood.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">12. Blurring vs Sharpening</h4>
+          <p style="margin:0;font-size:14px">Sharpening is the process used to highlight fine detail in an image, or to enhance detail that has been blurred either in error or as a natural effect of a particular method of image acquisition. Since blurring in the spatial domain is achieved by pixel averaging (analogous to integration), sharpening is achieved by spatial differentiation.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">13. What Is an Edge? Edge Profile Types</h4>
+          <p style="margin:0;font-size:14px">An edge is a set of connected pixels that lie on the boundary between two regions — defined as a place of rapid, discontinuous change in the image intensity function.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">14. Derivative Operator & First-Order Image Derivatives</h4>
+          <p style="margin:0;font-size:14px">A derivative operator is one whose response is proportional to the degree of intensity discontinuity in the image at the point where it is applied. Consequently, image differentiation enhances edges and other discontinuities (including noise) and deemphasizes areas of slowly varying gray-level values.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">15. Edge Detection via the Gradient</h4>
+          <p style="margin:0;font-size:14px">The gradient of an image f at coordinates (x,y) is the two-dimensional column vector ∇f = [gₓ, g_y]ᵀ = [∂f/∂x, ∂f/∂y]ᵀ. Its magnitude M(x,y) gives the rate of change of intensity at (x,y) — the strength of an edge — and its direction α(x,y) gives the direction of the maximum rate of change, which is perpendicular to the edge itself.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">16. Gradient Masks: Roberts, Prewitt, Sobel</h4>
+          <p style="margin:0;font-size:14px">Gradient masks — the Roberts, Prewitt, and Sobel operators — are convolution kernels used to digitally approximate the partial derivatives gₓ and g_y required to compute the image gradient at every pixel.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">17. Effects of Noise & Why We Smooth First</h4>
+          <p style="margin:0;font-size:14px">Because derivative (difference) filters compute differences between neighbouring pixel values, they respond strongly to noise, since a noisy pixel by definition looks very different from its neighbours. The standard solution is to smooth the image (e.g. with a Gaussian filter) before applying any derivative operator.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">18. Sobel: Smoothed vs Unsmoothed</h4>
+          <p style="margin:0;font-size:14px">Smoothing an image before applying the Sobel operator suppresses noise-induced spurious gradients, so that after thresholding, only genuine, high-contrast edges remain in the output edge map.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">19. Second-Order Derivatives & the Laplacian</h4>
+          <p style="margin:0;font-size:14px">The Laplacian of a two-variable function f(x,y) is defined as ∇²f = ∂²f/∂x² + ∂²f/∂y². It is a linear operator, and it is the simplest isotropic derivative operator — meaning its response is independent of the direction of the discontinuities in the image to which the filter is applied.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">20. Laplacian Masks</h4>
+          <p style="margin:0;font-size:14px">A Laplacian mask is a filter mask that implements the digital Laplacian operator. Standard 3×3 implementations exist for 4-neighbour connectivity (centre coefficient −4) and 8-neighbour connectivity (centre coefficient −8, which also includes the diagonal terms and gives isotropic results for 45° increments as well).</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">21. Effect of the Laplacian Operator</h4>
+          <p style="margin:0;font-size:14px">As it is a derivative operator, the Laplacian highlights gray-level discontinuities in an image and deemphasizes regions of slowly varying gray levels — causing it to produce images with grey edge lines and other discontinuities, all superimposed on a dark, featureless background.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">22. Sharpening with the Laplacian & High-Boost Filtering</h4>
+          <p style="margin:0;font-size:14px">Laplacian sharpening is accomplished by adding (or subtracting) a Laplacian-filtered image to (or from) the original image, according to g(x,y) = f(x,y) + c∇²f(x,y), so as to restore the gray-level tonality lost through differentiation while retaining the Laplacian's edge-enhancing effect.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">23. LoG & the Marr-Hildreth Algorithm</h4>
+          <p style="margin:0;font-size:14px">The Marr-Hildreth edge detector combines Gaussian smoothing with the Laplacian operator into a single kernel called the Laplacian of Gaussian (LoG). Edges are located by finding the zero crossings of the image obtained by convolving the LoG kernel with the input image.</p>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h4 style="margin:0 0 6px 0;font-size:15px">24. Finding Zero Crossings</h4>
+          <p style="margin:0;font-size:14px">A zero crossing is said to occur at a pixel p when the signs of at least two of its opposing neighbouring pixels (within a 3×3 neighbourhood centred at p) differ. When a threshold is used, the absolute numerical difference between the opposing pixels must also exceed the threshold before p is classified as a zero-crossing (edge) pixel.</p>
+        </div>
     </section>
 
     <footer>
