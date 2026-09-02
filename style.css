@@ -95,6 +95,17 @@ code,.mono{font-family:'JetBrains Mono',monospace}
 .remember p,.tip p,.warn p{margin:0;color:var(--ink)}
 .remember p+p,.tip p+p,.warn p+p{margin-top:8px}
 
+.definition{
+  border-radius:12px;padding:18px 20px;margin:16px 0 20px;
+  background:#F4F1FF;border:1.5px solid #D6CCFA;
+}
+.definition .lab{
+  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;font-weight:700;color:#6D3FD1;display:block;margin-bottom:7px;
+}
+.definition p{margin:0;color:var(--ink);font-size:15px;line-height:1.6;font-weight:500}
+.definition p+p{margin-top:8px}
+
 .twrap{overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
 table{border-collapse:collapse;width:100%;font-size:14px;background:var(--paper);min-width:460px}
 th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line-soft);vertical-align:top}
