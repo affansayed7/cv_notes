@@ -501,55 +501,191 @@
       <div class="eyebrow">Topic 11 · Global Thresholding</div>
       <h3>Otsu's Method</h3>
       <div class="definition"><span class="lab">Definition — memorise this</span>
-        <p>Otsu's method is an optimal global thresholding technique that selects the threshold k which maximizes the between-class variance σ_B²(k) of the two pixel classes (below and above k). It is optimal in the sense of maximizing the separability of the resulting classes, and is based entirely on computations performed on the image histogram.</p>
+        <p>Otsu's method is an automatic global thresholding technique that determines an optimal threshold by maximizing the between-class variance of the background and foreground pixel classes. It is optimal in the sense of maximizing class separability, and is computed entirely from the image histogram.</p>
       </div>
 
-      <p>Let the components of the normalized histogram be <span class="k">pᵢ = nᵢ/MN</span>, for <span class="k">i = 0,1,…,L−1</span>, where <span class="k">nᵢ</span> = number of pixels of intensity <span class="k">i</span> and <span class="k">MN</span> = total pixels. Choose a threshold <span class="k">k</span> that divides pixels into two classes: <span class="k">C₁</span> (levels <span class="k">[0,k]</span>) and <span class="k">C₂</span> (levels <span class="k">[k+1, L−1]</span>).</p>
+      <p>Otsu's method converts a grayscale image into a binary image by automatically choosing a threshold <span class="k">T</span>. Suppose dark pixels are <strong>background</strong> and bright pixels are the <strong>object/foreground</strong>; we want:</p>
+      <div class="formula">
+        <span class="cap">Thresholding rule</span>
+        $$ g(x,y)=\begin{cases} 0, & f(x,y) < T\\ 1, & f(x,y) \ge T \end{cases} $$
+      </div>
+      <p>The whole problem is: <strong>how do we automatically choose T?</strong> Otsu's answer: choose the threshold that best separates the image into two classes — background <span class="k">C₀</span> and foreground <span class="k">C₁</span> — by <strong>maximizing the variance BETWEEN the two classes</strong>.</p>
 
-      <h4>Class probabilities and means</h4>
+      <h4>Intuition first</h4>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 210" role="img" aria-label="A bimodal histogram split by threshold T into a background group and an object group">
+            <line x1="50" y1="175" x2="600" y2="175" stroke="#14171C" stroke-width="1.2"/>
+            <line x1="50" y1="175" x2="50" y2="30" stroke="#14171C" stroke-width="1.2"/>
+            <text x="30" y="105" class="diag-mono" font-size="10" fill="#6B7480" transform="rotate(-90 30 105)">pixels</text>
+            <path d="M50 175 C 120 55, 175 55, 245 170 C 295 174, 340 174, 390 165 C 460 60, 520 60, 590 175" fill="#EDF0FF" stroke="#1F3BE8" stroke-width="2"/>
+            <line x1="317" y1="175" x2="317" y2="50" stroke="#C0492B" stroke-width="2" stroke-dasharray="5 3"/>
+            <text x="317" y="44" class="diag-mono" font-size="12" fill="#C0492B" text-anchor="middle">T</text>
+            <text x="165" y="135" class="diag-txt" font-size="11" fill="#6B7480" text-anchor="middle">Background (dark)</text>
+            <text x="485" y="130" class="diag-txt" font-size="11" fill="#6B7480" text-anchor="middle">Object (bright)</text>
+            <text x="150" y="198" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">dark ←</text>
+            <text x="500" y="198" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">→ bright</text>
+          </svg>
+        </div>
+        <figcaption>Two groups. A good threshold puts them as far apart as possible — Otsu measures mathematically how well-separated the two classes are</figcaption>
+      </figure>
+
+      <h4>The histogram &amp; notation</h4>
+      <p>Grayscale levels are <span class="k">0,1,…,L−1</span> (for an 8-bit image, <span class="k">L=256</span>). Let <span class="k">nᵢ</span> = number of pixels of intensity <span class="k">i</span>, and total pixels <span class="k">N = Σ nᵢ</span>. The normalized histogram is:</p>
       <div class="formula">
-        <span class="cap">Probability of each class</span>
-        $$ P_1(k)=\sum_{i=0}^{k} p_i \qquad P_2(k)=\sum_{i=k+1}^{L-1} p_i = 1 - P_1(k) $$
-      </div>
-      <div class="formula">
-        <span class="cap">Class means and global mean</span>
-        $$ m_1(k)=\frac{1}{P_1(k)}\sum_{i=0}^{k} i\,p_i \qquad m_2(k)=\frac{1}{P_2(k)}\sum_{i=k+1}^{L-1} i\,p_i $$
-        $$ m(k)=\sum_{i=0}^{k} i\,p_i \quad(\text{cumulative mean up to }k), \qquad m_G=\sum_{i=0}^{L-1} i\,p_i \quad(\text{global mean}) $$
+        <span class="cap">Normalized histogram</span>
+        $$ p_i=\frac{n_i}{N}, \qquad \sum_{i=0}^{L-1} p_i = 1 $$
       </div>
 
-      <h4>Between-class variance — the quantity Otsu maximizes</h4>
+      <p>For a candidate threshold <span class="k">T</span>, split pixels into two classes: <span class="k">C₀ = {0,1,…,T}</span> (background) and <span class="k">C₁ = {T+1,…,L−1}</span> (foreground). Then compute four things for every possible <span class="k">T</span>:</p>
+
+      <h4>① Class probabilities (weights)</h4>
       <div class="formula">
-        <span class="cap">Between-class variance</span>
-        $$ \sigma_B^2(k)=P_1(k)\big[m_1(k)-m_G\big]^2 + P_2(k)\big[m_2(k)-m_G\big]^2 $$
+        <span class="cap">Weights — just add histogram probabilities</span>
+        $$ w_0(T)=\sum_{i=0}^{T} p_i \qquad w_1(T)=\sum_{i=T+1}^{L-1} p_i \qquad w_0 + w_1 = 1 $$
       </div>
-      <p>This can be written more efficiently (only <span class="k">m</span> and <span class="k">P₁</span> need computing for each <span class="k">k</span>) as:</p>
+
+      <h4>② Class means</h4>
       <div class="formula">
-        <span class="cap">Efficient computational form</span>
-        $$ \sigma_B^2(k)=\frac{\big[m_G\,P_1(k)-m(k)\big]^2}{P_1(k)\,[1-P_1(k)]} $$
+        <span class="cap">Means — multiply intensity × probability, then divide by weight</span>
+        $$ \mu_0=\frac{\sum_{i=0}^{T} i\,p_i}{w_0} \qquad \mu_1=\frac{\sum_{i=T+1}^{L-1} i\,p_i}{w_1} $$
+      </div>
+
+      <h4>③ Between-class variance ⭐ (the key formula)</h4>
+      <div class="formula">
+        <span class="cap">Between-class variance — memorise this above all</span>
+        $$ \sigma_B^2 = w_0\,w_1\,(\mu_0 - \mu_1)^2 $$
+      </div>
+
+      <h4>④ Pick the T that maximizes σ_B²</h4>
+      <div class="formula">
+        <span class="cap">Optimal threshold</span>
+        $$ T^{*} = \arg\max_{T}\ \sigma_B^2(T) $$
       </div>
 
       <div class="remember">
-        <span class="lab">The optimum threshold</span>
-        <p>The Otsu threshold <span class="k">k*</span> is the value of <span class="k">k</span> that <strong>maximizes</strong> <span class="k">σ_B²(k)</span>. The farther apart the two means <span class="k">m₁</span> and <span class="k">m₂</span> are, the larger <span class="k">σ_B²</span> — indicating better separability. A <strong>separability measure</strong> <span class="k">η(k) = σ_B²(k)/σ_G²</span> (between-class variance over total variance, range 0–1) quantifies how good the threshold is.</p>
+        <span class="lab">Why this formula makes sense</span>
+        <p><span class="k">σ_B² = w₀·w₁·(μ₀−μ₁)²</span> has three parts: <span class="k">w₀</span> (how many pixels are background), <span class="k">w₁</span> (how many are foreground), and <span class="k">(μ₀−μ₁)²</span> (how far apart their average intensities are). We want meaningful classes whose <strong>means are far apart</strong>. E.g. μ₀=20, μ₁=100 → difference 80 (great separation) beats μ₀=40, μ₁=60 → difference 20 (poor separation).</p>
       </div>
 
+      <h4>Worked Example 1 — a symmetric histogram</h4>
+      <p>An image with 5 intensity levels: counts <span class="k">n = [2, 3, 4, 3, 2]</span> for levels 0–4, so <span class="k">N = 14</span>. Test thresholds <span class="k">T = 1</span> and <span class="k">T = 2</span> (avoid thresholds that produce an empty class).</p>
+
+      <div class="grid2">
+        <div class="card">
+          <h4 style="margin-top:0">T = 1 → C₀={0,1}, C₁={2,3,4}</h4>
+          <p style="margin:0 0 6px 0"><span class="k">w₀ = 5/14 = 0.3571</span>, &nbsp;<span class="k">w₁ = 9/14 = 0.6429</span></p>
+          <p style="margin:0 0 6px 0"><span class="k">μ₀ = (0·2 + 1·3)/5 = 3/5 = 0.6</span></p>
+          <p style="margin:0 0 6px 0"><span class="k">μ₁ = (2·4 + 3·3 + 4·2)/9 = 25/9 = 2.778</span></p>
+          <p style="margin:0"><span class="k">σ_B² = (5/14)(9/14)(0.6−2.778)² ≈ 1.089</span></p>
+        </div>
+        <div class="card">
+          <h4 style="margin-top:0">T = 2 → C₀={0,1,2}, C₁={3,4}</h4>
+          <p style="margin:0 0 6px 0"><span class="k">w₀ = 9/14 = 0.6429</span>, &nbsp;<span class="k">w₁ = 5/14 = 0.3571</span></p>
+          <p style="margin:0 0 6px 0"><span class="k">μ₀ = (0·2+1·3+2·4)/9 = 11/9 = 1.222</span></p>
+          <p style="margin:0 0 6px 0"><span class="k">μ₁ = (3·3 + 4·2)/5 = 17/5 = 3.4</span></p>
+          <p style="margin:0"><span class="k">σ_B² = (9/14)(5/14)(1.222−3.4)² ≈ 1.089</span></p>
+        </div>
+      </div>
+      <div class="tip">
+        <span class="lab">Note</span>
+        <p>Both give <strong>≈ 1.089</strong> — because this histogram is symmetric, T=1 and T=2 are equally good. (Real exam histograms are usually asymmetric, giving a unique answer — see Example 2.)</p>
+      </div>
+
+      <h4>Worked Example 2 — a unique optimal threshold</h4>
+      <p>Levels 0–3 with counts <span class="k">n = [4, 6, 5, 1]</span>, so <span class="k">N = 16</span>. Test <span class="k">T = 0, 1, 2</span>. This is exactly how to lay out an exam numerical — build a table:</p>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>T</th><th>w₀</th><th>w₁</th><th>μ₀</th><th>μ₁</th><th>σ_B²</th></tr></thead>
+          <tbody>
+            <tr><td>0</td><td>0.25</td><td>0.75</td><td>0</td><td>1.583</td><td>0.470</td></tr>
+            <tr><td style="background:#FFF6E6"><strong>1</strong></td><td style="background:#FFF6E6">0.625</td><td style="background:#FFF6E6">0.375</td><td style="background:#FFF6E6">0.6</td><td style="background:#FFF6E6">2.167</td><td style="background:#FFF6E6"><strong>0.575 ← max</strong></td></tr>
+            <tr><td>2</td><td>0.9375</td><td>0.0625</td><td>1.067</td><td>3</td><td>0.219</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Sample working for the winning row, <span class="k">T = 1</span> → C₀={0,1}, C₁={2,3}:</p>
+      <ul>
+        <li><span class="k">w₀ = (4+6)/16 = 0.625</span>, &nbsp;<span class="k">w₁ = 6/16 = 0.375</span></li>
+        <li><span class="k">μ₀ = (0·4 + 1·6)/10 = 0.6</span></li>
+        <li><span class="k">μ₁ = (2·5 + 3·1)/6 = 13/6 = 2.167</span></li>
+        <li><span class="k">σ_B² = (0.625)(0.375)(0.6−2.167)² ≈ 0.575</span></li>
+      </ul>
+      <div class="remember">
+        <span class="lab">Answer</span>
+        <p>The maximum <span class="k">σ_B² = 0.575</span> occurs at <span class="k">T = 1</span> → the <strong>Otsu threshold is 1</strong>.</p>
+      </div>
+
+      <h4>The algorithm to memorise</h4>
       <div class="card">
-        <h4 style="margin-top:0">Otsu's algorithm, step by step</h4>
+        <h4 style="margin-top:0">Otsu's Algorithm</h4>
+        <p style="margin:0 0 8px 0"><strong>Input:</strong> grayscale image with L intensity levels.</p>
         <ol style="margin-bottom:0">
-          <li>Compute the normalized histogram <span class="k">pᵢ</span> of the image.</li>
-          <li>Compute the cumulative sums <span class="k">P₁(k)</span> for <span class="k">k = 0,…,L−1</span>.</li>
-          <li>Compute the cumulative means <span class="k">m(k)</span>.</li>
-          <li>Compute the global mean <span class="k">m_G</span>.</li>
-          <li>Compute the between-class variance <span class="k">σ_B²(k)</span> for all <span class="k">k</span>.</li>
-          <li>Obtain the Otsu threshold <span class="k">k*</span> = the <span class="k">k</span> at which <span class="k">σ_B²(k)</span> is maximum (average the values if the max occurs at several <span class="k">k</span>).</li>
-          <li>Compute the separability measure <span class="k">η(k*)</span>.</li>
+          <li><strong>Step 1:</strong> compute the normalized histogram <span class="k">pᵢ = nᵢ/N</span>.</li>
+          <li><strong>Step 2:</strong> for each possible threshold <span class="k">T = 0,…,L−2</span>, calculate <span class="k">w₀, w₁</span>, then <span class="k">μ₀, μ₁</span>, then <span class="k">σ_B²(T) = w₀·w₁·(μ₀−μ₁)²</span>.</li>
+          <li><strong>Step 3:</strong> find <span class="k">T* = arg max σ_B²(T)</span>.</li>
+          <li><strong>Step 4:</strong> threshold the image using <span class="k">T*</span>.</li>
         </ol>
-        <p style="margin:12px 0 0">Then segment: <span class="k">g(x,y)=1</span> if <span class="k">f(x,y) &gt; k*</span>, else <span class="k">0</span>.</p>
+      </div>
+
+      <h4>Useful shortcuts &amp; relationships</h4>
+      <div class="formula">
+        <span class="cap">Faster computational form (cumulative moments)</span>
+        $$ \sigma_B^2(T)=\frac{\big[\mu_T\,\omega_0(T)-\mu(T)\big]^2}{\omega_0(T)\,[1-\omega_0(T)]}, \quad\text{where } \omega_0(T)=w_0,\ \mu(T)=\sum_{i=0}^{T} i\,p_i,\ \mu_T=\sum_{i=0}^{L-1} i\,p_i $$
+      </div>
+      <div class="formula">
+        <span class="cap">Overall mean = weighted average of the two class means</span>
+        $$ \mu_T = w_0\,\mu_0 + w_1\,\mu_1 $$
+      </div>
+      <div class="tip">
+        <span class="lab">Learn the simple form first</span>
+        <p>For your exam, master <span class="k">σ_B² = w₀·w₁·(μ₀−μ₁)²</span> first — the cumulative-moment form above is just a faster route for large 8-bit histograms.</p>
+      </div>
+
+      <h4>Theory: variance decomposition (common theory question)</h4>
+      <p>The total variance of an image decomposes into within-class and between-class variance:</p>
+      <div class="formula">
+        <span class="cap">Variance decomposition</span>
+        $$ \sigma_T^2 = \sigma_W^2 + \sigma_B^2 $$
+      </div>
+      <p>Since the total variance <span class="k">σ_T²</span> is <strong>fixed</strong> for a given image, maximizing <span class="k">σ_B²</span> is exactly equivalent to minimizing <span class="k">σ_W²</span>:</p>
+      <div class="formula">
+        <span class="cap">Two equivalent views of Otsu</span>
+        $$ \max\ \sigma_B^2 \iff \min\ \sigma_W^2 $$
+      </div>
+      <div class="remember">
+        <span class="lab">What within-class variance means</span>
+        <p><span class="k">σ_W²</span> measures how spread-out the pixels are <em>inside</em> each class. A good threshold gives tight classes (e.g. C₀ = {10,11,12,10}, C₁ = {200,202,198,201}) → small <span class="k">σ_W²</span>. A bad threshold mixes dark and bright pixels into one class → huge <span class="k">σ_W²</span>. So Otsu can be stated two ways: <strong>maximize between-class variance</strong> OR <strong>minimize within-class variance</strong>.</p>
+      </div>
+
+      <h4>Otsu vs manual vs adaptive thresholding</h4>
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Otsu</th><th>Adaptive / Local</th></tr></thead>
+          <tbody>
+            <tr><td>Global — one threshold for the whole image</td><td>Local — a different threshold per region: <span class="k">T = T(x,y)</span></td></tr>
+            <tr><td>Uses the entire histogram</td><td>Uses a local neighbourhood</td></tr>
+            <tr><td>Works well for bimodal histograms</td><td>Works better under uneven illumination</td></tr>
+            <tr><td>Simple, automatic</td><td>More computationally involved</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Manual thresholding</strong> just picks a value ("I'll use T=128") with no optimization; <strong>Otsu = automatic threshold selection</strong> that mathematically finds the best-separating value.</p>
+
+      <div class="warn">
+        <span class="lab">Limitations of Otsu</span>
+        <p>Otsu assumes the histogram has reasonably separable classes. It may fail or give poor segmentation when: the histogram is <strong>not clearly bimodal</strong> (a single broad hump with no valley), foreground/background proportions are <strong>extremely unbalanced</strong>, illumination is <strong>non-uniform</strong>, or <strong>noise</strong> significantly distorts the histogram.</p>
       </div>
 
       <div class="tip">
         <span class="lab">Multilevel &amp; edge-improved variants</span>
-        <p><strong>Multilevel Otsu</strong> extends the same idea to multiple thresholds by maximizing <span class="k">σ_B² = P₁(m₁−m_G)² + P₂(m₂−m_G)² + P₃(m₃−m_G)²</span> for three classes. <strong>Edge-improved global thresholding</strong>: performing edge detection first (using the gradient or absolute Laplacian to select only pixels on or near edges before building the histogram) sharpens the histogram peaks and improves the threshold.</p>
+        <p><strong>Multilevel Otsu</strong> extends the idea to multiple thresholds by maximizing <span class="k">σ_B² = P₁(m₁−m_G)² + P₂(m₂−m_G)² + P₃(m₃−m_G)²</span> for three classes. <strong>Edge-improved global thresholding</strong>: doing edge detection first (using the gradient or absolute Laplacian to keep only pixels on/near edges before building the histogram) sharpens the histogram peaks and yields a better threshold.</p>
+      </div>
+
+      <div class="card">
+        <h4 style="margin-top:0">Exam quick-reference — the 5 formulas + the criterion</h4>
+        <p style="margin:0"><span class="k">pᵢ = nᵢ/N</span> &nbsp;·&nbsp; <span class="k">w₀ = Σᵢ₌₀ᵀ pᵢ</span> &nbsp;·&nbsp; <span class="k">w₁ = 1 − w₀</span> &nbsp;·&nbsp; <span class="k">μₖ = (Σ_{i∈Cₖ} i·pᵢ)/wₖ</span> &nbsp;·&nbsp; <span class="k">σ_B² = w₀·w₁·(μ₀−μ₁)²</span> &nbsp;·&nbsp; <strong>criterion:</strong> <span class="k">T* = arg max σ_B²</span> (equivalently, min within-class variance).</p>
       </div>
     </section>
 
@@ -722,7 +858,7 @@
       <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">8. Intensity Thresholding</h4><p style="margin:0;font-size:14px">A region-based technique that separates objects from background by selecting threshold(s) T and classifying each pixel by whether its intensity is above or below T.</p></div>
       <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">9. Global vs Variable Thresholding</h4><p style="margin:0;font-size:14px">Global uses one constant T over the whole image; variable changes T across the image — local/regional (depends on the neighbourhood) or dynamic/adaptive (also depends on coordinates).</p></div>
       <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">10. Role of Noise &amp; Illumination</h4><p style="margin:0;font-size:14px">Noise broadens and merges histogram peaks; non-uniform illumination shifts region intensities apart — either can destroy the valley needed for thresholding.</p></div>
-      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">11. Otsu's Method</h4><p style="margin:0;font-size:14px">An optimal global thresholding method that chooses the threshold k maximizing the between-class variance σ_B²(k) — optimal in maximizing class separability, computed entirely from the histogram.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">11. Otsu's Method</h4><p style="margin:0;font-size:14px">An automatic global thresholding technique that chooses the threshold T maximizing the between-class variance σ_B² = w₀·w₁·(μ₀−μ₁)² — equivalently, minimizing within-class variance (since σ_T² = σ_W² + σ_B² is fixed). Computed entirely from the histogram.</p></div>
       <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">12. Variable / Adaptive Thresholding</h4><p style="margin:0;font-size:14px">Computes a threshold at every point from properties (local mean, std-dev) of the neighbourhood S_xy, succeeding under non-uniform illumination where a global threshold fails.</p></div>
       <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">13. Region Growing</h4><p style="margin:0;font-size:14px">Groups pixels into larger regions by starting from seed points and appending neighbouring pixels whose properties (e.g. intensity range) are similar to the seed.</p></div>
       <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">14. Region Splitting &amp; Merging</h4><p style="margin:0;font-size:14px">Subdivides the image into disjoint regions, splits any region failing a homogeneity predicate (quadtree), and merges adjacent regions that jointly satisfy it, until all regions are homogeneous.</p></div>
