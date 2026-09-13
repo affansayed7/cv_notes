@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>05 · Frequency Domain — CV Exam Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+<script>
+  window.MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+
+<button class="menu-btn" id="menuBtn" aria-label="Open contents"><span></span></button>
+<div class="scrim" id="scrim"></div>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <a class="brand" href="index.html">
+      <svg class="eye" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect width="40" height="40" rx="9" fill="#1F3BE8"/>
+        <path d="M6 20c4.5-6.5 9-9.5 14-9.5S29.5 13.5 34 20c-4.5 6.5-9 9.5-14 9.5S10.5 26.5 6 20Z" fill="#fff"/>
+        <circle cx="20" cy="20" r="6.2" fill="#1F3BE8"/>
+        <circle cx="20" cy="20" r="3" fill="#0d1b52"/>
+        <circle cx="17.6" cy="17.6" r="1.5" fill="#fff"/>
+      </svg>
+      <div><h1>Computer Vision</h1><div class="sub">Module 05</div></div>
+    </a>
+    <a class="back-link" href="index.html">← All modules</a>
+
+    <div class="nav-label">Why the Frequency Domain?</div>
+    <nav class="nav" id="nav">
+      <a href="#f1"><span class="num">01</span> Spatial Frequencies</a>
+      <a href="#f2"><span class="num">02</span> Complexity of Convolution</a>
+      <a href="#f3"><span class="num">03</span> Why Go to the Frequency Domain?</a>
+    </nav>
+    <div class="nav-label">Fourier Foundations</div>
+    <nav class="nav">
+      <a href="#f4"><span class="num">04</span> The Core Idea &amp; Complex Exponentials</a>
+      <a href="#f5"><span class="num">05</span> Fourier Series &amp; Transform</a>
+      <a href="#f6"><span class="num">06</span> Continuous Fourier Transform</a>
+      <a href="#f7"><span class="num">07</span> Worked Example: FT of a Kernel</a>
+    </nav>
+    <div class="nav-label">Discrete &amp; Fast Transforms</div>
+    <nav class="nav">
+      <a href="#f8"><span class="num">08</span> The 2D DFT &amp; IDFT</a>
+      <a href="#f9"><span class="num">09</span> Fast Fourier Transform (FFT)</a>
+      <a href="#f10"><span class="num">10</span> Algorithm Complexity</a>
+    </nav>
+    <div class="nav-label">Properties of the DFT</div>
+    <nav class="nav">
+      <a href="#f11"><span class="num">11</span> Shifting &amp; Centering the DFT</a>
+      <a href="#f12"><span class="num">12</span> Symmetry &amp; the Spectrum</a>
+      <a href="#f13"><span class="num">13</span> Translation &amp; Rotation</a>
+      <a href="#f14"><span class="num">14</span> Low vs High Frequency Content</a>
+    </nav>
+    <div class="nav-label">Filtering</div>
+    <nav class="nav">
+      <a href="#f15"><span class="num">15</span> The Convolution Theorem</a>
+      <a href="#f16"><span class="num">16</span> Frequency-Domain Filtering Pipeline</a>
+    </nav>
+    <div class="nav-label">Revision</div>
+    <nav class="nav">
+      <a href="#glossary"><span class="num">★</span> All Definitions — Cram Sheet</a>
+    </nav>
+  </aside>
+
+  <main>
+    <header class="hero">
+      <div class="kick">Module 05 · Frequency Domain</div>
+      <h2>Frequency Domain <em>Enhancement.</em></h2>
+      <p>The most derivation-heavy chapter — every formula worked out step by step: spatial frequency, the complexity argument for going frequency-domain, the Fourier series/transform, the continuous FT, the 2D DFT/IDFT, the FFT decomposition with full complexity analysis, DFT properties (shift, symmetry, translation, rotation), and the convolution theorem behind frequency-domain filtering. Numericals included wherever they can be asked.</p>
+      <div class="meta">
+        <span class="chip">16 <b>topics</b></span>
+        <span class="chip">Gonzalez &amp; Woods · <b>Ch. 4</b></span>
+        <span class="chip">Full derivations + numericals</span>
+      </div>
+    </header>
+
+    <!-- F1 -->
+    <section id="f1">
+      <div class="eyebrow">Topic 01</div>
+      <h3>Spatial Frequencies</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>Spatial frequency is the rate of change of intensity per unit distance in an image. Regions where intensity changes rapidly over a small area contain high spatial frequencies; regions where intensity varies slowly over many pixels contain low spatial frequencies.</p>
+      </div>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Image content</th><th>Frequency</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>Radical change in intensity (abrupt over small areas)</td><td><strong>High frequency</strong></td><td>fine detail, edges, texture</td></tr>
+            <tr><td>Slowly varying change in intensity</td><td><strong>Low frequency</strong></td><td>smooth regions, general gray-level appearance</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 150" role="img" aria-label="Three swatches: flat zero-frequency, smooth low-frequency gradient, checkerboard high-frequency">
+            <g transform="translate(20,15)">
+              <rect width="170" height="90" fill="#9a9a9a"/>
+              <text x="85" y="108" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">zero freq. — flat</text>
+            </g>
+            <g transform="translate(230,15)">
+              <rect width="170" height="90" fill="url(#gsm)"/>
+              <defs><linearGradient id="gsm"><stop offset="0" stop-color="#1a1a1a"/><stop offset="1" stop-color="#f0f0f0"/></linearGradient></defs>
+              <text x="85" y="108" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">low freq. — smooth</text>
+            </g>
+            <g transform="translate(440,15)">
+              <g>
+                <rect x="0" y="0" width="21" height="18" fill="#111"/><rect x="21" y="0" width="21" height="18" fill="#fff"/><rect x="42" y="0" width="21" height="18" fill="#111"/><rect x="63" y="0" width="21" height="18" fill="#fff"/><rect x="84" y="0" width="21" height="18" fill="#111"/><rect x="105" y="0" width="21" height="18" fill="#fff"/><rect x="126" y="0" width="21" height="18" fill="#111"/><rect x="147" y="0" width="21" height="18" fill="#fff"/>
+                <rect x="0" y="18" width="21" height="18" fill="#fff"/><rect x="21" y="18" width="21" height="18" fill="#111"/><rect x="42" y="18" width="21" height="18" fill="#fff"/><rect x="63" y="18" width="21" height="18" fill="#111"/><rect x="84" y="18" width="21" height="18" fill="#fff"/><rect x="105" y="18" width="21" height="18" fill="#111"/><rect x="126" y="18" width="21" height="18" fill="#fff"/><rect x="147" y="18" width="21" height="18" fill="#111"/>
+                <rect x="0" y="36" width="21" height="18" fill="#111"/><rect x="21" y="36" width="21" height="18" fill="#fff"/><rect x="42" y="36" width="21" height="18" fill="#111"/><rect x="63" y="36" width="21" height="18" fill="#fff"/><rect x="84" y="36" width="21" height="18" fill="#111"/><rect x="105" y="36" width="21" height="18" fill="#fff"/><rect x="126" y="36" width="21" height="18" fill="#111"/><rect x="147" y="36" width="21" height="18" fill="#fff"/>
+                <rect x="0" y="54" width="21" height="18" fill="#fff"/><rect x="21" y="54" width="21" height="18" fill="#111"/><rect x="42" y="54" width="21" height="18" fill="#fff"/><rect x="63" y="54" width="21" height="18" fill="#111"/><rect x="84" y="54" width="21" height="18" fill="#fff"/><rect x="105" y="54" width="21" height="18" fill="#111"/><rect x="126" y="54" width="21" height="18" fill="#fff"/><rect x="147" y="54" width="21" height="18" fill="#111"/>
+                <rect x="0" y="72" width="21" height="18" fill="#111"/><rect x="21" y="72" width="21" height="18" fill="#fff"/><rect x="42" y="72" width="21" height="18" fill="#111"/><rect x="63" y="72" width="21" height="18" fill="#fff"/><rect x="84" y="72" width="21" height="18" fill="#111"/><rect x="105" y="72" width="21" height="18" fill="#fff"/><rect x="126" y="72" width="21" height="18" fill="#111"/><rect x="147" y="72" width="21" height="18" fill="#fff"/>
+              </g>
+              <text x="85" y="108" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">high freq. — checkerboard</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>Zero → low → high spatial frequency. Zero = flat (all pixels equal); low = smooth gradient; high = checkerboard</figcaption>
+      </figure>
+    </section>
+
+    <!-- F2 -->
+    <section id="f2">
+      <div class="eyebrow">Topic 02</div>
+      <h3>Complexity of Convolution</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The computational cost of spatial convolution is the number of multiply-add operations required to slide a kernel across an image. Filtering an M×N image with an m×n kernel costs on the order of M·N·m·n operations, because each of the M·N output pixels requires m·n multiplications.</p>
+      </div>
+
+      <p>Spatial filtering (Module 03) is a <strong>convolution</strong> operation — average filters, Gaussian filters, median filters, gradient masks, Laplacian masks are all applied by sliding a kernel. The cost:</p>
+      <div class="formula">
+        <span class="cap">Cost of spatial convolution</span>
+        $$ \text{operations} \;\propto\; M\cdot N\cdot m\cdot n $$
+      </div>
+      <p>Each output pixel (there are <span class="k">M·N</span> of them) requires one sum of <span class="k">m·n</span> products. For example, a 3×3 kernel over the image below computes each output pixel as a sum of 9 products:</p>
+      <div class="formula">
+        <span class="cap">One output pixel, 3×3 kernel [1 0 −1; 1 0 −1; 1 0 −1]</span>
+        $$ (1{\times}1)+(8{\times}1)+(2{\times}1)+(2{\times}0)+(9{\times}0)+(5{\times}0)+(7{\times}{-}1)+(3{\times}{-}1)+(1{\times}{-}1)=0 $$
+      </div>
+      <div class="warn">
+        <span class="lab">The problem</span>
+        <p>When the kernel is <strong>large</strong> (e.g. 201×201), <span class="k">m·n</span> becomes huge, and spatial convolution becomes extremely slow. This is the motivation for the frequency domain.</p>
+      </div>
+    </section>
+
+    <!-- F3 -->
+    <section id="f3">
+      <div class="eyebrow">Topic 03</div>
+      <h3>Why Go to the Frequency Domain?</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>Filtering in the frequency domain replaces the expensive spatial convolution with a simple point-wise multiplication of Fourier transforms. It takes on the order of 2MN·log₂(MN) operations using the FFT, which is dramatically faster than direct convolution for large kernels.</p>
+      </div>
+
+      <div class="formula">
+        <span class="cap">Frequency-domain filtering cost (via FFT)</span>
+        $$ \text{operations} \;\propto\; 2MN\log_2(MN) $$
+      </div>
+
+      <div class="card">
+        <h4 style="margin-top:0">The headline example</h4>
+        <p style="margin:0">Filtering a bank of images of size <strong>2048 × 2048</strong> with a kernel of <strong>201 × 201</strong> elements:</p>
+        <div class="twrap" style="margin-top:10px"><table>
+          <thead><tr><th>Method</th><th>Time</th></tr></thead>
+          <tbody>
+            <tr><td>Frequency domain (FFT)</td><td><strong>≈ 1 minute</strong></td></tr>
+            <tr><td>Spatial convolution</td><td><strong>≈ 17 hours</strong></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="remember">
+        <span class="lab">The whole reason this chapter exists</span>
+        <p>For small kernels, spatial convolution is fine. For <strong>large</strong> kernels, transforming to the frequency domain, multiplying, and transforming back is enormously faster — because convolution in space becomes multiplication in frequency (the Convolution Theorem, Topic 15).</p>
+      </div>
+    </section>
+
+    <!-- F4 -->
+    <section id="f4">
+      <div class="eyebrow">Topic 04 · Fourier Foundations</div>
+      <h3>The Core Idea &amp; Complex Exponentials</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The Fourier transform lets us describe a signal (or image) as a sum of complex exponentials, each of a different spatial frequency. Each complex exponential is a basis function of the form e^(jθ) = cos θ + j·sin θ (Euler's formula), representing a single pure frequency component.</p>
+      </div>
+
+      <p>The single most important building block is <strong>Euler's formula</strong>, which links the complex exponential to sines and cosines:</p>
+      <div class="formula">
+        <span class="cap">Euler's formula — the bridge</span>
+        $$ e^{j\theta} = \cos\theta + j\sin\theta \qquad\text{where } j=\sqrt{-1} $$
+      </div>
+      <p>A <strong>2D complex exponential signal</strong> of frequencies <span class="k">(ω₁, ω₂)</span> is the 2D basis function of the Fourier transform:</p>
+      <div class="formula">
+        <span class="cap">2D complex exponential (Fourier basis function)</span>
+        $$ e^{\,j(\omega_1 n_1 + \omega_2 n_2)} = \cos(\omega_1 n_1 + \omega_2 n_2) + j\sin(\omega_1 n_1 + \omega_2 n_2) $$
+      </div>
+      <ul>
+        <li>These signals are <strong>periodic</strong> — they repeat, which is why they can represent the repeating patterns (frequencies) in an image.</li>
+        <li>A low <span class="k">ω</span> = a slowly varying wave (low frequency); a high <span class="k">ω</span> = a rapidly oscillating wave (high frequency).</li>
+      </ul>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 160" role="img" aria-label="A low frequency cosine wave and a high frequency cosine wave">
+            <text x="150" y="16" class="diag-mono" font-size="11" fill="#1F3BE8" text-anchor="middle">low frequency: cos(ωt), small ω</text>
+            <line x1="20" y1="80" x2="280" y2="80" stroke="#DBE0E7"/>
+            <path d="M20 80 Q 85 20 150 80 T 280 80" fill="none" stroke="#1F3BE8" stroke-width="2.2"/>
+
+            <text x="490" y="16" class="diag-mono" font-size="11" fill="#E08A00" text-anchor="middle">high frequency: cos(ωt), large ω</text>
+            <line x1="360" y1="80" x2="620" y2="80" stroke="#DBE0E7"/>
+            <path d="M360 80 Q 376 30 392 80 T 424 80 T 456 80 T 488 80 T 520 80 T 552 80 T 584 80 T 616 80" fill="none" stroke="#E08A00" stroke-width="2.2"/>
+          </svg>
+        </div>
+        <figcaption>Same shape, different ω: small ω oscillates slowly (low freq), large ω oscillates rapidly (high freq)</figcaption>
+      </figure>
+    </section>
+
+    <!-- F5 -->
+    <section id="f5">
+      <div class="eyebrow">Topic 05</div>
+      <h3>Fourier Series &amp; Fourier Transform</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The Fourier series represents a periodic function as a sum of sines and cosines of different frequencies, each multiplied by a coefficient. The Fourier transform generalizes this to non-periodic functions (of finite area), representing them as an integral of sines and cosines weighted by a weighing function.</p>
+      </div>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th></th><th>Applies to</th><th>Representation</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Fourier Series</strong></td><td><strong>periodic</strong> functions</td><td><strong>sum</strong> of sines/cosines of different frequencies × coefficients</td></tr>
+            <tr><td><strong>Fourier Transform</strong></td><td><strong>non-periodic</strong> functions (finite area under the curve)</td><td><strong>integral</strong> of sines/cosines × a weighing function</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 160" role="img" aria-label="A square wave approximated by adding sine waves of increasing frequency">
+            <text x="320" y="16" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">approximating a square wave as a sum of sine waves</text>
+            <line x1="20" y1="90" x2="620" y2="90" stroke="#DBE0E7"/>
+            <path d="M20 60 L170 60 L170 120 L320 120 L320 60 L470 60 L470 120 L620 120" fill="none" stroke="#C0492B" stroke-width="1.6" stroke-dasharray="4 3"/>
+            <path d="M20 62 Q 95 38 170 62 Q 245 86 320 118 Q 395 86 470 62 Q 545 38 620 62" fill="none" stroke="#1F3BE8" stroke-width="1.6" opacity=".7"/>
+            <path d="M20 60 Q 60 55 95 62 Q 130 78 170 60 Q 210 55 245 78 Q 285 98 320 118 Q 355 98 395 78 Q 430 55 470 60 Q 510 78 545 62 Q 580 55 620 60" fill="none" stroke="#1F3BE8" stroke-width="2.2"/>
+            <text x="120" y="140" class="diag-mono" font-size="9.5" fill="#C0492B">target (square)</text>
+            <text x="420" y="140" class="diag-mono" font-size="9.5" fill="#1F3BE8">sum of sines →</text>
+          </svg>
+        </div>
+        <figcaption>Add more sine components of higher frequency, and the sum gets closer to the square wave — the essence of Fourier synthesis</figcaption>
+      </figure>
+
+      <div class="tip">
+        <span class="lab">Historical note (often a 1-mark question)</span>
+        <p><strong>Joseph Fourier (1768–1830)</strong> developed the theory to model <strong>heat-flow problems</strong>. Both the series and the transform share the key property that a function can be <strong>reconstructed completely via an inverse process, with no loss of information</strong> — this is why we can work in the Fourier domain and return to the original domain without losing anything.</p>
+      </div>
+    </section>
+
+    <!-- F6 -->
+    <section id="f6">
+      <div class="eyebrow">Topic 06</div>
+      <h3>The Continuous Fourier Transform</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The continuous Fourier transform converts a function from the spatial (or time) domain into the frequency domain, expressing it as a continuous spectrum of frequency components. Its inverse reconstructs the original function exactly from that spectrum.</p>
+      </div>
+
+      <h4>1D continuous Fourier transform pair</h4>
+      <div class="formula">
+        <span class="cap">Forward (analysis) and inverse (synthesis)</span>
+        $$ F(\omega)=\int_{-\infty}^{\infty} f(t)\,e^{-j\omega t}\,dt \qquad f(t)=\frac{1}{2\pi}\int_{-\infty}^{\infty} F(\omega)\,e^{\,j\omega t}\,d\omega $$
+      </div>
+      <p>The forward transform "measures how much of frequency <span class="k">ω</span> is present" by correlating <span class="k">f(t)</span> with the complex exponential <span class="k">e^(−jωt)</span>. The inverse rebuilds <span class="k">f(t)</span> by summing (integrating) all those frequency components back together.</p>
+
+      <h4>2D continuous Fourier transform (for images)</h4>
+      <div class="formula">
+        <span class="cap">2D forward transform</span>
+        $$ F(u,v)=\int_{-\infty}^{\infty}\!\!\int_{-\infty}^{\infty} f(x,y)\,e^{-j2\pi(ux+vy)}\,dx\,dy $$
+      </div>
+      <p>where <span class="k">u, v</span> are the frequency variables corresponding to the spatial coordinates <span class="k">x, y</span>.</p>
+
+      <div class="warn">
+        <span class="lab">The problem with the continuous FT</span>
+        <p>The main disadvantage of the continuous FT is that it is <strong>not computable</strong> on a computer — it requires values to be computed at <strong>all possible frequencies</strong> (a continuum). This is exactly why we need the <strong>discrete</strong> version (the DFT, Topic 08).</p>
+      </div>
+    </section>
+
+    <!-- F7 -->
+    <section id="f7">
+      <div class="eyebrow">Topic 07</div>
+      <h3>Worked Example: Fourier Transform of a Kernel</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The frequency response of a spatial filter is the Fourier transform of its kernel. For a symmetric kernel, the transform reduces to a real-valued sum of cosine terms, one per distinct coefficient offset, which describes how the filter attenuates or passes each frequency.</p>
+      </div>
+
+      <p>This is the type of numerical you can be asked: "find the frequency response <span class="k">H(ω₁, ω₂)</span> of the given kernel." Consider a small symmetric smoothing kernel <span class="k">h(n₁, n₂)</span> with these weights (a discrete Gaussian-like filter):</p>
+      <div class="formula">
+        <span class="cap">Given kernel</span>
+        $$ h(n_1,n_2)=\begin{bmatrix} 0.075 & 0.124 & 0.075\\ 0.124 & 0.204 & 0.124\\ 0.075 & 0.124 & 0.075 \end{bmatrix} $$
+      </div>
+
+      <h4>Step-by-step: take the DTFT of the kernel</h4>
+      <p>The frequency response is <span class="k">H(ω₁,ω₂) = Σ Σ h(n₁,n₂)·e^(−j(ω₁n₁+ω₂n₂))</span>. Group the 9 terms by their position offsets and use <span class="k">e^(jθ)+e^(−jθ) = 2cos θ</span>:</p>
+      <ul>
+        <li><strong>Centre</strong> (offset 0,0): contributes <span class="k">0.204</span></li>
+        <li><strong>Left &amp; right</strong> neighbours (offsets ±1 in n₁): <span class="k">0.124(e^(−jω₁)+e^(jω₁)) = 0.124·2cos ω₁</span></li>
+        <li><strong>Top &amp; bottom</strong> neighbours (offsets ±1 in n₂): <span class="k">0.124·2cos ω₂</span></li>
+        <li><strong>Diagonal</strong> corners (offsets ±1,±1 same sign): <span class="k">0.075·2cos(ω₁+ω₂)</span></li>
+        <li><strong>Anti-diagonal</strong> corners (offsets ±1,∓1): <span class="k">0.075·2cos(ω₁−ω₂)</span></li>
+      </ul>
+      <div class="formula">
+        <span class="cap">Result — the frequency response</span>
+        $$ H(\omega_1,\omega_2)=0.204 + 0.124\cdot2\cos\omega_1 + 0.124\cdot2\cos\omega_2 + 0.075\cdot2\cos(\omega_1+\omega_2) + 0.075\cdot2\cos(\omega_1-\omega_2) $$
+      </div>
+      <div class="remember">
+        <span class="lab">What the answer tells you</span>
+        <p>At <span class="k">ω₁=ω₂=0</span> (zero frequency / DC), all cosines = 1, so <span class="k">H = 0.204 + 0.248 + 0.248 + 0.15 + 0.15 = 1</span> — the filter <strong>passes the average brightness unchanged</strong> (coefficients sum to 1). At high frequencies the cosines go negative, so <span class="k">H</span> drops toward 0 — confirming it is a <strong>lowpass (smoothing) filter</strong>. The plot of <span class="k">|H|</span> is a dome, high at the centre (low freq) and falling toward the edges (high freq).</p>
+      </div>
+    </section>
+
+    <!-- F8 -->
+    <section id="f8">
+      <div class="eyebrow">Topic 08 · Discrete &amp; Fast Transforms</div>
+      <h3>The 2D Discrete Fourier Transform (DFT)</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The Discrete Fourier Transform (DFT) is the computable, sampled version of the Fourier transform: it evaluates the transform only at a finite set of equally spaced frequencies. For an image of size N₁×N₂ it produces N₁×N₂ frequency coefficients, and the inverse DFT reconstructs the original image exactly with no loss of information.</p>
+      </div>
+
+      <p><strong>Why the DFT is needed:</strong> the continuous FT requires values at all possible frequencies — impossible to compute. So we <strong>sample at equally spaced frequencies</strong>. For an image of size <span class="k">N₁ × N₂</span>, we set:</p>
+      <div class="formula">
+        <span class="cap">Sampling the continuous transform</span>
+        $$ X(k_1,k_2) = X(\omega_1,\omega_2)\Big|_{\omega_1=\frac{2\pi}{N_1}k_1,\ \omega_2=\frac{2\pi}{N_2}k_2}, \qquad k_1=0,\dots,N_1-1,\ \ k_2=0,\dots,N_2-1 $$
+      </div>
+
+      <h4>The 2D DFT (forward)</h4>
+      <div class="formula">
+        <span class="cap">2D DFT</span>
+        $$ X(k_1,k_2)=\sum_{n_1=0}^{N_1-1}\sum_{n_2=0}^{N_2-1} x(n_1,n_2)\,e^{-j\frac{2\pi}{N_1}k_1 n_1}\,e^{-j\frac{2\pi}{N_2}k_2 n_2} $$
+      </div>
+
+      <h4>The 2D Inverse DFT</h4>
+      <div class="formula">
+        <span class="cap">2D IDFT — reconstructs the image exactly</span>
+        $$ x(n_1,n_2)=\frac{1}{N_1 N_2}\sum_{k_1=0}^{N_1-1}\sum_{k_2=0}^{N_2-1} X(k_1,k_2)\,e^{+j\frac{2\pi}{N_1}k_1 n_1}\,e^{+j\frac{2\pi}{N_2}k_2 n_2} $$
+      </div>
+      <div class="remember">
+        <span class="lab">Forward vs Inverse — spot the three differences</span>
+        <p>(1) The <strong>sign</strong> of the exponent flips (−j → +j). (2) The inverse has a <strong>1/(N₁N₂)</strong> normalization factor. (3) The forward sums over <strong>n</strong> (space) to give <strong>X(k)</strong>; the inverse sums over <strong>k</strong> (frequency) to give back <strong>x(n)</strong>. Everything else is identical.</p>
+      </div>
+    </section>
+
+    <!-- F9 -->
+    <section id="f9">
+      <div class="eyebrow">Topic 09</div>
+      <h3>The Fast Fourier Transform (FFT)</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The Fast Fourier Transform (FFT) is an efficient algorithm for computing the DFT. It avoids redundant computation by decomposing the 2D DFT into a sequence of 1D DFTs (row-wise then column-wise), reducing the cost from the direct-computation order of N⁴ down to a far smaller order — the basis of all practical frequency-domain image processing.</p>
+      </div>
+
+      <h4>A — Direct computation (the slow way)</h4>
+      <p>Computing the 2D DFT directly from its definition: for <strong>each</strong> output frequency <span class="k">(k₁,k₂)</span>, the double sum needs <span class="k">N₁·N₂</span> multiplications. There are <span class="k">N₁·N₂</span> output frequencies. So:</p>
+      <div class="formula">
+        <span class="cap">Direct-computation complexity</span>
+        $$ \text{Total} = (N_1 N_2)\cdot(N_1 N_2) = N_1^2 N_2^2 = O(N^4) \quad\text{if } N_1=N_2=N $$
+      </div>
+
+      <h4>B — Row-wise (row–column) decomposition = the FFT idea</h4>
+      <p>The key trick: the 2D DFT <strong>separates</strong>. Split the double exponential and do the inner sum over <span class="k">n₂</span> first (a 1D DFT along each row), giving an intermediate array <span class="k">G(n₁,k₂)</span>, then do the outer sum over <span class="k">n₁</span> (a 1D DFT down each column):</p>
+      <div class="formula">
+        <span class="cap">Step 1 — 1D DFT along each row → G(n₁,k₂)</span>
+        $$ X(k_1,k_2)=\sum_{n_1=0}^{N_1-1}\underbrace{\left[\sum_{n_2=0}^{N_2-1} x(n_1,n_2)\,e^{-j\frac{2\pi}{N_2}k_2 n_2}\right]}_{G(n_1,k_2)}\,e^{-j\frac{2\pi}{N_1}k_1 n_1} $$
+      </div>
+      <div class="formula">
+        <span class="cap">Step 2 — 1D DFT down each column of G</span>
+        $$ X(k_1,k_2)=\sum_{n_1=0}^{N_1-1} G(n_1,k_2)\,e^{-j\frac{2\pi}{N_1}k_1 n_1} $$
+      </div>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 170" role="img" aria-label="2D DFT decomposed into row transforms then column transforms">
+            <text x="120" y="18" class="diag-mono" font-size="11" fill="#1F3BE8" text-anchor="middle">Step 1: transform each ROW</text>
+            <g stroke="#1F3BE8" fill="none" stroke-width="1.6">
+              <rect x="40" y="35" width="160" height="100"/>
+              <line x1="40" y1="60" x2="200" y2="60"/><line x1="40" y1="85" x2="200" y2="85"/><line x1="40" y1="110" x2="200" y2="110"/>
+            </g>
+            <g><polygon points="150,47 168,47 168,43 178,50 168,57 168,53 150,53" fill="#1F3BE8"/></g>
+
+            <path d="M225 85 h40" stroke="#14171C" stroke-width="1.8"/>
+            <polygon points="271,85 259,79 259,91" fill="#14171C"/>
+            <text x="245" y="72" class="diag-mono" font-size="9.5" fill="#6B7480" text-anchor="middle">G(n₁,k₂)</text>
+
+            <text x="470" y="18" class="diag-mono" font-size="11" fill="#E08A00" text-anchor="middle">Step 2: transform each COLUMN</text>
+            <g stroke="#E08A00" fill="none" stroke-width="1.6">
+              <rect x="390" y="35" width="160" height="100"/>
+              <line x1="430" y1="35" x2="430" y2="135"/><line x1="470" y1="35" x2="470" y2="135"/><line x1="510" y1="35" x2="510" y2="135"/>
+            </g>
+            <polygon points="402,110 402,92 398,92 405,82 412,92 408,92 408,110" fill="#E08A00"/>
+            <text x="470" y="152" class="diag-mono" font-size="9.5" fill="#6B7480" text-anchor="middle">= X(k₁,k₂)</text>
+          </svg>
+        </div>
+        <figcaption>2D DFT = (1D DFT on every row) then (1D DFT on every column of the result)</figcaption>
+      </figure>
+
+      <div class="formula">
+        <span class="cap">Row-column complexity</span>
+        $$ \text{RC cost}=N_1\cdot(N_2)^2 + N_2\cdot(N_1)^2 = O(N^3)\quad\text{if } N_1=N_2=N $$
+      </div>
+      <p>Going from <span class="k">O(N⁴)</span> (direct) to <span class="k">O(N³)</span> (row–column separation) is already a huge saving. The true <strong>FFT</strong> algorithm applies the same divide-and-conquer idea <em>within</em> each 1D DFT as well, bringing the cost all the way down to the order of <span class="k">2MN·log₂(MN)</span> quoted in Topic 03.</p>
+    </section>
+
+    <!-- F10 -->
+    <section id="f10">
+      <div class="eyebrow">Topic 10</div>
+      <h3>Algorithm Complexity</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The FFT reduces the complexity of computing an N-point (or N×N) DFT from the order of N² (or N⁴ in 2D, direct) down to the order of N·log₂N (or 2N²·log₂N in 2D), which is the reason large-scale frequency-domain processing is practical.</p>
+      </div>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Method</th><th>2D complexity (N×N image)</th></tr></thead>
+          <tbody>
+            <tr><td>Direct DFT computation</td><td><span class="k">O(N⁴)</span></td></tr>
+            <tr><td>Row–column decomposition</td><td><span class="k">O(N³)</span></td></tr>
+            <tr><td>Full FFT</td><td><span class="k">≈ 2N²·log₂N</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <p style="margin:0">The FFT algorithm was developed in the <strong>1960s for seismic exploration</strong>. Improvements reduced the DFT complexity to <span class="k">2N²·log₂N</span>. For <span class="k">N=256</span>: <span class="k">2N²·log₂N ≈ 10⁶</span> operations — <strong>a few seconds on a workstation</strong>, versus the vastly larger direct-computation cost.</p>
+      </div>
+    </section>
+
+    <!-- F11 -->
+    <section id="f11">
+      <div class="eyebrow">Topic 11 · Properties of the DFT</div>
+      <h3>Shifting &amp; Centering the DFT</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>Multiplying an image by (−1)^(x+y) before computing its DFT shifts the origin (the zero-frequency / DC component) of the transform to the centre of the frequency rectangle, at (M/2, N/2). This "centering" makes the spectrum easier to view and to filter, since low frequencies gather in the middle.</p>
+      </div>
+
+      <div class="formula">
+        <span class="cap">The centering (shift) property</span>
+        $$ f(x,y)\;\longleftrightarrow\;F(u,v) $$
+        $$ f(x,y)\cdot(-1)^{x+y}\;\longleftrightarrow\;F\!\left(u-\tfrac{M}{2},\,v-\tfrac{N}{2}\right) $$
+      </div>
+      <p>It is common practice to multiply the input image by <span class="k">(−1)^(x+y)</span> prior to computing the FT. This shifts the centre of the transform to <span class="k">(M/2, N/2)</span>.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 170" role="img" aria-label="Uncentered spectrum with bright corners vs centered spectrum with bright middle">
+            <text x="150" y="16" class="diag-mono" font-size="11" fill="#C0492B" text-anchor="middle">uncentered — DC in corners</text>
+            <rect x="60" y="30" width="180" height="120" fill="#111"/>
+            <circle cx="60" cy="30" r="12" fill="#fff" opacity=".9"/><circle cx="240" cy="30" r="12" fill="#fff" opacity=".9"/>
+            <circle cx="60" cy="150" r="12" fill="#fff" opacity=".9"/><circle cx="240" cy="150" r="12" fill="#fff" opacity=".9"/>
+
+            <path d="M270 90 h50" stroke="#14171C" stroke-width="1.8"/>
+            <polygon points="326,90 314,84 314,96" fill="#14171C"/>
+            <text x="296" y="78" class="diag-mono" font-size="9" fill="#6B7480" text-anchor="middle">×(−1)^(x+y)</text>
+
+            <text x="480" y="16" class="diag-mono" font-size="11" fill="#3A7D44" text-anchor="middle">centered — DC in middle</text>
+            <rect x="390" y="30" width="180" height="120" fill="#111"/>
+            <circle cx="480" cy="90" r="16" fill="#fff" opacity=".95"/>
+          </svg>
+        </div>
+        <figcaption>Without centering the zero-frequency term sits at the corners; ×(−1)^(x+y) brings it to the middle</figcaption>
+      </figure>
+    </section>
+
+    <!-- F12 -->
+    <section id="f12">
+      <div class="eyebrow">Topic 12</div>
+      <h3>Symmetry &amp; the Spectrum</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>For a real-valued image, the Fourier transform is conjugate symmetric: F(u,v) = F*(−u,−v). Consequently, the Fourier spectrum (the magnitude |F(u,v)|) is symmetric about the origin: |F(u,v)| = |F(−u,−v)|.</p>
+      </div>
+
+      <div class="formula">
+        <span class="cap">Conjugate symmetry (real image)</span>
+        $$ F(u,v)=F^{*}(-u,-v) $$
+      </div>
+      <div class="formula">
+        <span class="cap">Magnitude (spectrum) is symmetric</span>
+        $$ |F(u,v)|=|F(-u,-v)| $$
+      </div>
+
+      <h4>The three descriptors of the transform</h4>
+      <p>Since <span class="k">F(u,v)</span> is complex, we describe it with:</p>
+      <div class="formula">
+        <span class="cap">Spectrum, phase, and power</span>
+        $$ |F(u,v)|=\sqrt{R^2+I^2}\ \text{(magnitude / spectrum)} \qquad \phi(u,v)=\tan^{-1}\!\frac{I}{R}\ \text{(phase angle)} $$
+        $$ P(u,v)=|F(u,v)|^2=R^2+I^2 \ \text{(power spectrum)} $$
+      </div>
+      <p>where <span class="k">R</span> and <span class="k">I</span> are the real and imaginary parts of <span class="k">F(u,v)</span>.</p>
+
+      <div class="tip">
+        <span class="lab">Why we log-transform the spectrum for display</span>
+        <p>A Fourier spectrum has an enormous dynamic range (the DC term dwarfs everything). To make it visible we apply <span class="k">D(u,v)=c·log(1+|F(u,v)|)</span> — the log transform from Module 02. The "computing spectrum" figure shows: a rectangle image → its spectrum (tiny bright spots in the corners) → the centered spectrum → the log-transformed spectrum (now the detail is visible).</p>
+      </div>
+    </section>
+
+    <!-- F13 -->
+    <section id="f13">
+      <div class="eyebrow">Topic 13</div>
+      <h3>Translation &amp; Rotation Properties</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>Translating an image in space does not change the magnitude of its Fourier spectrum (only its phase); rotating an image by an angle rotates its Fourier spectrum by the same angle. These properties show that the spectrum's shape depends on the image's frequency content and orientation, not on its position.</p>
+      </div>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Spatial operation</th><th>Effect on the Fourier transform</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Translation</strong> (shift the image by x₀, y₀)</td><td>only the <strong>phase</strong> changes (multiplied by a phase term); the <strong>magnitude spectrum |F| is unchanged</strong></td></tr>
+            <tr><td><strong>Rotation</strong> (rotate the image by θ)</td><td>the spectrum <strong>rotates by the same angle θ</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="formula">
+        <span class="cap">Translation property</span>
+        $$ f(x-x_0,\,y-y_0)\;\longleftrightarrow\;F(u,v)\,e^{-j2\pi\left(\frac{ux_0}{M}+\frac{vy_0}{N}\right)} $$
+      </div>
+      <div class="remember">
+        <span class="lab">The intuition</span>
+        <p>Moving an object around an image doesn't change <em>which</em> frequencies are present (edges are still edges, textures still textures) — only <em>where</em> they align, which lives in the phase. But rotating the object rotates its edges/textures, so the frequency content rotates with it.</p>
+      </div>
+    </section>
+
+    <!-- F14 -->
+    <section id="f14">
+      <div class="eyebrow">Topic 14</div>
+      <h3>Low vs High Frequency Content</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>In the Fourier spectrum, the low-frequency components (near the centre of a centered spectrum) are responsible for the general gray-level appearance of an image, while the high-frequency components (away from the centre) are responsible for its fine detail such as edges and texture.</p>
+      </div>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Spectrum region</th><th>Frequencies</th><th>Responsible for</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Centre</strong> (of centered spectrum)</td><td>low frequency</td><td>general gray-level <strong>appearance</strong> — the smooth, overall look</td></tr>
+            <tr><td><strong>Away from centre</strong></td><td>high frequency</td><td><strong>detail</strong> — edges, sharp transitions, fine texture</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 180" role="img" aria-label="Centered spectrum labelled: bright centre = general appearance, outer ring = detail">
+            <rect x="230" y="20" width="180" height="140" fill="#111"/>
+            <circle cx="320" cy="90" r="34" fill="#fff" opacity=".85"/>
+            <circle cx="320" cy="90" r="18" fill="#fff"/>
+            <text x="320" y="94" class="diag-mono" font-size="9" fill="#111" text-anchor="middle">low f</text>
+            <line x1="130" y1="60" x2="288" y2="82" stroke="#1F3BE8" stroke-width="1.4"/>
+            <text x="120" y="58" class="diag-mono" font-size="10" fill="#1F3BE8" text-anchor="end">general appearance</text>
+            <line x1="510" y1="140" x2="392" y2="120" stroke="#E08A00" stroke-width="1.4"/>
+            <text x="518" y="144" class="diag-mono" font-size="10" fill="#E08A00">detail (edges)</text>
+            <text x="320" y="176" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">centered log-magnitude spectrum</text>
+          </svg>
+        </div>
+        <figcaption>Reconstructing an image from only the central (low-freq) part gives a blurred version; from only the outer (high-freq) part gives edges</figcaption>
+      </figure>
+      <div class="tip">
+        <span class="lab">The reconstruction demo</span>
+        <p>Keeping progressively more of the spectrum (e.g. 5% → 10% → 20% → 50% of the coefficients, from the centre outward) and inverse-transforming shows the image going from very blurred to nearly perfect — visual proof that <strong>low frequencies carry the bulk of the appearance</strong> and high frequencies add the crisp detail.</p>
+      </div>
+    </section>
+
+    <!-- F15 -->
+    <section id="f15">
+      <div class="eyebrow">Topic 15 · Filtering</div>
+      <h3>The Convolution Theorem</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The Convolution Theorem states that convolution in the spatial domain is equivalent to multiplication in the frequency domain, and vice versa. That is, if g = f ∗ h (convolution), then its Fourier transform is G = F·H (point-wise product).</p>
+      </div>
+
+      <div class="formula">
+        <span class="cap">The convolution theorem (both directions)</span>
+        $$ g = f * h \;\;\longleftrightarrow\;\; G = F\cdot H $$
+        $$ g = f\cdot h \;\;\longleftrightarrow\;\; G = F * H $$
+      </div>
+      <p>where <span class="k">F, H, G</span> are the Fourier transforms of <span class="k">f, h, g</span> respectively.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 180" role="img" aria-label="Two routes to compute g: convolve in space, or transform, multiply, inverse-transform">
+            <text x="320" y="18" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">two equivalent routes to the filtered image g</text>
+            <g class="diag-mono" font-size="12" text-anchor="middle">
+              <rect x="40" y="35" width="80" height="40" rx="6" fill="#EDF0FF" stroke="#1F3BE8"/><text x="80" y="60" fill="#132a9c">f</text>
+              <rect x="150" y="35" width="80" height="40" rx="6" fill="#EDF0FF" stroke="#1F3BE8"/><text x="190" y="60" fill="#132a9c">h</text>
+              <rect x="90" y="120" width="100" height="40" rx="6" fill="#FFF6E6" stroke="#E08A00"/><text x="140" y="145" fill="#8a5200">g = f ∗ h</text>
+              <path d="M80 78 L130 118" stroke="#1F3BE8"/><path d="M190 78 L150 118" stroke="#1F3BE8"/>
+              <text x="200" y="105" fill="#C0492B" font-size="10">spatial: convolve</text>
+            </g>
+            <g class="diag-mono" font-size="12" text-anchor="middle">
+              <rect x="360" y="35" width="70" height="36" rx="6" fill="#EDF0FF" stroke="#1F3BE8"/><text x="395" y="58" fill="#132a9c">F</text>
+              <rect x="470" y="35" width="70" height="36" rx="6" fill="#EDF0FF" stroke="#1F3BE8"/><text x="505" y="58" fill="#132a9c">H</text>
+              <rect x="405" y="115" width="120" height="36" rx="6" fill="#FFF6E6" stroke="#E08A00"/><text x="465" y="138" fill="#8a5200">G = F · H</text>
+              <text x="345" y="30" fill="#6B7480" font-size="9">FT of f</text>
+              <text x="555" y="30" fill="#6B7480" font-size="9">FT of h</text>
+              <path d="M395 74 L450 113" stroke="#1F3BE8"/><path d="M505 74 L490 113" stroke="#1F3BE8"/>
+              <text x="595" y="100" fill="#C0492B" font-size="10">freq: multiply</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>Convolving f and h in space ≡ multiplying F and H in frequency — the theorem that makes frequency-domain filtering worthwhile</figcaption>
+      </figure>
+
+      <div class="remember">
+        <span class="lab">How you actually use it</span>
+        <p>To filter <span class="k">g = f ∗ h</span> without doing the expensive convolution: (1) take the FT of both — <span class="k">F</span> and <span class="k">H</span>; (2) <strong>multiply</strong> them point-wise — <span class="k">G = F·H</span>; (3) take the <strong>inverse FT</strong> of <span class="k">G</span> to get <span class="k">g</span>. For large kernels this three-step route is far cheaper than direct convolution (Topic 03).</p>
+      </div>
+
+      <div class="card">
+        <h4 style="margin-top:0">Numerical intuition — noise removal example</h4>
+        <p style="margin:0">A signal = sum of 3 sinusoids (20, 50, 80 Hz) + random noise. Filtering in the <strong>time domain</strong> with a length-5 averaging filter <span class="k">[1 1 1 1 1]/5</span> smooths it but blurs the peaks. Filtering in the <strong>frequency domain</strong> with a cut-off at 90 Hz cleanly removes the high-frequency noise while keeping the three sinusoids intact — a direct demonstration of why frequency-domain filtering is so precise for frequency-selective tasks.</p>
+      </div>
+    </section>
+
+    <!-- F16 -->
+    <section id="f16">
+      <div class="eyebrow">Topic 16</div>
+      <h3>The Frequency-Domain Filtering Pipeline</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>Frequency-domain filtering enhances an image by: transforming it to the frequency domain with the FT, multiplying by a filter function H(u,v), and transforming the result back with the inverse FT. The enhanced image is g(x,y) = Real{ ℱ⁻¹[ H(u,v)·F(u,v) ] }.</p>
+      </div>
+
+      <div class="formula">
+        <span class="cap">The complete filtering equation</span>
+        $$ g(x,y)=\text{Real}\Big\{\,\mathcal{F}^{-1}\big[\,H(u,v)\,F(u,v)\,\big]\Big\} $$
+      </div>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 180" role="img" aria-label="Pipeline: input image, FT, multiply by H(u,v), inverse FT, output image">
+            <g class="diag-mono" font-size="11" text-anchor="middle">
+              <rect x="20" y="70" width="90" height="44" rx="6" fill="#F5F5F5" stroke="#DBE0E7"/><text x="65" y="90" fill="#3A4048">f(x,y)</text><text x="65" y="105" fill="#6B7480" font-size="9">input</text>
+              <path d="M112 92 h30" stroke="#14171C"/><polygon points="146,92 136,87 136,97" fill="#14171C"/>
+              <rect x="146" y="70" width="90" height="44" rx="6" fill="#EDF0FF" stroke="#1F3BE8"/><text x="191" y="88" fill="#132a9c">Fourier</text><text x="191" y="103" fill="#132a9c">transform</text>
+              <path d="M238 92 h30" stroke="#14171C"/><polygon points="272,92 262,87 262,97" fill="#14171C"/>
+              <text x="253" y="128" fill="#6B7480" font-size="9">F(u,v)</text>
+              <rect x="272" y="66" width="96" height="52" rx="6" fill="#FFF6E6" stroke="#E08A00" stroke-width="2"/><text x="320" y="86" fill="#8a5200">Filter</text><text x="320" y="101" fill="#8a5200">H(u,v)</text>
+              <path d="M370 92 h30" stroke="#14171C"/><polygon points="404,92 394,87 394,97" fill="#14171C"/>
+              <text x="388" y="128" fill="#6B7480" font-size="8.5">H·F</text>
+              <rect x="404" y="70" width="98" height="44" rx="6" fill="#EDF0FF" stroke="#1F3BE8"/><text x="453" y="88" fill="#132a9c">Inverse</text><text x="453" y="103" fill="#132a9c">FT</text>
+              <path d="M504 92 h30" stroke="#14171C"/><polygon points="538,92 528,87 528,97" fill="#14171C"/>
+              <rect x="538" y="70" width="90" height="44" rx="6" fill="#F5F5F5" stroke="#DBE0E7"/><text x="583" y="90" fill="#3A4048">g(x,y)</text><text x="583" y="105" fill="#6B7480" font-size="9">enhanced</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>Input → FT → multiply by filter H(u,v) → inverse FT → enhanced output. (Pre/post-processing steps may bracket the pipeline.)</figcaption>
+      </figure>
+
+      <div class="remember">
+        <span class="lab">Choosing H(u,v) decides the filter</span>
+        <p>The filter function <span class="k">H(u,v)</span> is where you decide what to keep: a <strong>lowpass</strong> H (passes the centre, blocks the edges) <strong>smooths/blurs</strong>; a <strong>highpass</strong> H (blocks the centre, passes the edges) <strong>sharpens / extracts edges</strong>. This is the frequency-domain counterpart of the spatial smoothing vs sharpening filters from Module 03 — connected by the Convolution Theorem.</p>
+      </div>
+    </section>
+
+    <!-- GLOSSARY -->
+    <section id="glossary">
+      <div class="eyebrow">Cram Sheet</div>
+      <h3>All Definitions, In One Place</h3>
+      <p>Every "Definition — memorise this" box from the topics above, gathered here for a final memorization pass before the exam.</p>
+
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">1. Spatial Frequency</h4><p style="margin:0;font-size:14px">The rate of change of intensity per unit distance in an image. Rapid change over a small area = high frequency; slow change over many pixels = low frequency.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">2. Complexity of Convolution</h4><p style="margin:0;font-size:14px">Filtering an M×N image with an m×n kernel costs on the order of M·N·m·n operations (each of M·N output pixels needs m·n multiplications) — very slow for large kernels.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">3. Why the Frequency Domain</h4><p style="margin:0;font-size:14px">Frequency-domain filtering replaces spatial convolution with point-wise multiplication, taking on the order of 2MN·log₂(MN) operations via the FFT — dramatically faster for large kernels (e.g. 1 min vs 17 hours).</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">4. Fourier Idea &amp; Complex Exponentials</h4><p style="margin:0;font-size:14px">The FT describes a signal as a sum of complex exponentials of different frequencies. Each basis function is e^(jθ)=cosθ+j·sinθ (Euler), one pure frequency.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">5. Fourier Series &amp; Transform</h4><p style="margin:0;font-size:14px">Series: a periodic function as a sum of sines/cosines × coefficients. Transform: a non-periodic (finite-area) function as an integral of sines/cosines × a weighing function.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">6. Continuous Fourier Transform</h4><p style="margin:0;font-size:14px">Converts a function from the spatial/time domain to the frequency domain as a continuous spectrum; the inverse reconstructs it exactly. Not directly computable (needs all frequencies).</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">7. FT of a Kernel (frequency response)</h4><p style="margin:0;font-size:14px">The frequency response of a filter is the FT of its kernel; for a symmetric kernel it reduces to a real sum of cosine terms describing how each frequency is passed or attenuated.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">8. 2D DFT &amp; IDFT</h4><p style="margin:0;font-size:14px">The computable, sampled FT: evaluates the transform at a finite set of equally spaced frequencies. For an N₁×N₂ image it gives N₁×N₂ coefficients; the IDFT reconstructs the image exactly.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">9. Fast Fourier Transform (FFT)</h4><p style="margin:0;font-size:14px">An efficient DFT algorithm that decomposes the 2D DFT into 1D row then column DFTs (and divide-and-conquer within each), cutting cost from O(N⁴) direct toward 2N²log₂N.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">10. Algorithm Complexity</h4><p style="margin:0;font-size:14px">FFT reduces an N-point DFT from O(N²) to O(N·log₂N) (2D: O(N⁴) direct → 2N²·log₂N), making large-scale frequency processing practical.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">11. Shifting / Centering the DFT</h4><p style="margin:0;font-size:14px">Multiplying the image by (−1)^(x+y) before the DFT shifts the zero-frequency (DC) term to the centre (M/2, N/2), making the spectrum easier to view and filter.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">12. Symmetry &amp; Spectrum</h4><p style="margin:0;font-size:14px">For a real image, F(u,v)=F*(−u,−v) (conjugate symmetric), so the magnitude spectrum is symmetric: |F(u,v)|=|F(−u,−v)|. Spectrum = magnitude, phase = angle, power = |F|².</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">13. Translation &amp; Rotation</h4><p style="margin:0;font-size:14px">Translating an image changes only the FT phase, not the magnitude spectrum; rotating the image rotates its spectrum by the same angle.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">14. Low vs High Frequency</h4><p style="margin:0;font-size:14px">Low-frequency components (centre of a centered spectrum) give the general gray-level appearance; high-frequency components (outer region) give the fine detail (edges, texture).</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">15. Convolution Theorem</h4><p style="margin:0;font-size:14px">Convolution in space = multiplication in frequency: g=f∗h ⟷ G=F·H (and g=f·h ⟷ G=F∗H). This is why frequency-domain filtering works.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">16. Frequency-Domain Filtering</h4><p style="margin:0;font-size:14px">Transform to frequency, multiply by filter H(u,v), inverse-transform back: g(x,y)=Real{ℱ⁻¹[H(u,v)F(u,v)]}. Lowpass H smooths; highpass H sharpens.</p></div>
+    </section>
+
+    <footer>
+      <p class="mono">// end of module 05 — <a class="inl" href="index.html">back to all modules</a></p>
+      <p>Built for revision from the course deck (Frequency Domain Enhancement). References: Gonzalez &amp; Woods, <em>Digital Image Processing</em>, Ch. 4.</p>
+    </footer>
+
+  </main>
+</div>
+
+<script src="nav.js"></script>
+</body>
+</html>
