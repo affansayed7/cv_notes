@@ -407,7 +407,95 @@
         <span class="cap">Row-column complexity</span>
         $$ \text{RC cost}=N_1\cdot(N_2)^2 + N_2\cdot(N_1)^2 = O(N^3)\quad\text{if } N_1=N_2=N $$
       </div>
-      <p>Going from <span class="k">O(N⁴)</span> (direct) to <span class="k">O(N³)</span> (row–column separation) is already a huge saving. The true <strong>FFT</strong> algorithm applies the same divide-and-conquer idea <em>within</em> each 1D DFT as well, bringing the cost all the way down to the order of <span class="k">2MN·log₂(MN)</span> quoted in Topic 03.</p>
+      <p>Going from <span class="k">O(N⁴)</span> (direct) to <span class="k">O(N³)</span> (row–column separation) is already a huge saving. But the row–column trick only reduces a 2D DFT to many 1D DFTs — each 1D DFT is still <span class="k">O(N²)</span>. The <strong>true FFT</strong> (the Cooley–Tukey algorithm) speeds up <em>each</em> 1D DFT from <span class="k">O(N²)</span> to <span class="k">O(N·log₂N)</span>. Here is exactly how.</p>
+
+      <h4>C — How the 1D FFT actually works (Cooley–Tukey)</h4>
+      <p>Start from the 1D DFT and introduce the standard shorthand called the <strong>twiddle factor</strong> <span class="k">W_N</span>:</p>
+      <div class="formula">
+        <span class="cap">1D DFT with the twiddle factor</span>
+        $$ X(k)=\sum_{n=0}^{N-1} x(n)\,e^{-j\frac{2\pi}{N}kn}=\sum_{n=0}^{N-1} x(n)\,W_N^{\,kn}, \qquad W_N = e^{-j\frac{2\pi}{N}} $$
+      </div>
+
+      <p><strong>Step 1 — Split the sum into even and odd samples.</strong> Assume <span class="k">N</span> is a power of 2. Separate the input index <span class="k">n</span> into even indices <span class="k">n=2m</span> and odd indices <span class="k">n=2m+1</span>:</p>
+      <div class="formula">
+        <span class="cap">Split into even + odd</span>
+        $$ X(k)=\sum_{m=0}^{N/2-1} x(2m)\,W_N^{\,k(2m)} \;+\; \sum_{m=0}^{N/2-1} x(2m+1)\,W_N^{\,k(2m+1)} $$
+      </div>
+
+      <p><strong>Step 2 — Use the key twiddle-factor identity</strong> <span class="k">W_N^{2} = W_{N/2}</span>. Since <span class="k">W_N^{2km} = e^{-j\frac{2\pi}{N}2km} = e^{-j\frac{2\pi}{N/2}km} = W_{N/2}^{\,km}</span>, and factoring <span class="k">W_N^{k}</span> out of the odd sum:</p>
+      <div class="formula">
+        <span class="cap">Two half-size DFTs appear</span>
+        $$ X(k)=\underbrace{\sum_{m=0}^{N/2-1} x(2m)\,W_{N/2}^{\,km}}_{E(k)\ =\ \text{DFT of even samples}} \;+\; W_N^{\,k}\underbrace{\sum_{m=0}^{N/2-1} x(2m+1)\,W_{N/2}^{\,km}}_{O(k)\ =\ \text{DFT of odd samples}} $$
+      </div>
+      <p>So an <span class="k">N</span>-point DFT is built from <strong>two</strong> <span class="k">N/2</span>-point DFTs — one over the even-indexed samples (<span class="k">E(k)</span>) and one over the odd-indexed samples (<span class="k">O(k)</span>). This is the <strong>divide</strong> step.</p>
+
+      <p><strong>Step 3 — The butterfly (combine step).</strong> We only computed <span class="k">E(k)</span> and <span class="k">O(k)</span> for <span class="k">k = 0 … N/2−1</span>. To get the upper half of the spectrum, use the periodicity of the half-size DFTs (<span class="k">E(k+N/2)=E(k)</span>, <span class="k">O(k+N/2)=O(k)</span>) and the identity <span class="k">W_N^{\,k+N/2} = -W_N^{\,k}</span>:</p>
+      <div class="formula">
+        <span class="cap">The butterfly equations</span>
+        $$ X(k) = E(k) + W_N^{\,k}\,O(k) $$
+        $$ X\!\left(k+\tfrac{N}{2}\right) = E(k) - W_N^{\,k}\,O(k) \qquad k=0,1,\dots,\tfrac{N}{2}-1 $$
+      </div>
+      <p>Each pair of outputs is computed from the same <span class="k">E(k)</span>, <span class="k">O(k)</span>, and one twiddle multiply — a "+" and a "−". Drawn as a signal-flow graph, this crossing pattern looks like a butterfly:</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 500 200" role="img" aria-label="A single FFT butterfly: E(k) and O(k) combine with twiddle factor to produce two outputs by addition and subtraction">
+            <text x="250" y="18" class="diag-mono" font-size="12" fill="#6B7480" text-anchor="middle">one butterfly</text>
+            <circle cx="80" cy="60" r="4" fill="#1F3BE8"/><text x="55" y="64" class="diag-mono" font-size="12" fill="#132a9c">E(k)</text>
+            <circle cx="80" cy="150" r="4" fill="#1F3BE8"/><text x="55" y="154" class="diag-mono" font-size="12" fill="#132a9c">O(k)</text>
+            <circle cx="420" cy="60" r="4" fill="#E08A00"/><text x="430" y="64" class="diag-mono" font-size="12" fill="#8a5200">X(k)</text>
+            <circle cx="420" cy="150" r="4" fill="#E08A00"/><text x="430" y="154" class="diag-mono" font-size="11" fill="#8a5200">X(k+N/2)</text>
+            <line x1="80" y1="60" x2="420" y2="60" stroke="#14171C" stroke-width="1.4"/>
+            <line x1="80" y1="150" x2="420" y2="60" stroke="#14171C" stroke-width="1.4"/>
+            <line x1="80" y1="60" x2="420" y2="150" stroke="#14171C" stroke-width="1.4"/>
+            <line x1="80" y1="150" x2="420" y2="150" stroke="#14171C" stroke-width="1.4"/>
+            <rect x="215" y="140" width="70" height="22" rx="4" fill="#FFF6E6" stroke="#E08A00"/>
+            <text x="250" y="156" class="diag-mono" font-size="11" fill="#8a5200" text-anchor="middle">× Wₙᵏ</text>
+            <text x="405" y="48" class="diag-mono" font-size="14" fill="#3A7D44">+</text>
+            <text x="405" y="140" class="diag-mono" font-size="14" fill="#C0492B">−</text>
+          </svg>
+        </div>
+        <figcaption>The butterfly: two inputs E(k), O(k) → two outputs via one twiddle multiply, then add (top) and subtract (bottom)</figcaption>
+      </figure>
+
+      <p><strong>Step 4 — Recurse.</strong> Each <span class="k">N/2</span>-point DFT splits into two <span class="k">N/4</span>-point DFTs, and so on, until we reach trivial 1-point DFTs. There are <span class="k">log₂N</span> stages, and each stage does <span class="k">N/2</span> butterflies (≈ <span class="k">N</span> operations). This is the whole speed-up:</p>
+      <div class="formula">
+        <span class="cap">1D FFT complexity</span>
+        $$ \underbrace{\log_2 N}_{\text{stages}} \times \underbrace{\tfrac{N}{2}\ \text{butterflies}}_{\approx\, N\ \text{ops/stage}} \;=\; O(N\log_2 N) \quad\text{vs. } O(N^2)\text{ for the direct DFT} $$
+      </div>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 620 220" role="img" aria-label="8-point FFT decomposition tree: 8-point splits into two 4-point, into four 2-point, into eight 1-point DFTs, over 3 stages">
+            <text x="310" y="16" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">8-point FFT = 3 stages (log₂8 = 3)</text>
+            <g class="diag-mono" font-size="10" text-anchor="middle">
+              <rect x="270" y="28" width="80" height="26" rx="5" fill="#EDF0FF" stroke="#1F3BE8"/><text x="310" y="45" fill="#132a9c">8-pt DFT</text>
+              <line x1="290" y1="54" x2="190" y2="80" stroke="#1F3BE8"/><line x1="330" y1="54" x2="430" y2="80" stroke="#1F3BE8"/>
+              <rect x="150" y="82" width="80" height="24" rx="5" fill="#EDF0FF" stroke="#1F3BE8"/><text x="190" y="98" fill="#132a9c">4-pt (even)</text>
+              <rect x="390" y="82" width="80" height="24" rx="5" fill="#EDF0FF" stroke="#1F3BE8"/><text x="430" y="98" fill="#132a9c">4-pt (odd)</text>
+              <line x1="170" y1="106" x2="120" y2="130" stroke="#1F3BE8"/><line x1="210" y1="106" x2="260" y2="130" stroke="#1F3BE8"/>
+              <line x1="410" y1="106" x2="360" y2="130" stroke="#1F3BE8"/><line x1="450" y1="106" x2="500" y2="130" stroke="#1F3BE8"/>
+              <rect x="90" y="132" width="60" height="22" rx="5" fill="#FFF6E6" stroke="#E08A00"/><text x="120" y="147" fill="#8a5200">2-pt</text>
+              <rect x="232" y="132" width="60" height="22" rx="5" fill="#FFF6E6" stroke="#E08A00"/><text x="262" y="147" fill="#8a5200">2-pt</text>
+              <rect x="330" y="132" width="60" height="22" rx="5" fill="#FFF6E6" stroke="#E08A00"/><text x="360" y="147" fill="#8a5200">2-pt</text>
+              <rect x="472" y="132" width="60" height="22" rx="5" fill="#FFF6E6" stroke="#E08A00"/><text x="502" y="147" fill="#8a5200">2-pt</text>
+              <text x="310" y="185" fill="#6B7480" font-size="10">→ eight trivial 1-point DFTs at the bottom</text>
+              <text x="310" y="202" fill="#6B7480" font-size="9.5">each stage ≈ N ops · 3 stages · = O(N log₂N)</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>Divide-and-conquer: an 8-point DFT halves 3 times down to 1-point DFTs — log₂N = 3 stages</figcaption>
+      </figure>
+
+      <div class="card">
+        <h4 style="margin-top:0">Worked complexity comparison — N = 1024</h4>
+        <p style="margin:0">Direct DFT: <span class="k">N² = 1024² ≈ 1.05 × 10⁶</span> operations. FFT: <span class="k">N·log₂N = 1024 × 10 ≈ 1.0 × 10⁴</span> operations. That's roughly a <strong>100× speed-up</strong> for a 1024-point transform — and the gap grows as N increases (for N=10⁶, it's a ~50,000× speed-up).</p>
+      </div>
+
+      <div class="remember">
+        <span class="lab">The FFT in one breath (for the exam)</span>
+        <p>Split the DFT sum into <strong>even and odd</strong> indexed samples → each becomes a half-size DFT (<span class="k">E</span>, <span class="k">O</span>) using <span class="k">W_N² = W_{N/2}</span> → recombine with the <strong>butterfly</strong> <span class="k">X(k)=E(k)+W_N^k O(k)</span>, <span class="k">X(k+N/2)=E(k)−W_N^k O(k)</span> using <span class="k">W_N^{k+N/2}=−W_N^k</span> → recurse for <span class="k">log₂N</span> stages → total <span class="k">O(N log₂N)</span>. For 2D images, apply this 1D FFT to every row, then every column.</p>
+      </div>
     </section>
 
     <!-- F10 -->
