@@ -146,7 +146,40 @@
         <p>The computational cost of spatial convolution is the number of multiply-add operations required to slide a kernel across an image. Filtering an M×N image with an m×n kernel costs on the order of M·N·m·n operations, because each of the M·N output pixels requires m·n multiplications.</p>
       </div>
 
-      <p>Spatial filtering (Module 03) is a <strong>convolution</strong> operation — average filters, Gaussian filters, median filters, gradient masks, Laplacian masks are all applied by sliding a kernel. The cost:</p>
+      <p>Spatial filtering (Module 03) is a <strong>convolution</strong> operation — average filters, Gaussian filters, median filters, gradient masks, Laplacian masks are all applied by sliding a kernel over the image, one pixel at a time:</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 560 150" role="img" aria-label="A 3x3 kernel window multiplied against an image region and summed to give one output pixel, then the window slides to the next position">
+            <text x="130" y="18" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">image region × kernel → ONE output pixel</text>
+            <g class="diag-mono" font-size="12" text-anchor="middle">
+              <rect x="30" y="30" width="150" height="90" fill="#fff" stroke="#DBE0E7"/>
+              <line x1="80" y1="30" x2="80" y2="120" stroke="#E9EDF2"/><line x1="130" y1="30" x2="130" y2="120" stroke="#E9EDF2"/>
+              <line x1="30" y1="60" x2="180" y2="60" stroke="#E9EDF2"/><line x1="30" y1="90" x2="180" y2="90" stroke="#E9EDF2"/>
+              <text x="55" y="50">10</text><text x="105" y="50">20</text><text x="155" y="50">30</text>
+              <text x="55" y="80">40</text><text x="105" y="80">50</text><text x="155" y="80">60</text>
+              <text x="55" y="110">70</text><text x="105" y="110">80</text><text x="155" y="110">90</text>
+            </g>
+            <text x="200" y="80" class="diag-mono" font-size="16" fill="#6B7480">×</text>
+            <g class="diag-mono" font-size="12" fill="#132a9c" text-anchor="middle">
+              <rect x="220" y="30" width="120" height="90" fill="#EDF0FF" stroke="#1F3BE8"/>
+              <line x1="260" y1="30" x2="260" y2="120" stroke="#C9D2FF"/><line x1="300" y1="30" x2="300" y2="120" stroke="#C9D2FF"/>
+              <line x1="220" y1="60" x2="340" y2="60" stroke="#C9D2FF"/><line x1="220" y1="90" x2="340" y2="90" stroke="#C9D2FF"/>
+              <text x="240" y="50">1</text><text x="280" y="50">1</text><text x="320" y="50">1</text>
+              <text x="240" y="80">1</text><text x="280" y="80">1</text><text x="320" y="80">1</text>
+              <text x="240" y="110">1</text><text x="280" y="110">1</text><text x="320" y="110">1</text>
+            </g>
+            <path d="M355 75 h35" stroke="#14171C" stroke-width="1.8"/>
+            <polygon points="396,75 384,69 384,81" fill="#14171C"/>
+            <text x="372" y="63" class="diag-mono" font-size="9" fill="#6B7480" text-anchor="middle">Σ</text>
+            <rect x="405" y="55" width="60" height="40" rx="6" fill="#FFF6E6" stroke="#E08A00"/>
+            <text x="435" y="80" class="diag-mono" font-size="14" fill="#8a5200" text-anchor="middle">450</text>
+            <text x="130" y="140" class="diag-txt" font-size="10" fill="#6B7480" text-anchor="middle">then slide one pixel right, and repeat — for EVERY pixel in the image</text>
+          </svg>
+        </div>
+        <figcaption>Multiply + add for one output pixel, then slide and repeat across the whole image — this repetition is what gets expensive</figcaption>
+      </figure>
+
       <div class="formula">
         <span class="cap">Cost of spatial convolution</span>
         $$ \text{operations} \;\propto\; M\cdot N\cdot m\cdot n $$
@@ -156,8 +189,17 @@
         <span class="cap">One output pixel, 3×3 kernel [1 0 −1; 1 0 −1; 1 0 −1]</span>
         $$ (1{\times}1)+(8{\times}1)+(2{\times}1)+(2{\times}0)+(9{\times}0)+(5{\times}0)+(7{\times}{-}1)+(3{\times}{-}1)+(1{\times}{-}1)=0 $$
       </div>
+
+      <div class="card">
+        <h4 style="margin-top:0">Why a large kernel is the real problem — with real numbers</h4>
+        <p>Image size <span class="k">2048 × 2048 ≈ 4 million pixels</span>. Kernel size <span class="k">201 × 201 = 40,401</span> values.</p>
+        <div class="formula" style="margin:10px 0">
+          $$ \underbrace{4{,}000{,}000}_{\text{pixels}} \times \underbrace{40{,}401}_{\text{ops per pixel}} \;=\; \text{a huge number of operations} $$
+        </div>
+        <p style="margin:0">For <strong>every single pixel</strong> in the image, you redo a 40,401-multiplication sum. That repetition, over 4 million pixels, is exactly why spatial convolution with a large kernel is so slow.</p>
+      </div>
       <div class="warn">
-        <span class="lab">The problem</span>
+        <span class="lab">The problem, in one line</span>
         <p>When the kernel is <strong>large</strong> (e.g. 201×201), <span class="k">m·n</span> becomes huge, and spatial convolution becomes extremely slow. This is the motivation for the frequency domain.</p>
       </div>
     </section>
@@ -170,9 +212,56 @@
         <p>Filtering in the frequency domain replaces the expensive spatial convolution with a simple point-wise multiplication of Fourier transforms. It takes on the order of 2MN·log₂(MN) operations using the FFT, which is dramatically faster than direct convolution for large kernels.</p>
       </div>
 
+      <p>Instead of repeatedly sliding and summing in space, the frequency-domain route transforms the problem into one simple operation:</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 220" role="img" aria-label="Spatial route: image and kernel convolved directly, expensive. Frequency route: FFT both, multiply pointwise, inverse FFT, much cheaper">
+            <text x="140" y="18" class="diag-mono" font-size="12" fill="#C0492B" text-anchor="middle">SPATIAL DOMAIN — expensive</text>
+            <g class="diag-mono" font-size="11" text-anchor="middle">
+              <rect x="40" y="35" width="90" height="36" rx="6" fill="#F5F5F5" stroke="#DBE0E7"/><text x="85" y="58" fill="#3A4048">Image</text>
+              <text x="140" y="58" fill="#6B7480" font-size="16">*</text>
+              <rect x="150" y="35" width="90" height="36" rx="6" fill="#F5F5F5" stroke="#DBE0E7"/><text x="195" y="58" fill="#3A4048">Kernel</text>
+              <path d="M140 80 v25" stroke="#14171C"/><polygon points="140,112 134,100 146,100" fill="#14171C"/>
+              <rect x="65" y="115" width="150" height="40" rx="6" fill="#FDECEC" stroke="#C0492B" stroke-width="1.6"/>
+              <text x="140" y="132" fill="#7f1d1d" font-weight="700">convolution</text>
+              <text x="140" y="147" fill="#7f1d1d" font-size="9.5">move + multiply + add, per pixel</text>
+            </g>
+            <text x="140" y="185" class="diag-mono" font-size="12" fill="#C0492B" text-anchor="middle">≈ 17 hours (201×201 kernel, 2048×2048 image)</text>
+
+            <line x1="320" y1="20" x2="320" y2="210" stroke="#DBE0E7" stroke-dasharray="4 3"/>
+
+            <text x="480" y="18" class="diag-mono" font-size="12" fill="#3A7D44" text-anchor="middle">FREQUENCY DOMAIN — cheap</text>
+            <g class="diag-mono" font-size="10.5" text-anchor="middle">
+              <rect x="360" y="30" width="80" height="30" rx="5" fill="#EDF0FF" stroke="#1F3BE8"/><text x="400" y="50" fill="#132a9c">Image</text>
+              <path d="M400 60 v18" stroke="#1F3BE8"/><polygon points="400,84 395,74 405,74" fill="#1F3BE8"/>
+              <rect x="365" y="86" width="70" height="26" rx="5" fill="#EDF0FF" stroke="#1F3BE8"/><text x="400" y="103" fill="#132a9c" font-size="9.5">FFT</text>
+
+              <rect x="520" y="30" width="80" height="30" rx="5" fill="#EDF0FF" stroke="#1F3BE8"/><text x="560" y="50" fill="#132a9c">Kernel</text>
+              <path d="M560 60 v18" stroke="#1F3BE8"/><polygon points="560,84 555,74 565,74" fill="#1F3BE8"/>
+              <rect x="525" y="86" width="70" height="26" rx="5" fill="#EDF0FF" stroke="#1F3BE8"/><text x="560" y="103" fill="#132a9c" font-size="9.5">FFT</text>
+
+              <path d="M400 112 v14 h160 v-14" fill="none" stroke="#14171C"/>
+              <path d="M480 126 v14" stroke="#14171C"/><polygon points="480,146 474,136 486,136" fill="#14171C"/>
+              <rect x="440" y="148" width="80" height="30" rx="6" fill="#FFF6E6" stroke="#E08A00" stroke-width="1.6"/>
+              <text x="480" y="167" fill="#8a5200" font-weight="700">× multiply</text>
+              <path d="M480 178 v14" stroke="#14171C"/><polygon points="480,198 474,188 486,188" fill="#14171C"/>
+              <rect x="425" y="200" width="110" height="14" fill="none"/>
+            </g>
+            <text x="480" y="215" class="diag-mono" font-size="9.5" fill="#3A7D44" text-anchor="middle">→ Inverse FFT → output image, ≈ 1 minute</text>
+          </svg>
+        </div>
+        <figcaption>Same task, two routes: sliding convolution in space vs. transform-multiply-untransform in frequency</figcaption>
+      </figure>
+
       <div class="formula">
         <span class="cap">Frequency-domain filtering cost (via FFT)</span>
         $$ \text{operations} \;\propto\; 2MN\log_2(MN) $$
+      </div>
+
+      <div class="remember">
+        <span class="lab">Why multiplication is so much cheaper than convolution</span>
+        <p>Spatial convolution repeats "multiply + add + multiply + add + …" for every window position — that's the expensive part. The Convolution Theorem says <span class="k">F(Image * Kernel) = F(Image) × F(Kernel)</span>: once both are in the frequency domain, filtering is just <strong>one point-wise multiplication</strong> per frequency — no sliding window at all. The FFT itself isn't free, but its cost (<span class="k">O(MN log MN)</span>) barely grows with kernel size, whereas spatial convolution's cost grows directly with <span class="k">m·n</span>.</p>
       </div>
 
       <div class="card">
@@ -186,9 +275,15 @@
           </tbody>
         </table></div>
       </div>
+
+      <div class="warn">
+        <span class="lab">But frequency domain isn't always better — the exam trap</span>
+        <p><strong>Small kernel</strong> (3×3, 5×5, 7×7): spatial filtering is perfectly fine — the FFT→multiply→inverse-FFT overhead isn't worth paying. <strong>Large kernel</strong> (101×101, 201×201, 501×501): spatial convolution becomes extremely expensive, and frequency-domain filtering becomes clearly worthwhile. The rule: <strong>small kernel → stay in spatial domain; large kernel → frequency domain wins.</strong></p>
+      </div>
+
       <div class="remember">
-        <span class="lab">The whole reason this chapter exists</span>
-        <p>For small kernels, spatial convolution is fine. For <strong>large</strong> kernels, transforming to the frequency domain, multiplying, and transforming back is enormously faster — because convolution in space becomes multiplication in frequency (the Convolution Theorem, Topic 15).</p>
+        <span class="lab">Exam-ready answer, if asked "why go to the frequency domain?"</span>
+        <p>"Frequency-domain filtering is used because convolution in the spatial domain can be very expensive for large kernels. By the <strong>Convolution Theorem</strong>, spatial convolution becomes point-wise multiplication in the frequency domain. Using the <strong>FFT</strong>, filtering can be performed in approximately <span class="k">O(MN log(MN))</span> operations, making it much faster for large kernels." One sentence to remember above all: <span class="k">Convolution in space ⟷ Multiplication in frequency</span>.</p>
       </div>
     </section>
 
