@@ -41,6 +41,7 @@
     <div class="nav-label">Fourier Foundations</div>
     <nav class="nav">
       <a href="#f4"><span class="num">04</span> The Core Idea &amp; Complex Exponentials</a>
+      <a href="#f4b"><span class="num">04b</span> Discrete Cosine Transform (DCT)</a>
       <a href="#f5"><span class="num">05</span> Fourier Series &amp; Transform</a>
       <a href="#f6"><span class="num">06</span> Continuous Fourier Transform</a>
       <a href="#f7"><span class="num">07</span> Worked Example: FT of a Kernel</a>
@@ -63,6 +64,16 @@
       <a href="#f15"><span class="num">15</span> The Convolution Theorem</a>
       <a href="#f16"><span class="num">16</span> Frequency-Domain Filtering Pipeline</a>
     </nav>
+    <div class="nav-label">Filter Design</div>
+    <nav class="nav">
+      <a href="#f17"><span class="num">17</span> Steps of Performing Filtering</a>
+      <a href="#f18"><span class="num">18</span> The Need for Padding</a>
+      <a href="#f19"><span class="num">19</span> Frequency-Based Filters Overview</a>
+      <a href="#f20"><span class="num">20</span> Ideal Lowpass (ILPF) &amp; Ringing</a>
+      <a href="#f21"><span class="num">21</span> Gaussian Lowpass (GLPF)</a>
+      <a href="#f22"><span class="num">22</span> Butterworth Lowpass (BLPF)</a>
+      <a href="#f23"><span class="num">23</span> Highpass Filters</a>
+    </nav>
     <div class="nav-label">Revision</div>
     <nav class="nav">
       <a href="#glossary"><span class="num">★</span> All Definitions — Cram Sheet</a>
@@ -75,7 +86,7 @@
       <h2>Frequency Domain <em>Enhancement.</em></h2>
       <p>The most derivation-heavy chapter — every formula worked out step by step: spatial frequency, the complexity argument for going frequency-domain, the Fourier series/transform, the continuous FT, the 2D DFT/IDFT, the FFT decomposition with full complexity analysis, DFT properties (shift, symmetry, translation, rotation), and the convolution theorem behind frequency-domain filtering. Numericals included wherever they can be asked.</p>
       <div class="meta">
-        <span class="chip">16 <b>topics</b></span>
+        <span class="chip">24 <b>topics</b></span>
         <span class="chip">Gonzalez &amp; Woods · <b>Ch. 4</b></span>
         <span class="chip">Full derivations + numericals</span>
       </div>
@@ -218,6 +229,70 @@
         </div>
         <figcaption>Same shape, different ω: small ω oscillates slowly (low freq), large ω oscillates rapidly (high freq)</figcaption>
       </figure>
+
+      <h4>2D complex exponentials are periodic</h4>
+      <p>A crucial property: the 2D complex exponential is <strong>periodic</strong> in both directions. <span class="k">e^{j(ω₁(n₁+N₁)+ω₂n₂)} = e^{j(ω₁n₁+ω₂n₂)}</span> whenever <span class="k">ω₁N₁</span> is a multiple of <span class="k">2π</span>. This periodicity is what lets a finite set of these basis functions represent any repeating pattern in an image — and it is why the discrete transform (Topic 08) only needs a finite number of frequencies.</p>
+    </section>
+
+    <!-- F4b DCT -->
+    <section id="f4b">
+      <div class="eyebrow">Topic 04b</div>
+      <h3>The Discrete Cosine Transform (DCT)</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The Discrete Cosine Transform (DCT) expresses a signal as a sum of cosine functions of different frequencies. Unlike the Fourier transform it uses only real-valued cosines (no imaginary part), which makes it especially useful for image compression (it is the core of JPEG).</p>
+      </div>
+
+      <h4>1D discrete cosine</h4>
+      <p>Start from a simple 1D cosine <span class="k">cos(ωt)</span>. As the frequency <span class="k">ω</span> increases from <span class="k">0</span> → <span class="k">π/8</span> → <span class="k">π/4</span> → … the cosine oscillates faster. A signal is built as a weighted sum of these cosines at different frequencies:</p>
+      <div class="formula">
+        <span class="cap">1D DCT (analysis)</span>
+        $$ X(k)=\sum_{n=0}^{N-1} x(n)\cos\!\left[\frac{\pi}{N}\left(n+\tfrac{1}{2}\right)k\right], \qquad k=0,1,\dots,N-1 $$
+      </div>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 150" role="img" aria-label="Cosine waves at increasing frequencies: DC (flat), low, higher">
+            <g transform="translate(10,10)">
+              <text x="90" y="10" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">ω=0 (DC, flat)</text>
+              <line x1="10" y1="70" x2="170" y2="70" stroke="#DBE0E7"/>
+              <line x1="10" y1="45" x2="170" y2="45" stroke="#1F3BE8" stroke-width="2"/>
+            </g>
+            <g transform="translate(230,10)">
+              <text x="90" y="10" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">ω=π/8 (low)</text>
+              <line x1="10" y1="70" x2="170" y2="70" stroke="#DBE0E7"/>
+              <path d="M10 45 Q 55 20 100 70 T 190 70" fill="none" stroke="#1F3BE8" stroke-width="2"/>
+            </g>
+            <g transform="translate(450,10)">
+              <text x="90" y="10" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">ω=π/4 (higher)</text>
+              <line x1="10" y1="70" x2="170" y2="70" stroke="#DBE0E7"/>
+              <path d="M10 45 Q 33 20 55 70 T 100 70 T 145 70 T 190 70" fill="none" stroke="#E08A00" stroke-width="2"/>
+            </g>
+          </svg>
+        </div>
+        <figcaption>DCT basis: cosines of increasing frequency. Any 1D signal = a weighted sum of these</figcaption>
+      </figure>
+
+      <div class="remember">
+        <span class="lab">Period–frequency relationship (memorise this)</span>
+        <p>The <strong>period N</strong> (number of samples per full cycle) of a discrete cosine <span class="k">cos(ωn)</span> is:</p>
+        <div class="formula" style="margin:8px 0 0"><span class="cap">Period from frequency</span>$$ N=\frac{2\pi}{\omega} $$</div>
+        <div class="twrap" style="margin-top:8px"><table>
+          <thead><tr><th>ω</th><th>π/8</th><th>π/4</th><th>π/2</th><th>π</th></tr></thead>
+          <tbody><tr><td><strong>N = 2π/ω</strong></td><td>16</td><td>8</td><td>4</td><td>2</td></tr></tbody>
+        </table></div>
+        <p style="margin-top:8px">Higher <span class="k">ω</span> → smaller period <span class="k">N</span> → the cosine oscillates faster (fewer samples per cycle). At <span class="k">ω=π</span>, <span class="k">N=2</span> — the fastest a discrete signal can alternate (+,−,+,−…).</p>
+      </div>
+
+      <h4>2D discrete cosine</h4>
+      <p>Extending to images, the 2D DCT uses <strong>2D cosine basis patterns</strong> (a grid of increasingly fine checkerboard-like cosine patterns). Each image block is written as a weighted sum of these patterns:</p>
+      <div class="formula">
+        <span class="cap">2D DCT</span>
+        $$ X(k_1,k_2)=\sum_{n_1=0}^{N_1-1}\sum_{n_2=0}^{N_2-1} x(n_1,n_2)\cos\!\left[\frac{\pi}{N_1}\!\left(n_1+\tfrac12\right)k_1\right]\cos\!\left[\frac{\pi}{N_2}\!\left(n_2+\tfrac12\right)k_2\right] $$
+      </div>
+      <div class="remember">
+        <span class="lab">Why the DCT matters — JPEG</span>
+        <p>Natural images have most of their energy in the <strong>low-frequency</strong> cosine patterns. The DCT concentrates that energy into a few coefficients (the top-left of the block), so the high-frequency coefficients can be quantized away with little visible loss. This "energy compaction" is exactly why <strong>JPEG uses the 8×8 DCT</strong>. The DCT uses only real cosines (no <span class="k">j</span>), which is cheaper and avoids complex arithmetic.</p>
+      </div>
     </section>
 
     <!-- F5 -->
@@ -295,7 +370,26 @@
         <p>The frequency response of a spatial filter is the Fourier transform of its kernel. For a symmetric kernel, the transform reduces to a real-valued sum of cosine terms, one per distinct coefficient offset, which describes how the filter attenuates or passes each frequency.</p>
       </div>
 
-      <p>This is the type of numerical you can be asked: "find the frequency response <span class="k">H(ω₁, ω₂)</span> of the given kernel." Consider a small symmetric smoothing kernel <span class="k">h(n₁, n₂)</span> with these weights (a discrete Gaussian-like filter):</p>
+      <p>This is the type of numerical you can be asked: "find the frequency response <span class="k">H(ω₁, ω₂)</span> of the given kernel."</p>
+
+      <h4>Example A — the plus-shaped (5-point) smoothing kernel</h4>
+      <p>A simple separable-looking blur with a heavy centre and its 4 edge-neighbours:</p>
+      <div class="formula">
+        <span class="cap">Given kernel</span>
+        $$ h(n_1,n_2)=\begin{bmatrix} 0 & \tfrac{1}{6} & 0\\[2pt] \tfrac{1}{6} & \tfrac{1}{3} & \tfrac{1}{6}\\[2pt] 0 & \tfrac{1}{6} & 0 \end{bmatrix} $$
+      </div>
+      <p>Take the DTFT — only 5 non-zero terms. The centre <span class="k">1/3</span> contributes a constant; each opposite pair of <span class="k">1/6</span> neighbours combines via <span class="k">e^{jθ}+e^{-jθ}=2\cos θ</span>:</p>
+      <div class="formula">
+        <span class="cap">Frequency response</span>
+        $$ H(\omega_1,\omega_2)=\tfrac{1}{3} + \tfrac{1}{6}\cdot 2\cos\omega_1 + \tfrac{1}{6}\cdot 2\cos\omega_2 = \tfrac{1}{3} + \tfrac{1}{3}\cos\omega_1 + \tfrac{1}{3}\cos\omega_2 $$
+      </div>
+      <div class="remember">
+        <span class="lab">Is it a smoothing or a sharpening filter?</span>
+        <p>Check the coefficient sum: <span class="k">1/3 + 4×(1/6) = 1/3 + 2/3 = 1</span> → it <strong>passes the average (DC) unchanged</strong>. At DC (<span class="k">ω₁=ω₂=0</span>): <span class="k">H = 1/3 + 1/3 + 1/3 = 1</span> (maximum). At the highest frequency (<span class="k">ω₁=ω₂=π</span>): <span class="k">H = 1/3 − 1/3 − 1/3 = −1/3</span> (small/attenuated). So <span class="k">H</span> is <strong>high at low frequencies and low at high frequencies → this is a blur (lowpass/smoothing) filter</strong>. Its <span class="k">|H|</span> plot is a dome peaked at the centre.</p>
+      </div>
+
+      <h4>Example B — the 3×3 Gaussian kernel</h4>
+      <p>Same method, a fuller symmetric smoothing kernel <span class="k">h(n₁, n₂)</span> (a discrete Gaussian):</p>
       <div class="formula">
         <span class="cap">Given kernel</span>
         $$ h(n_1,n_2)=\begin{bmatrix} 0.075 & 0.124 & 0.075\\ 0.124 & 0.204 & 0.124\\ 0.075 & 0.124 & 0.075 \end{bmatrix} $$
@@ -747,6 +841,272 @@
       </div>
     </section>
 
+    <!-- F17 steps -->
+    <section id="f17">
+      <div class="eyebrow">Topic 17 · Filter Design</div>
+      <h3>Steps of Performing Frequency-Domain Filtering</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The standard frequency-domain filtering procedure pads the image, centers its transform, multiplies by a filter transfer function H(u,v), inverse-transforms, and crops back to the original size. Padding to P=2M, Q=2N is required to prevent wraparound (circular-convolution) errors.</p>
+      </div>
+
+      <div class="card">
+        <h4 style="margin-top:0">The 8-step procedure (Gonzalez &amp; Woods)</h4>
+        <ol style="margin-bottom:0">
+          <li>Given an input image <span class="k">f(x,y)</span> of size <span class="k">M×N</span>, obtain padding sizes <span class="k">P = 2M</span> and <span class="k">Q = 2N</span>.</li>
+          <li>Form a <strong>padded</strong> image <span class="k">f_p(x,y)</span> of size <span class="k">P×Q</span> using zero-, mirror-, or replicate-padding.</li>
+          <li>Multiply <span class="k">f_p(x,y)</span> by <span class="k">(−1)^{x+y}</span> to <strong>center</strong> the transform on the P×Q frequency rectangle.</li>
+          <li>Compute the DFT <span class="k">F(u,v)</span> of the image from step 3.</li>
+          <li>Construct a real, symmetric filter transfer function <span class="k">H(u,v)</span> of size P×Q, centered at <span class="k">(P/2, Q/2)</span>.</li>
+          <li>Form the product <span class="k">G(u,v) = H(u,v)·F(u,v)</span> by <strong>elementwise</strong> multiplication.</li>
+          <li>Obtain the filtered image (size P×Q): <span class="k">g_p(x,y) = Real{ℱ⁻¹[G(u,v)]}·(−1)^{x+y}</span>.</li>
+          <li>Obtain the final result <span class="k">g(x,y)</span> of size <span class="k">M×N</span> by extracting the top-left M×N region from <span class="k">g_p(x,y)</span>.</li>
+        </ol>
+      </div>
+      <div class="remember">
+        <span class="lab">The (−1)^(x+y) appears twice</span>
+        <p>Once in step 3 (to center the spectrum before filtering) and again in step 7 (to undo the centering after the inverse transform). Both are needed for the result to come out correct and right-side-up.</p>
+      </div>
+    </section>
+
+    <!-- F18 padding -->
+    <section id="f18">
+      <div class="eyebrow">Topic 18</div>
+      <h3>The Need for Padding</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>Multiplication in the frequency domain corresponds to circular (periodic) convolution in the spatial domain. Because both functions are treated as periodic, without padding the tail of one period wraps around and corrupts the other — so the image and filter are zero-padded to P=2M, Q=2N to give the linear-convolution result.</p>
+      </div>
+
+      <ul>
+        <li>Because we are convolving two <strong>periodic</strong> functions, the convolution itself is periodic — adjacent periods can overlap and interfere. This is called <strong>wraparound error</strong>.</li>
+        <li>Multiplication in the frequency domain <span class="k">G = H·F</span> corresponds to <strong>circular convolution</strong> in the spatial domain, not the linear convolution we actually want.</li>
+        <li>Padding both functions to size <span class="k">P = 2M</span>, <span class="k">Q = 2N</span> (or at least <span class="k">P ≥ 2M−1</span>) separates the periods enough that the circular convolution equals the desired <strong>linear convolution</strong>.</li>
+      </ul>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 150" role="img" aria-label="Without padding, periods overlap causing wraparound; with padding they are separated">
+            <text x="150" y="16" class="diag-mono" font-size="11" fill="#C0492B" text-anchor="middle">no padding — periods overlap</text>
+            <rect x="40" y="30" width="90" height="60" fill="#EDF0FF" stroke="#1F3BE8"/>
+            <rect x="125" y="30" width="90" height="60" fill="#FDECEC" stroke="#C0492B"/>
+            <rect x="115" y="30" width="20" height="60" fill="#C0492B" opacity=".35"/>
+            <text x="150" y="108" class="diag-txt" font-size="10" fill="#6B7480" text-anchor="middle">tail wraps into next period ✗</text>
+
+            <text x="480" y="16" class="diag-mono" font-size="11" fill="#3A7D44" text-anchor="middle">padded to 2M — periods clear</text>
+            <rect x="370" y="30" width="70" height="60" fill="#EDF0FF" stroke="#1F3BE8"/>
+            <rect x="440" y="30" width="50" height="60" fill="#F5F5F5" stroke="#DBE0E7" stroke-dasharray="3 3"/>
+            <rect x="500" y="30" width="70" height="60" fill="#E4F5E9" stroke="#3A7D44"/>
+            <rect x="570" y="30" width="30" height="60" fill="#F5F5F5" stroke="#DBE0E7" stroke-dasharray="3 3"/>
+            <text x="480" y="108" class="diag-txt" font-size="10" fill="#6B7480" text-anchor="middle">zero-pad (grey) gives clean separation ✓</text>
+          </svg>
+        </div>
+        <figcaption>Padding to P=2M, Q=2N prevents one period's convolution tail from wrapping into the next</figcaption>
+      </figure>
+    </section>
+
+    <!-- F19 filter overview -->
+    <section id="f19">
+      <div class="eyebrow">Topic 19</div>
+      <h3>Frequency-Based Filters — Overview</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>A lowpass filter passes low-frequency components and attenuates high frequencies, which blurs (smooths) the image. A highpass filter passes high-frequency components and attenuates low frequencies, which sharpens the image and extracts edges.</p>
+      </div>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Filter</th><th>Passes</th><th>Blocks</th><th>Effect on image</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Lowpass (LPF)</strong></td><td>low frequencies (centre)</td><td>high frequencies (edges of spectrum)</td><td><strong>blurs / smooths</strong> — restricts data to low-freq components</td></tr>
+            <tr><td><strong>Highpass (HPF)</strong></td><td>high frequencies</td><td>low frequencies</td><td><strong>sharpens / extracts edges</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Each comes in <strong>three flavours</strong> — Ideal, Butterworth, and Gaussian — which differ in how sharply they cut off. The distance from the centre of the (centered) frequency rectangle is:</p>
+      <div class="formula">
+        <span class="cap">Distance from the frequency-domain centre</span>
+        $$ D(u,v)=\Big[(u-\tfrac{M}{2})^2+(v-\tfrac{N}{2})^2\Big]^{1/2} $$
+      </div>
+      <p><span class="k">D₀</span> (a chosen constant) is the <strong>cutoff frequency</strong> — the radius at which the filter transitions.</p>
+    </section>
+
+    <!-- F20 ILPF -->
+    <section id="f20">
+      <div class="eyebrow">Topic 20</div>
+      <h3>Ideal Lowpass Filter (ILPF)</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The Ideal Lowpass Filter passes, without attenuation, all frequencies inside a circle of radius D₀ about the origin and completely removes all frequencies outside it. It has a perfectly sharp cutoff, but this abrupt transition causes ringing artifacts in the filtered image.</p>
+      </div>
+
+      <div class="formula">
+        <span class="cap">ILPF transfer function</span>
+        $$ H(u,v)=\begin{cases} 1 & \text{if } D(u,v)\le D_0\\ 0 & \text{if } D(u,v) > D_0 \end{cases} $$
+      </div>
+      <p>The filter is <strong>radially symmetric</strong> about the origin — a flat cylinder of radius <span class="k">D₀</span>: everything inside passes untouched, everything outside is zeroed.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 170" role="img" aria-label="ILPF: a sharp cylinder cross-section, and ringing artifacts in the result">
+            <text x="150" y="16" class="diag-mono" font-size="11" fill="#1F3BE8" text-anchor="middle">ILPF radial cross-section</text>
+            <line x1="40" y1="130" x2="270" y2="130" stroke="#14171C" stroke-width="1.2"/>
+            <line x1="155" y1="140" x2="155" y2="30" stroke="#DBE0E7"/>
+            <path d="M40 130 L40 45 L110 45 L110 130 L200 130 L200 45 L270 45 L270 130" fill="none" stroke="#1F3BE8" stroke-width="2.4"/>
+            <text x="110" y="145" class="diag-mono" font-size="10" fill="#C0492B">−D₀</text>
+            <text x="195" y="145" class="diag-mono" font-size="10" fill="#C0492B">D₀</text>
+            <text x="40" y="42" class="diag-mono" font-size="10" fill="#6B7480">1</text>
+
+            <text x="480" y="16" class="diag-mono" font-size="11" fill="#E08A00" text-anchor="middle">result: ringing + blurring</text>
+            <rect x="390" y="28" width="180" height="120" fill="#888"/>
+            <g stroke="#fff" fill="none" opacity=".7"><circle cx="480" cy="88" r="20"/><circle cx="480" cy="88" r="34"/><circle cx="480" cy="88" r="48"/></g>
+            <text x="480" y="162" class="diag-txt" font-size="9.5" fill="#6B7480" text-anchor="middle">concentric ripples around sharp features</text>
+          </svg>
+        </div>
+        <figcaption>The sharp cutoff (a "brick wall") produces ringing — concentric ripples — around edges in the output</figcaption>
+      </figure>
+
+      <div class="warn">
+        <span class="lab">Ringing — the price of a sharp cutoff</span>
+        <p>Because the ILPF has a sharp discontinuity in frequency, its spatial-domain equivalent is a <strong>sinc-like function with oscillating side-lobes</strong>. Convolving with those side-lobes creates <strong>ringing and blurring</strong> around edges. The ringing is <strong>more severe the narrower</strong> the filter (the smaller <span class="k">D₀</span>). This is why the ideal filter is rarely used in practice.</p>
+      </div>
+    </section>
+
+    <!-- F21 GLPF -->
+    <section id="f21">
+      <div class="eyebrow">Topic 21</div>
+      <h3>Gaussian Lowpass Filter (GLPF)</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The Gaussian Lowpass Filter has a transfer function shaped like a Gaussian, giving a smooth transition from pass to stop with no sharp discontinuity. Because its spatial-domain form is also Gaussian (no side-lobes), it produces absolutely no ringing artifacts.</p>
+      </div>
+
+      <div class="formula">
+        <span class="cap">GLPF transfer function</span>
+        $$ H(u,v)=e^{-\frac{D^2(u,v)}{2\sigma^2}} \qquad\text{or, with } \sigma=D_0:\qquad H(u,v)=e^{-\frac{D^2(u,v)}{2D_0^2}} $$
+      </div>
+      <p>where <span class="k">σ</span> is the measure of the spread of the Gaussian curve. Setting <span class="k">σ = D₀</span> makes <span class="k">D₀</span> the cutoff where <span class="k">H</span> drops to <span class="k">e^{−1/2} ≈ 0.607</span> of its peak.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 160" role="img" aria-label="GLPF: smooth bell cross-section, no ringing in result">
+            <text x="150" y="16" class="diag-mono" font-size="11" fill="#1F3BE8" text-anchor="middle">GLPF radial cross-section</text>
+            <line x1="40" y1="130" x2="270" y2="130" stroke="#14171C" stroke-width="1.2"/>
+            <path d="M40 128 C 110 125, 130 40, 155 40 C 180 40, 200 125, 270 128" fill="none" stroke="#1F3BE8" stroke-width="2.4"/>
+            <line x1="40" y1="88" x2="270" y2="88" stroke="#DBE0E7" stroke-dasharray="3 3"/>
+            <text x="20" y="92" class="diag-mono" font-size="9" fill="#6B7480">.607</text>
+            <text x="40" y="42" class="diag-mono" font-size="10" fill="#6B7480">1</text>
+
+            <text x="480" y="16" class="diag-mono" font-size="11" fill="#3A7D44" text-anchor="middle">result: smooth blur, NO ringing</text>
+            <rect x="390" y="28" width="180" height="120" fill="#999" style="filter:blur(1px)"/>
+            <circle cx="480" cy="88" r="30" fill="#bbb"/>
+            <text x="480" y="162" class="diag-txt" font-size="9.5" fill="#6B7480" text-anchor="middle">clean — no concentric ripples</text>
+          </svg>
+        </div>
+        <figcaption>Smooth Gaussian falloff → smooth impulse response → no ringing. The trade-off is a more gradual (less selective) cutoff</figcaption>
+      </figure>
+      <div class="remember">
+        <span class="lab">ILPF vs GLPF</span>
+        <p>ILPF: sharpest cutoff, but <strong>rings</strong>. GLPF: <strong>no ringing</strong> ever (guaranteed, because a Gaussian's transform is a Gaussian with no negative side-lobes), but a gentler cutoff so it blurs a bit more for the same <span class="k">D₀</span>. Butterworth sits between them.</p>
+      </div>
+    </section>
+
+    <!-- F22 BLPF -->
+    <section id="f22">
+      <div class="eyebrow">Topic 22</div>
+      <h3>Butterworth Lowpass Filter (BLPF)</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The Butterworth Lowpass Filter has a smooth transfer function controlled by an order n. It has no sharp discontinuity and no single clear cutoff; a low order (n=1,2) behaves like a Gaussian with no ringing, while a high order approaches the ideal filter (sharper cutoff, but ringing reappears).</p>
+      </div>
+
+      <div class="formula">
+        <span class="cap">BLPF transfer function (order n, cutoff D₀)</span>
+        $$ H(u,v)=\frac{1}{1+\big[D(u,v)/D_0\big]^{2n}} $$
+      </div>
+      <p>At <span class="k">D(u,v)=D₀</span>, <span class="k">H = 1/(1+1) = 0.5</span> regardless of <span class="k">n</span> — so <span class="k">D₀</span> is the <strong>half-power point</strong>. The order <span class="k">n</span> controls the steepness of the transition.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 480 170" role="img" aria-label="Butterworth cross-sections for increasing order n, getting sharper">
+            <text x="240" y="16" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">BLPF cross-section vs order n</text>
+            <line x1="40" y1="130" x2="440" y2="130" stroke="#14171C" stroke-width="1.2"/>
+            <line x1="40" y1="140" x2="40" y2="30" stroke="#14171C" stroke-width="1.2"/>
+            <line x1="240" y1="130" x2="240" y2="30" stroke="#DBE0E7" stroke-dasharray="3 3"/>
+            <text x="236" y="145" class="diag-mono" font-size="10" fill="#C0492B">D₀</text>
+            <path d="M40 45 C 140 55, 200 95, 240 110 C 300 130, 380 132, 440 132" fill="none" stroke="#1F3BE8" stroke-width="2"/>
+            <text x="90" y="50" class="diag-mono" font-size="10" fill="#1F3BE8">n=1</text>
+            <path d="M40 45 C 180 47, 220 70, 240 100 C 265 128, 320 132, 440 132" fill="none" stroke="#E08A00" stroke-width="2"/>
+            <text x="330" y="120" class="diag-mono" font-size="10" fill="#E08A00">n=4 (sharper)</text>
+            <text x="30" y="48" class="diag-mono" font-size="9" fill="#6B7480">1</text>
+          </svg>
+        </div>
+        <figcaption>Increasing n sharpens the cutoff toward the ideal filter; low n stays smooth like a Gaussian</figcaption>
+      </figure>
+      <div class="tip">
+        <span class="lab">The order n is the tuning knob</span>
+        <p><span class="k">n=1</span>: very smooth, Gaussian-like, no ringing. <span class="k">n=2</span>: a good compromise (mild transition, negligible ringing) — the most commonly used. <span class="k">n</span> large (e.g. 20): approaches the ILPF and ringing returns. Butterworth lets you <strong>dial</strong> between "no ringing" and "sharp cutoff".</p>
+      </div>
+    </section>
+
+    <!-- F23 HPF -->
+    <section id="f23">
+      <div class="eyebrow">Topic 23</div>
+      <h3>Highpass Filters (Ideal, Butterworth, Gaussian)</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>A highpass filter is obtained from the corresponding lowpass filter by H_hp(u,v) = 1 − H_lp(u,v). It passes high frequencies (fine detail and edges) and blocks low frequencies (the smooth background), producing a sharpened / edge-enhanced image.</p>
+      </div>
+
+      <div class="formula">
+        <span class="cap">The master relationship</span>
+        $$ H_{hp}(u,v)=1-H_{lp}(u,v) $$
+      </div>
+      <p>Apply it to each of the three lowpass filters:</p>
+
+      <div class="formula">
+        <span class="cap">Ideal Highpass (IHPF)</span>
+        $$ H(u,v)=\begin{cases} 1 & \text{if } D(u,v) > D_0\\ 0 & \text{if } D(u,v)\le D_0 \end{cases} $$
+      </div>
+      <div class="formula">
+        <span class="cap">Butterworth Highpass (BHPF)</span>
+        $$ H(u,v)=\frac{1}{1+\big[D_0/D(u,v)\big]^{2n}} $$
+      </div>
+      <div class="formula">
+        <span class="cap">Gaussian Highpass (GHPF)</span>
+        $$ H(u,v)=1-e^{-\frac{D^2(u,v)}{2D_0^2}} $$
+      </div>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Highpass filter</th><th>Cutoff behaviour</th><th>Ringing?</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Ideal (IHPF)</strong></td><td>brick-wall: blocks all <span class="k">D≤D₀</span>, passes all <span class="k">D&gt;D₀</span></td><td><strong>yes</strong> — strong ringing</td></tr>
+            <tr><td><strong>Butterworth (BHPF)</strong></td><td>smooth, order-<span class="k">n</span> controlled</td><td>mild (grows with <span class="k">n</span>)</td></tr>
+            <tr><td><strong>Gaussian (GHPF)</strong></td><td>smoothest transition</td><td><strong>none</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 160" role="img" aria-label="Highpass filtering result: edges extracted, smooth areas darkened">
+            <text x="150" y="16" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">original image</text>
+            <rect x="50" y="28" width="180" height="120" fill="#c9c9c9"/>
+            <rect x="50" y="28" width="90" height="120" fill="#8a8a8a"/>
+            <circle cx="180" cy="90" r="28" fill="#e5e5e5"/>
+
+            <path d="M258 88 h40" stroke="#14171C" stroke-width="1.8"/>
+            <polygon points="304,88 292,82 292,94" fill="#14171C"/>
+            <text x="278" y="76" class="diag-mono" font-size="9" fill="#6B7480" text-anchor="middle">HPF</text>
+
+            <text x="490" y="16" class="diag-mono" font-size="11" fill="#E08A00" text-anchor="middle">highpass result — edges only</text>
+            <rect x="400" y="28" width="180" height="120" fill="#141414"/>
+            <line x1="490" y1="28" x2="490" y2="148" stroke="#fff" stroke-width="1.6"/>
+            <circle cx="520" cy="90" r="28" fill="none" stroke="#fff" stroke-width="1.6"/>
+          </svg>
+        </div>
+        <figcaption>Highpass filtering keeps edges/detail and suppresses the smooth interior — the frequency-domain way to sharpen</figcaption>
+      </figure>
+      <div class="remember">
+        <span class="lab">Exam-favourite fact</span>
+        <p>Every highpass filter is just <span class="k">1 − (its lowpass version)</span>. So if you can write the three lowpass transfer functions, you get the three highpass ones for free. Same ringing behaviour carries over: <strong>Ideal rings, Gaussian never rings, Butterworth is tunable</strong>.</p>
+      </div>
+    </section>
+
     <!-- GLOSSARY -->
     <section id="glossary">
       <div class="eyebrow">Cram Sheet</div>
@@ -769,6 +1129,14 @@
       <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">14. Low vs High Frequency</h4><p style="margin:0;font-size:14px">Low-frequency components (centre of a centered spectrum) give the general gray-level appearance; high-frequency components (outer region) give the fine detail (edges, texture).</p></div>
       <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">15. Convolution Theorem</h4><p style="margin:0;font-size:14px">Convolution in space = multiplication in frequency: g=f∗h ⟷ G=F·H (and g=f·h ⟷ G=F∗H). This is why frequency-domain filtering works.</p></div>
       <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">16. Frequency-Domain Filtering</h4><p style="margin:0;font-size:14px">Transform to frequency, multiply by filter H(u,v), inverse-transform back: g(x,y)=Real{ℱ⁻¹[H(u,v)F(u,v)]}. Lowpass H smooths; highpass H sharpens.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">04b. Discrete Cosine Transform (DCT)</h4><p style="margin:0;font-size:14px">Represents a signal as a sum of real-valued cosines of different frequencies. Compacts image energy into few low-frequency coefficients → basis of JPEG compression.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">17. Steps of Filtering</h4><p style="margin:0;font-size:14px">Pad to P=2M, Q=2N → center with (−1)^(x+y) → DFT → multiply by H(u,v) → inverse DFT → undo centering → crop back to M×N.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">18. Need for Padding</h4><p style="margin:0;font-size:14px">Multiplication in frequency = circular convolution in space; padding to 2M×2N prevents wraparound error so the result equals true linear convolution.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">19. Lowpass vs Highpass</h4><p style="margin:0;font-size:14px">LPF passes low freq (blurs); HPF passes high freq (sharpens/edges). D(u,v)=√((u−M/2)²+(v−N/2)²); D₀ = cutoff frequency.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">20. Ideal Lowpass (ILPF)</h4><p style="margin:0;font-size:14px">H=1 if D≤D₀ else 0. Sharp brick-wall cutoff → severe ringing (worse for smaller D₀).</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">21. Gaussian Lowpass (GLPF)</h4><p style="margin:0;font-size:14px">H=e^(−D²/2D₀²). Smooth transition → no ringing ever; gentler (more blurring) cutoff.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">22. Butterworth Lowpass (BLPF)</h4><p style="margin:0;font-size:14px">H=1/(1+[D/D₀]^(2n)). Order n tunes sharpness: n=1–2 smooth like Gaussian, large n approaches ideal (ringing returns). H=0.5 at D₀.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">23. Highpass Filters</h4><p style="margin:0;font-size:14px">H_hp = 1 − H_lp. Ideal (rings), Butterworth 1/(1+[D₀/D]^(2n)) (tunable), Gaussian 1−e^(−D²/2D₀²) (no ringing).</p></div>
     </section>
 
     <footer>
