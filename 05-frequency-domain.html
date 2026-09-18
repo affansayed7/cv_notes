@@ -440,61 +440,173 @@
     <!-- F4b DCT -->
     <section id="f4b">
       <div class="eyebrow">Topic 04b</div>
-      <h3>The Discrete Cosine Transform (DCT)</h3>
+      <h3>The Discrete Cosine — From Complex Exponential to 2D Patterns</h3>
       <div class="definition"><span class="lab">Definition — memorise this</span>
-        <p>The Discrete Cosine Transform (DCT) expresses a signal as a sum of cosine functions of different frequencies. Unlike the Fourier transform it uses only real-valued cosines (no imaginary part), which makes it especially useful for image compression (it is the core of JPEG).</p>
+        <p>The discrete cosine is the real part of the 2D complex exponential basis function. Studied on its own, cos(ω₁n₁+ω₂n₂) reveals how a single frequency pair (ω₁,ω₂) produces one specific spatial pattern — the building block that the Discrete Cosine Transform (DCT) sums together to represent an image, and the core of JPEG compression.</p>
       </div>
 
-      <h4>1D discrete cosine</h4>
-      <p>Start from a simple 1D cosine <span class="k">cos(ωt)</span>. As the frequency <span class="k">ω</span> increases from <span class="k">0</span> → <span class="k">π/8</span> → <span class="k">π/4</span> → … the cosine oscillates faster. A signal is built as a weighted sum of these cosines at different frequencies:</p>
+      <h4>From complex exponential to cosine</h4>
+      <p>Recall the 2D complex exponential from Topic 04: <span class="k">x(n₁,n₂) = e^{j(ω₁n₁+ω₂n₂)}</span>. By Euler's formula, <span class="k">e^{jθ}=cos θ + j sin θ</span>, so:</p>
       <div class="formula">
-        <span class="cap">1D DCT (analysis)</span>
-        $$ X(k)=\sum_{n=0}^{N-1} x(n)\cos\!\left[\frac{\pi}{N}\left(n+\tfrac{1}{2}\right)k\right], \qquad k=0,1,\dots,N-1 $$
+        <span class="cap">Splitting into real and imaginary parts</span>
+        $$ e^{j(\omega_1 n_1+\omega_2 n_2)} = \underbrace{\cos(\omega_1 n_1+\omega_2 n_2)}_{\text{real part}} + j\underbrace{\sin(\omega_1 n_1+\omega_2 n_2)}_{\text{imaginary part}} $$
+      </div>
+      <p>The <strong>real part is a cosine</strong>. This topic studies that cosine on its own — it's simpler (no imaginary numbers) and is exactly what the DCT is built from.</p>
+
+      <h4>What is a 1D discrete cosine?</h4>
+      <div class="formula">
+        <span class="cap">1D discrete cosine</span>
+        $$ x[n]=\cos(\omega n), \qquad n = 0,1,2,3,\dots $$
+      </div>
+      <p>Unlike a continuous cosine (defined for every real <span class="k">t</span>), a <strong>discrete</strong> cosine is only defined at integer sample points <span class="k">n</span> — it's a sequence of dots, not a smooth curve.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 150" role="img" aria-label="Continuous cosine as a smooth curve versus discrete cosine as sampled dots at integer n">
+            <text x="150" y="16" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">continuous cosine — smooth curve</text>
+            <line x1="20" y1="80" x2="280" y2="80" stroke="#DBE0E7"/>
+            <path d="M20 80 Q 85 30 150 80 T 280 80" fill="none" stroke="#6B7480" stroke-width="2"/>
+            <text x="490" y="16" class="diag-mono" font-size="11" fill="#1F3BE8" text-anchor="middle">discrete cosine — sampled dots</text>
+            <line x1="360" y1="80" x2="620" y2="80" stroke="#DBE0E7"/>
+            <g fill="#1F3BE8"><circle cx="380" cy="78" r="4"/><circle cx="420" cy="45" r="4"/><circle cx="460" cy="78" r="4"/><circle cx="500" cy="112" r="4"/><circle cx="540" cy="78" r="4"/><circle cx="580" cy="45" r="4"/></g>
+            <text x="380" y="98" class="diag-mono" font-size="9" fill="#6B7480">0</text><text x="420" y="35" class="diag-mono" font-size="9" fill="#6B7480">1</text>
+            <text x="460" y="98" class="diag-mono" font-size="9" fill="#6B7480">2</text><text x="500" y="132" class="diag-mono" font-size="9" fill="#6B7480">3</text>
+          </svg>
+        </div>
+        <figcaption>The discrete cosine only exists at integer n — there's nothing "between" the samples</figcaption>
+      </figure>
+
+      <h4>What does ω control?</h4>
+      <div class="twrap">
+        <table>
+          <thead><tr><th>ω</th><th>x[n] = cos(ωn)</th><th>Behaviour</th></tr></thead>
+          <tbody>
+            <tr><td><strong>ω = 0</strong></td><td><span class="k">cos(0) = 1</span> for every n</td><td>constant signal, <strong>no oscillation</strong> — the DC / zero-frequency component</td></tr>
+            <tr><td><strong>ω increasing</strong> (e.g. π/8)</td><td>starts oscillating</td><td>faster oscillation as ω grows</td></tr>
+            <tr><td><strong>ω = π</strong></td><td><span class="k">1, −1, 1, −1, …</span></td><td>the <strong>fastest</strong> oscillation a discrete cosine can have</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="remember">
+        <span class="lab">The frequency rule</span>
+        <p><strong>Low ω → slowly varying signal</strong> (few oscillations). <strong>High ω → rapidly varying signal</strong> (many oscillations).</p>
+      </div>
+
+      <h4>Why ω = π is special — worked out</h4>
+      <p>Let <span class="k">x[n] = cos(πn)</span>. Evaluate at <span class="k">n=0,1,2,3,4,…</span>:</p>
+      <div class="formula">
+        <span class="cap">Evaluating cos(πn)</span>
+        $$ \cos(0)=1,\quad \cos(\pi)=-1,\quad \cos(2\pi)=1,\quad \cos(3\pi)=-1,\ \dots $$
+      </div>
+      <p>So <span class="k">x[n] = 1,−1,1,−1,1,−1,…</span> — alternating every single sample. This is <strong>the fastest oscillation that can be represented distinctly</strong> in a discrete-time cosine; you cannot oscillate faster than "flip every sample."</p>
+
+      <h4>A crucial subtlety: discrete frequency is periodic in 2π</h4>
+      <p>For a discrete signal <span class="k">x[n]=cos(ωn)</span>, adding <span class="k">2π</span> to <span class="k">ω</span> changes <strong>nothing</strong>:</p>
+      <div class="formula">
+        <span class="cap">Derivation</span>
+        $$ \cos\big((\omega+2\pi)n\big) = \cos(\omega n + 2\pi n) $$
+      </div>
+      <p>Since <span class="k">n</span> is always an <strong>integer</strong>, <span class="k">2πn</span> is always a whole multiple of <span class="k">2π</span> — and cosine repeats every <span class="k">2π</span> — so:</p>
+      <div class="formula">
+        <span class="cap">Result — discrete frequency wraps around</span>
+        $$ \cos\big((\omega+2\pi)n\big)=\cos(\omega n) $$
+      </div>
+      <p>So <span class="k">ω=0</span> and <span class="k">ω=2π</span> give <strong>exactly the same sequence</strong> — both are the constant signal <span class="k">1,1,1,1,…</span>. This is why the frequency axis of a discrete-time signal is <strong>periodic with period 2π</strong> — there's no such thing as a discrete frequency "beyond" a full 2π cycle; it just wraps back to a frequency you've already seen.</p>
+
+      <div class="card">
+        <h4 style="margin-top:0">Worked example — aliasing beyond π</h4>
+        <p>Because cosine is even and frequency wraps every <span class="k">2π</span>, frequencies <strong>above π</strong> fold back onto lower frequencies. Compare <span class="k">ω=3π/2</span> against <span class="k">ω=π/2</span>:</p>
+        <div class="twrap" style="margin-top:8px"><table>
+          <thead><tr><th>n</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead>
+          <tbody>
+            <tr><td><span class="k">cos(3πn/2)</span></td><td>1</td><td>0</td><td>−1</td><td>0</td><td>1</td></tr>
+            <tr><td><span class="k">cos(πn/2)</span></td><td>1</td><td>0</td><td>−1</td><td>0</td><td>1</td></tr>
+          </tbody>
+        </table></div>
+        <p style="margin:8px 0 0"><strong>Identical sequences</strong> — <span class="k">cos(3πn/2) = cos(πn/2)</span> for every integer n. A discrete signal literally <strong>cannot tell these two frequencies apart</strong>. This wraparound behaviour is why frequencies are always discussed in the range <span class="k">[0, π]</span> (or <span class="k">[−π, π]</span>) for discrete signals — anything outside it is a duplicate of something inside.</p>
+      </div>
+
+      <h4>Extending to 2D</h4>
+      <p>An image has two dimensions, so instead of <span class="k">cos(ωn)</span> we use:</p>
+      <div class="formula">
+        <span class="cap">2D discrete cosine</span>
+        $$ x[n_1,n_2]=\cos(\omega_1 n_1+\omega_2 n_2) $$
+      </div>
+      <p>where <span class="k">n₁, n₂</span> are the two spatial coordinates and <span class="k">ω₁, ω₂</span> are the two frequencies — one per direction. Every position <span class="k">(n₁,n₂)</span> in the image gets a value from this formula.</p>
+
+      <h4>Reading the two frequencies — four cases</h4>
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Case</th><th>Formula reduces to</th><th>Resulting pattern</th></tr></thead>
+          <tbody>
+            <tr><td><span class="k">ω₁=0, ω₂=0</span></td><td><span class="k">cos(0)=1</span></td><td><strong>constant</strong> image — zero frequency / DC</td></tr>
+            <tr><td><span class="k">ω₁=0</span> (only)</td><td><span class="k">cos(ω₂n₂)</span> — no n₁ term</td><td>varies only along <span class="k">n₂</span> → <strong>horizontal bands</strong></td></tr>
+            <tr><td><span class="k">ω₂=0</span> (only)</td><td><span class="k">cos(ω₁n₁)</span> — no n₂ term</td><td>varies only along <span class="k">n₁</span> → <strong>vertical stripes</strong></td></tr>
+            <tr><td><span class="k">ω₁≠0</span> and <span class="k">ω₂≠0</span></td><td>both terms present</td><td>varies in <strong>both</strong> directions → diagonal / checkerboard-like patterns</td></tr>
+          </tbody>
+        </table>
       </div>
 
       <figure>
         <div class="fig">
-          <svg viewBox="0 0 640 150" role="img" aria-label="Cosine waves at increasing frequencies: DC (flat), low, higher">
-            <g transform="translate(10,10)">
-              <text x="90" y="10" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">ω=0 (DC, flat)</text>
-              <line x1="10" y1="70" x2="170" y2="70" stroke="#DBE0E7"/>
-              <line x1="10" y1="45" x2="170" y2="45" stroke="#1F3BE8" stroke-width="2"/>
+          <svg viewBox="0 0 640 170" role="img" aria-label="Four 2D cosine cases: constant, horizontal bands, vertical stripes, checkerboard">
+            <g class="diag-mono" font-size="10" text-anchor="middle" fill="#6B7480">
+              <text x="80" y="16">ω₁=0, ω₂=0</text>
+              <rect x="20" y="26" width="120" height="80" fill="#999"/>
+              <text x="240" y="16">ω₁=0 only</text>
+              <g fill="#111"><rect x="180" y="26" width="120" height="20"/><rect x="180" y="66" width="120" height="20"/></g>
+              <g fill="#eee"><rect x="180" y="46" width="120" height="20"/><rect x="180" y="86" width="120" height="20"/></g>
+              <text x="400" y="16">ω₂=0 only</text>
+              <g fill="#111"><rect x="340" y="26" width="20" height="80"/><rect x="380" y="26" width="20" height="80"/><rect x="420" y="26" width="20" height="80"/></g>
+              <g fill="#eee"><rect x="360" y="26" width="20" height="80"/><rect x="400" y="26" width="20" height="80"/></g>
+              <text x="560" y="16">both ≠ 0</text>
+              <g fill="#111"><rect x="500" y="26" width="30" height="20"/><rect x="560" y="26" width="30" height="20"/><rect x="530" y="46" width="30" height="20"/><rect x="500" y="66" width="30" height="20"/><rect x="560" y="66" width="30" height="20"/><rect x="530" y="86" width="30" height="20"/></g>
+              <g fill="#eee"><rect x="530" y="26" width="30" height="20"/><rect x="500" y="46" width="30" height="20"/><rect x="560" y="46" width="30" height="20"/><rect x="530" y="66" width="30" height="20"/><rect x="500" y="86" width="30" height="20"/><rect x="560" y="86" width="30" height="20"/></g>
             </g>
-            <g transform="translate(230,10)">
-              <text x="90" y="10" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">ω=π/8 (low)</text>
-              <line x1="10" y1="70" x2="170" y2="70" stroke="#DBE0E7"/>
-              <path d="M10 45 Q 55 20 100 70 T 190 70" fill="none" stroke="#1F3BE8" stroke-width="2"/>
-            </g>
-            <g transform="translate(450,10)">
-              <text x="90" y="10" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">ω=π/4 (higher)</text>
-              <line x1="10" y1="70" x2="170" y2="70" stroke="#DBE0E7"/>
-              <path d="M10 45 Q 33 20 55 70 T 100 70 T 145 70 T 190 70" fill="none" stroke="#E08A00" stroke-width="2"/>
-            </g>
+            <text x="320" y="130" class="diag-txt" font-size="11" fill="#6B7480" text-anchor="middle">every (ω₁,ω₂) pair produces one specific spatial pattern</text>
           </svg>
         </div>
-        <figcaption>DCT basis: cosines of increasing frequency. Any 1D signal = a weighted sum of these</figcaption>
+        <figcaption>DC (flat) → horizontal bands → vertical stripes → checkerboard, as ω₁ and ω₂ switch on</figcaption>
       </figure>
 
+      <h4>The full grid of 2D cosine patterns</h4>
+      <p>Plot every combination of <span class="k">ω₁</span> (rows) against <span class="k">ω₂</span> (columns) and you get a <strong>grid of basis patterns</strong> — this is literally what the 2D DCT basis looks like (an 8×8 version of this grid is exactly what JPEG uses):</p>
+      <div class="twrap">
+        <table>
+          <thead><tr><th>ω₁ \ ω₂</th><th>0</th><th>π/8</th><th>π/4</th><th>π/2</th></tr></thead>
+          <tbody>
+            <tr><td><strong>0</strong></td><td>flat</td><td>faint horiz. bands</td><td>horiz. bands</td><td>fast horiz. bands</td></tr>
+            <tr><td><strong>π/8</strong></td><td>faint vert. stripes</td><td>gentle diagonal</td><td>diagonal</td><td>steep diagonal</td></tr>
+            <tr><td><strong>π/4</strong></td><td>vert. stripes</td><td>diagonal</td><td>checkerboard</td><td>finer checkerboard</td></tr>
+            <tr><td><strong>π/2</strong></td><td>fast vert. stripes</td><td>steep diagonal</td><td>finer checkerboard</td><td>finest checkerboard</td></tr>
+          </tbody>
+        </table>
+      </div>
       <div class="remember">
-        <span class="lab">Period–frequency relationship (memorise this)</span>
-        <p>The <strong>period N</strong> (number of samples per full cycle) of a discrete cosine <span class="k">cos(ωn)</span> is:</p>
-        <div class="formula" style="margin:8px 0 0"><span class="cap">Period from frequency</span>$$ N=\frac{2\pi}{\omega} $$</div>
-        <div class="twrap" style="margin-top:8px"><table>
-          <thead><tr><th>ω</th><th>π/8</th><th>π/4</th><th>π/2</th><th>π</th></tr></thead>
-          <tbody><tr><td><strong>N = 2π/ω</strong></td><td>16</td><td>8</td><td>4</td><td>2</td></tr></tbody>
-        </table></div>
-        <p style="margin-top:8px">Higher <span class="k">ω</span> → smaller period <span class="k">N</span> → the cosine oscillates faster (fewer samples per cycle). At <span class="k">ω=π</span>, <span class="k">N=2</span> — the fastest a discrete signal can alternate (+,−,+,−…).</p>
+        <span class="lab">Reading the grid — the movement rule</span>
+        <p>Moving <strong>right</strong> across the grid (increasing <span class="k">ω₂</span>) → the pattern varies <strong>more rapidly along n₂</strong>. Moving <strong>down</strong> the grid (increasing <span class="k">ω₁</span>) → the pattern varies <strong>more rapidly along n₁</strong>. Example: the box at <span class="k">ω₁=π/4, ω₂=π/2</span> is exactly the pattern <span class="k">cos(π/4·n₁ + π/2·n₂)</span> — find it by going to row π/4, column π/2.</p>
       </div>
 
-      <h4>2D discrete cosine</h4>
-      <p>Extending to images, the 2D DCT uses <strong>2D cosine basis patterns</strong> (a grid of increasingly fine checkerboard-like cosine patterns). Each image block is written as a weighted sum of these patterns:</p>
+      <h4>2D periodicity &amp; the connection to allowed frequencies</h4>
+      <p>Just like the 1D case, both 2D frequencies repeat every <span class="k">2π</span>: <span class="k">ω₁ ≡ ω₁+2π</span> and <span class="k">ω₂ ≡ ω₂+2π</span> — so the 2D frequency domain is periodic too. Recall from Topic 04 that for a finite <span class="k">N₁×N₂</span> image, only the discrete frequencies <span class="k">ω₁=2πk/N₁</span> and <span class="k">ω₂=2πl/N₂</span> are valid. Substituting these into the 2D cosine gives the actual basis functions used by the transform:</p>
+      <div class="formula">
+        <span class="cap">The 2D cosine basis, restricted to allowed discrete frequencies</span>
+        $$ \cos\!\left(\frac{2\pi k}{N_1}n_1+\frac{2\pi l}{N_2}n_2\right), \qquad k,l \text{ integers} $$
+      </div>
+      <p>This is the bridge between the periodicity derivation (Topic 04) and the actual DCT formula below — the DCT is built from exactly these allowed-frequency cosines.</p>
+
+      <h4>The DCT formula</h4>
+      <div class="formula">
+        <span class="cap">1D DCT (analysis)</span>
+        $$ X(k)=\sum_{n=0}^{N-1} x(n)\cos\!\left[\frac{\pi}{N}\left(n+\tfrac{1}{2}\right)k\right], \qquad k=0,1,\dots,N-1 $$
+      </div>
       <div class="formula">
         <span class="cap">2D DCT</span>
         $$ X(k_1,k_2)=\sum_{n_1=0}^{N_1-1}\sum_{n_2=0}^{N_2-1} x(n_1,n_2)\cos\!\left[\frac{\pi}{N_1}\!\left(n_1+\tfrac12\right)k_1\right]\cos\!\left[\frac{\pi}{N_2}\!\left(n_2+\tfrac12\right)k_2\right] $$
       </div>
       <div class="remember">
         <span class="lab">Why the DCT matters — JPEG</span>
-        <p>Natural images have most of their energy in the <strong>low-frequency</strong> cosine patterns. The DCT concentrates that energy into a few coefficients (the top-left of the block), so the high-frequency coefficients can be quantized away with little visible loss. This "energy compaction" is exactly why <strong>JPEG uses the 8×8 DCT</strong>. The DCT uses only real cosines (no <span class="k">j</span>), which is cheaper and avoids complex arithmetic.</p>
+        <p>Natural images have most of their energy in the <strong>low-frequency</strong> cosine patterns (the top-left of the grid above). The DCT concentrates that energy into a few coefficients, so the high-frequency coefficients can be quantized away with little visible loss. This "energy compaction" is exactly why <strong>JPEG uses the 8×8 DCT</strong>. The DCT uses only real cosines (no <span class="k">j</span>), which is cheaper and avoids complex arithmetic — unlike the full complex-exponential Fourier basis of Topic 04.</p>
       </div>
     </section>
 
@@ -568,12 +680,56 @@
     <!-- F7 -->
     <section id="f7">
       <div class="eyebrow">Topic 07</div>
-      <h3>Worked Example: Fourier Transform of a Kernel</h3>
+      <h3>Computing the CFT of a Filter — General Method &amp; Worked Examples</h3>
       <div class="definition"><span class="lab">Definition — memorise this</span>
-        <p>The frequency response of a spatial filter is the Fourier transform of its kernel. For a symmetric kernel, the transform reduces to a real-valued sum of cosine terms, one per distinct coefficient offset, which describes how the filter attenuates or passes each frequency.</p>
+        <p>Given a spatial-domain filter h(n₁,n₂), its (continuous) Fourier transform H(ω₁,ω₂) = ΣΣ h(n₁,n₂)·e^(−j(ω₁n₁+ω₂n₂)) tells us how strongly the filter responds to every spatial frequency pair. For a real, symmetric filter, positive/negative coordinate pairs combine via e^(jθ)+e^(−jθ)=2cosθ, so H comes out as a real-valued sum of cosines.</p>
       </div>
 
-      <p>This is the type of numerical you can be asked: "find the frequency response <span class="k">H(ω₁, ω₂)</span> of the given kernel."</p>
+      <h4>The general formula</h4>
+      <div class="formula">
+        <span class="cap">2D Fourier transform of a filter h(n₁,n₂)</span>
+        $$ H(\omega_1,\omega_2)=\sum_{n_1}\sum_{n_2} h(n_1,n_2)\,e^{-j(\omega_1 n_1+\omega_2 n_2)} $$
+      </div>
+      <p>Read it as: <strong>multiply each spatial value by its matching Fourier basis function, then add everything up.</strong> <span class="k">H(ω₁,ω₂)</span> tells us how strongly the filter contains the spatial frequency <span class="k">(ω₁,ω₂)</span>.</p>
+
+      <h4>Coordinate → exponential cheat-sheet</h4>
+      <p>For a 3×3 filter centred at the origin, assign coordinates <span class="k">(n₁,n₂)</span> with the centre at <span class="k">(0,0)</span>:</p>
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Coordinate</th><th>Fourier term</th></tr></thead>
+          <tbody>
+            <tr><td><span class="k">(0,0)</span></td><td><span class="k">h(0,0)</span></td></tr>
+            <tr><td><span class="k">(1,0)</span></td><td><span class="k">h(1,0)·e^(−jω₁)</span></td></tr>
+            <tr><td><span class="k">(−1,0)</span></td><td><span class="k">h(−1,0)·e^(jω₁)</span></td></tr>
+            <tr><td><span class="k">(0,1)</span></td><td><span class="k">h(0,1)·e^(−jω₂)</span></td></tr>
+            <tr><td><span class="k">(0,−1)</span></td><td><span class="k">h(0,−1)·e^(jω₂)</span></td></tr>
+            <tr><td><span class="k">(1,1)</span></td><td><span class="k">h(1,1)·e^(−j(ω₁+ω₂))</span></td></tr>
+            <tr><td><span class="k">(−1,−1)</span></td><td><span class="k">h(−1,−1)·e^(j(ω₁+ω₂))</span></td></tr>
+            <tr><td><span class="k">(1,−1)</span></td><td><span class="k">h(1,−1)·e^(−j(ω₁−ω₂))</span></td></tr>
+            <tr><td><span class="k">(−1,1)</span></td><td><span class="k">h(−1,1)·e^(j(ω₁−ω₂))</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h4 style="margin-top:0">The 7-step procedure — use this for ANY small filter</h4>
+        <ol style="margin-bottom:0">
+          <li>Assign coordinates to every cell, centred at <span class="k">(0,0)</span>.</li>
+          <li>Write the general formula: <span class="k">H = ΣΣ h(n₁,n₂)e^{−j(ω₁n₁+ω₂n₂)}</span>.</li>
+          <li>Substitute each matrix value with its coordinate (using the cheat-sheet above).</li>
+          <li><strong>Delete zero terms</strong> — this is usually most of the work of a sparse filter.</li>
+          <li><strong>Pair</strong> opposite coordinates: <span class="k">e^{jθ}+e^{−jθ}</span>.</li>
+          <li>Replace each pair with <span class="k">2cos θ</span>.</li>
+          <li>Simplify to the final <span class="k">H(ω₁,ω₂)</span>.</li>
+        </ol>
+      </div>
+
+      <div class="remember">
+        <span class="lab">A free sanity check — memorise this</span>
+        <p>At zero frequency (<span class="k">ω₁=ω₂=0</span>), every exponential <span class="k">e^{-j(0)}=1</span>, so:</p>
+        <div class="formula" style="margin:8px 0"><span class="cap">DC value of H</span>$$ H(0,0)=\sum_{n_1,n_2} h(n_1,n_2) $$</div>
+        <p style="margin:0"><strong>H(0,0) always equals the sum of all the filter's coefficients.</strong> Compute that sum first — it's a free check on your final formula (just plug in ω₁=ω₂=0 and see if it matches).</p>
+      </div>
 
       <h4>Example A — the plus-shaped (5-point) smoothing kernel</h4>
       <p>A simple separable-looking blur with a heavy centre and its 4 edge-neighbours:</p>
@@ -581,14 +737,14 @@
         <span class="cap">Given kernel</span>
         $$ h(n_1,n_2)=\begin{bmatrix} 0 & \tfrac{1}{6} & 0\\[2pt] \tfrac{1}{6} & \tfrac{1}{3} & \tfrac{1}{6}\\[2pt] 0 & \tfrac{1}{6} & 0 \end{bmatrix} $$
       </div>
-      <p>Take the DTFT — only 5 non-zero terms. The centre <span class="k">1/3</span> contributes a constant; each opposite pair of <span class="k">1/6</span> neighbours combines via <span class="k">e^{jθ}+e^{-jθ}=2\cos θ</span>:</p>
+      <p>Only 5 non-zero terms: the centre <span class="k">1/3</span> contributes a constant, and each opposite pair of <span class="k">1/6</span> neighbours combines via <span class="k">e^{jθ}+e^{-jθ}=2\cos θ</span>:</p>
       <div class="formula">
         <span class="cap">Frequency response</span>
         $$ H(\omega_1,\omega_2)=\tfrac{1}{3} + \tfrac{1}{6}\cdot 2\cos\omega_1 + \tfrac{1}{6}\cdot 2\cos\omega_2 = \tfrac{1}{3} + \tfrac{1}{3}\cos\omega_1 + \tfrac{1}{3}\cos\omega_2 $$
       </div>
       <div class="remember">
-        <span class="lab">Is it a smoothing or a sharpening filter?</span>
-        <p>Check the coefficient sum: <span class="k">1/3 + 4×(1/6) = 1/3 + 2/3 = 1</span> → it <strong>passes the average (DC) unchanged</strong>. At DC (<span class="k">ω₁=ω₂=0</span>): <span class="k">H = 1/3 + 1/3 + 1/3 = 1</span> (maximum). At the highest frequency (<span class="k">ω₁=ω₂=π</span>): <span class="k">H = 1/3 − 1/3 − 1/3 = −1/3</span> (small/attenuated). So <span class="k">H</span> is <strong>high at low frequencies and low at high frequencies → this is a blur (lowpass/smoothing) filter</strong>. Its <span class="k">|H|</span> plot is a dome peaked at the centre.</p>
+        <span class="lab">Check + interpret</span>
+        <p><strong>Check:</strong> <span class="k">H(0,0) = 1/3+1/3+1/3 = 1</span>, matching the coefficient sum <span class="k">0+1/6+0+1/6+1/3+1/6+0+1/6+0 = 1</span> ✓. <strong>Interpret:</strong> at DC, <span class="k">H=1</span> (maximum). At the highest frequency (<span class="k">ω₁=ω₂=π</span>): <span class="k">H = 1/3 − 1/3 − 1/3 = −1/3</span> (small). So <span class="k">H</span> is high at low frequencies and low at high frequencies → a <strong>blur (lowpass/smoothing) filter</strong>, consistent with it being an averaging-type kernel.</p>
       </div>
 
       <h4>Example B — the 3×3 Gaussian kernel</h4>
@@ -597,9 +753,7 @@
         <span class="cap">Given kernel</span>
         $$ h(n_1,n_2)=\begin{bmatrix} 0.075 & 0.124 & 0.075\\ 0.124 & 0.204 & 0.124\\ 0.075 & 0.124 & 0.075 \end{bmatrix} $$
       </div>
-
-      <h4>Step-by-step: take the DTFT of the kernel</h4>
-      <p>The frequency response is <span class="k">H(ω₁,ω₂) = Σ Σ h(n₁,n₂)·e^(−j(ω₁n₁+ω₂n₂))</span>. Group the 9 terms by their position offsets and use <span class="k">e^(jθ)+e^(−jθ) = 2cos θ</span>:</p>
+      <p>Group the 9 terms by their position offsets and use <span class="k">e^(jθ)+e^(−jθ) = 2cos θ</span>:</p>
       <ul>
         <li><strong>Centre</strong> (offset 0,0): contributes <span class="k">0.204</span></li>
         <li><strong>Left &amp; right</strong> neighbours (offsets ±1 in n₁): <span class="k">0.124(e^(−jω₁)+e^(jω₁)) = 0.124·2cos ω₁</span></li>
@@ -612,11 +766,68 @@
         $$ H(\omega_1,\omega_2)=0.204 + 0.124\cdot2\cos\omega_1 + 0.124\cdot2\cos\omega_2 + 0.075\cdot2\cos(\omega_1+\omega_2) + 0.075\cdot2\cos(\omega_1-\omega_2) $$
       </div>
       <div class="remember">
-        <span class="lab">What the answer tells you</span>
-        <p>At <span class="k">ω₁=ω₂=0</span> (zero frequency / DC), all cosines = 1, so <span class="k">H = 0.204 + 0.248 + 0.248 + 0.15 + 0.15 = 1</span> — the filter <strong>passes the average brightness unchanged</strong> (coefficients sum to 1). At high frequencies the cosines go negative, so <span class="k">H</span> drops toward 0 — confirming it is a <strong>lowpass (smoothing) filter</strong>. The plot of <span class="k">|H|</span> is a dome, high at the centre (low freq) and falling toward the edges (high freq).</p>
+        <span class="lab">Check + interpret</span>
+        <p><strong>Check:</strong> at DC, all cosines = 1, so <span class="k">H = 0.204 + 0.248 + 0.248 + 0.15 + 0.15 = 1</span> ✓ (coefficients sum to 1). <strong>Interpret:</strong> at high frequencies the cosines go negative, so <span class="k">H</span> drops toward 0 — confirming it is a <strong>lowpass (smoothing) filter</strong>. The plot of <span class="k">|H|</span> is a dome, high at the centre (low freq) and falling toward the edges (high freq).</p>
+      </div>
+
+      <h4>Example C — the sharpening (edge-enhancement) kernel</h4>
+      <p>A very different filter: positive centre, all eight surrounding values negative:</p>
+      <div class="formula">
+        <span class="cap">Given kernel</span>
+        $$ h(n_1,n_2)=\begin{bmatrix} -1 & -1 & -1\\ -1 & 9 & -1\\ -1 & -1 & -1 \end{bmatrix} $$
+      </div>
+      <p>The centre contributes <span class="k">9</span> (since <span class="k">e^{-j(0)}=1</span>). The four side neighbours (<span class="k">±1,0</span> and <span class="k">0,±1</span>) each carry coefficient <span class="k">−1</span> and pair up into cosines; the four corner neighbours (<span class="k">±1,±1</span>) also carry <span class="k">−1</span> and pair into <em>sum-and-difference</em> cosines:</p>
+      <div class="formula">
+        <span class="cap">Pairing the side terms</span>
+        $$ -e^{-j\omega_1}-e^{j\omega_1}=-2\cos\omega_1 \qquad -e^{-j\omega_2}-e^{j\omega_2}=-2\cos\omega_2 $$
+      </div>
+      <div class="formula">
+        <span class="cap">Pairing the corner terms</span>
+        $$ -e^{-j(\omega_1+\omega_2)}-e^{j(\omega_1+\omega_2)}=-2\cos(\omega_1+\omega_2) \qquad -e^{-j(\omega_1-\omega_2)}-e^{j(\omega_1-\omega_2)}=-2\cos(\omega_1-\omega_2) $$
+      </div>
+      <div class="formula">
+        <span class="cap">Result — the frequency response</span>
+        $$ H(\omega_1,\omega_2)=9-2\cos\omega_1-2\cos\omega_2-2\cos(\omega_1+\omega_2)-2\cos(\omega_1-\omega_2) $$
+      </div>
+
+      <div class="remember">
+        <span class="lab">Check — H(0,0)</span>
+        <p><span class="k">H(0,0) = 9−2−2−2−2 = 1</span>, matching the coefficient sum <span class="k">9−8 = 1</span> ✓.</p>
+      </div>
+
+      <div class="card">
+        <h4 style="margin-top:0">Worked numerical — evaluate at a specific frequency</h4>
+        <p>Find <span class="k">H(π, 0)</span> for this filter. Using <span class="k">cos π = −1</span> and <span class="k">cos 0 = 1</span>:</p>
+        <div class="formula" style="margin:8px 0">
+          $$ H(\pi,0)=9-2\cos\pi-2\cos0-2\cos(\pi+0)-2\cos(\pi-0) $$
+          $$ =9-2(-1)-2(1)-2(-1)-2(-1)=9+2-2+2+2 $$
+          $$ \boxed{H(\pi,0)=13} $$
+        </div>
+        <p style="margin:0">Compare: at DC, <span class="k">H=1</span>; at a high frequency, <span class="k">H=13</span> — the response <strong>grows much larger</strong> at high frequencies. That's the signature of an edge-enhancement/sharpening filter: high-frequency content (edges, fine detail) is strongly <strong>amplified</strong> rather than attenuated.</p>
+      </div>
+
+      <h4>Comparing the two filter types</h4>
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Filter</th><th>H at DC (0,0)</th><th>H at high freq (π,0)</th><th>Behaviour</th></tr></thead>
+          <tbody>
+            <tr><td>Plus-shaped / Gaussian (smoothing)</td><td>1 (maximum)</td><td>small / negative</td><td><strong>favours low frequencies</strong> — a lowpass filter</td></tr>
+            <tr><td>−1/9/−1 kernel (sharpening)</td><td>1</td><td>13 (amplified)</td><td><strong>favours high frequencies</strong> — a highpass-leaning filter</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="remember">
+        <span class="lab">Why the result is always real (no j left over)</span>
+        <p>Because each filter here is <strong>real-valued and symmetric</strong>, every complex term appears together with its mirror-image partner (<span class="k">±ω₁</span>, <span class="k">±ω₂</span>). Every such pair collapses via <span class="k">e^{jθ}+e^{-jθ}=2\cos θ</span> into a real cosine — so the final <span class="k">H(ω₁,ω₂)</span> has no <span class="k">j</span> left in it. This also makes <span class="k">H</span> an <strong>even</strong> function: <span class="k">H(−ω₁,−ω₂)=H(ω₁,ω₂)</span>, since cosine is even.</p>
+      </div>
+
+      <div class="tip">
+        <span class="lab">Terminology: CFT here vs the DFT later</span>
+        <p>These slides call this the "continuous" Fourier transform because <span class="k">ω₁,ω₂</span> are treated as continuous variables — you can evaluate <span class="k">H</span> at <em>any</em> frequency, even though the filter <span class="k">h(n₁,n₂)</span> itself is a small discrete array. Once we restrict the frequencies to the discrete grid <span class="k">ω₁=2πk/N₁</span>, <span class="k">ω₂=2πl/N₂</span> (Topic 04), we move to the <strong>DFT</strong> formulation, <span class="k">H[k,l]</span> — sampling the same continuous surface at specific points rather than evaluating it everywhere.</p>
       </div>
     </section>
 
+    <!-- F8 -->
     <!-- F8 -->
     <section id="f8">
       <div class="eyebrow">Topic 08 · Discrete &amp; Fast Transforms</div>
@@ -625,29 +836,97 @@
         <p>The Discrete Fourier Transform (DFT) is the computable, sampled version of the Fourier transform: it evaluates the transform only at a finite set of equally spaced frequencies. For an image of size N₁×N₂ it produces N₁×N₂ frequency coefficients, and the inverse DFT reconstructs the original image exactly with no loss of information.</p>
       </div>
 
-      <p><strong>Why the DFT is needed:</strong> the continuous FT requires values at all possible frequencies — impossible to compute. So we <strong>sample at equally spaced frequencies</strong>. For an image of size <span class="k">N₁ × N₂</span>, we set:</p>
+      <h4>Where we're coming from — the problem with the CFT</h4>
+      <p>The continuous transform from Topic 07, <span class="k">X(ω₁,ω₂) = ΣΣ x(n₁,n₂)e^{-j(ω₁n₁+ω₂n₂)}</span>, treats <span class="k">ω₁,ω₂</span> as <strong>continuous</strong> variables — there are infinitely many possible frequencies to evaluate. That's not practical for a computer. The fix: <strong>sample the frequency response at a finite number of equally spaced frequencies</strong>. That sampled result is the DFT.</p>
+
+      <h4>n vs k — don't confuse these</h4>
+      <p>This distinction trips people up, so fix it early:</p>
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Symbol</th><th>Domain</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><span class="k">n₁, n₂</span></td><td>spatial domain</td><td><strong>position</strong> — where we are in the image</td></tr>
+            <tr><td><span class="k">k₁, k₂</span></td><td>frequency domain</td><td><strong>frequency index</strong> — which frequency we're looking at</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>For an image of size <span class="k">N₁ × N₂</span>, instead of every possible <span class="k">(ω₁,ω₂)</span>, we choose only:</p>
       <div class="formula">
         <span class="cap">Sampling the continuous transform</span>
-        $$ X(k_1,k_2) = X(\omega_1,\omega_2)\Big|_{\omega_1=\frac{2\pi}{N_1}k_1,\ \omega_2=\frac{2\pi}{N_2}k_2}, \qquad k_1=0,\dots,N_1-1,\ \ k_2=0,\dots,N_2-1 $$
+        $$ \omega_1=\frac{2\pi k_1}{N_1}, \qquad \omega_2=\frac{2\pi k_2}{N_2}, \qquad k_1=0,\dots,N_1-1,\ \ k_2=0,\dots,N_2-1 $$
+      </div>
+      <p>Substituting these into the CFT formula from Topic 07 gives the DFT directly — <strong>the DFT is not a new concept, it's the CFT evaluated only at this specific grid of frequencies.</strong></p>
+
+      <h4>Visualising the frequency grid — worked example, N=4</h4>
+      <p>Let <span class="k">N=4</span>. Then <span class="k">ω_k = 2πk/4</span> for <span class="k">k=0,1,2,3</span>:</p>
+      <div class="twrap">
+        <table>
+          <thead><tr><th>k</th><th>0</th><th>1</th><th>2</th><th>3</th></tr></thead>
+          <tbody><tr><td><strong>ω_k</strong></td><td>0</td><td>π/2</td><td>π</td><td>3π/2</td></tr></tbody>
+        </table>
+      </div>
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 500 90" role="img" aria-label="Continuous frequency axis versus 4 discrete DFT sample points at 0, pi/2, pi, 3pi/2">
+            <text x="140" y="16" class="diag-mono" font-size="10.5" fill="#6B7480" text-anchor="middle">CFT: continuous — infinitely many points</text>
+            <line x1="20" y1="45" x2="260" y2="45" stroke="#DBE0E7" stroke-width="1.4"/>
+            <g fill="#6B7480"><circle cx="40" cy="45" r="2"/><circle cx="60" cy="45" r="2"/><circle cx="80" cy="45" r="2"/><circle cx="100" cy="45" r="2"/><circle cx="120" cy="45" r="2"/><circle cx="140" cy="45" r="2"/><circle cx="160" cy="45" r="2"/><circle cx="180" cy="45" r="2"/><circle cx="200" cy="45" r="2"/><circle cx="220" cy="45" r="2"/><circle cx="240" cy="45" r="2"/></g>
+            <text x="400" y="16" class="diag-mono" font-size="10.5" fill="#1F3BE8" text-anchor="middle">DFT (N=4): 4 equally spaced samples</text>
+            <line x1="330" y1="45" x2="480" y2="45" stroke="#14171C" stroke-width="1.4"/>
+            <g fill="#1F3BE8"><circle cx="330" cy="45" r="5"/><circle cx="380" cy="45" r="5"/><circle cx="430" cy="45" r="5"/><circle cx="480" cy="45" r="5"/></g>
+            <text x="330" y="65" class="diag-mono" font-size="9" fill="#6B7480" text-anchor="middle">0</text>
+            <text x="380" y="65" class="diag-mono" font-size="9" fill="#6B7480" text-anchor="middle">π/2</text>
+            <text x="430" y="65" class="diag-mono" font-size="9" fill="#6B7480" text-anchor="middle">π</text>
+            <text x="480" y="65" class="diag-mono" font-size="9" fill="#6B7480" text-anchor="middle">3π/2</text>
+          </svg>
+        </div>
+        <figcaption>The DFT takes the same continuous curve and reads it off at only N equally spaced points</figcaption>
+      </figure>
+
+      <div class="remember">
+        <span class="lab">Why k stops at N−1 (doesn't need to reach N)</span>
+        <p>At <span class="k">k=N</span>: <span class="k">ω = 2πN/N = 2π ≡ 0</span> (by the periodicity from Topic 04b) — <strong>identical</strong> to <span class="k">k=0</span>. So <span class="k">k=N</span> would just duplicate <span class="k">k=0</span>; the unique information is fully captured by <span class="k">k=0,…,N−1</span>.</p>
       </div>
 
       <h4>The 2D DFT (forward)</h4>
       <div class="formula">
         <span class="cap">2D DFT</span>
-        $$ X(k_1,k_2)=\sum_{n_1=0}^{N_1-1}\sum_{n_2=0}^{N_2-1} x(n_1,n_2)\,e^{-j\frac{2\pi}{N_1}k_1 n_1}\,e^{-j\frac{2\pi}{N_2}k_2 n_2} $$
+        $$ X(k_1,k_2)=\sum_{n_1=0}^{N_1-1}\sum_{n_2=0}^{N_2-1} x(n_1,n_2)\,e^{-j2\pi\left(\frac{k_1 n_1}{N_1}+\frac{k_2 n_2}{N_2}\right)} $$
       </div>
+      <p>This converts the spatial-domain image <span class="k">x(n₁,n₂)</span> into its frequency-domain representation <span class="k">X(k₁,k₂)</span>. Each value <span class="k">X(k₁,k₂)</span> tells us the strength (and phase) of that particular spatial-frequency component.</p>
+
+      <div class="card">
+        <h4 style="margin-top:0">How many coefficients does the DFT produce?</h4>
+        <p style="margin:0">Exactly <span class="k">N₁</span> choices for <span class="k">k₁</span> times <span class="k">N₂</span> choices for <span class="k">k₂</span> — so an <span class="k">N₁×N₂</span> image produces exactly <span class="k">N₁×N₂</span> DFT coefficients. Example: a <strong>512×512</strong> image has <strong>262,144</strong> pixels and produces exactly <strong>262,144</strong> frequency coefficients — a finite array a computer can actually store and process, instead of an infinite continuous frequency domain.</p>
+      </div>
+
+      <h4>The DC component — a formula worth memorising on its own</h4>
+      <p>Set <span class="k">k₁=k₂=0</span>. Every exponential becomes <span class="k">e^{-j0}=1</span>, so:</p>
+      <div class="formula">
+        <span class="cap">DC (zero-frequency) coefficient</span>
+        $$ X(0,0)=\sum_{n_1=0}^{N_1-1}\sum_{n_2=0}^{N_2-1} x(n_1,n_2) \qquad\Rightarrow\qquad \text{Mean intensity}=\frac{X(0,0)}{N_1 N_2} $$
+      </div>
+      <p><span class="k">X(0,0)</span> is simply the <strong>sum of every pixel value</strong> in the image; dividing by the number of pixels gives the mean image intensity. (This is the same DC-value trick from Topic 07, now applied to a full image rather than a small filter.)</p>
 
       <h4>The 2D Inverse DFT</h4>
       <div class="formula">
         <span class="cap">2D IDFT — reconstructs the image exactly</span>
-        $$ x(n_1,n_2)=\frac{1}{N_1 N_2}\sum_{k_1=0}^{N_1-1}\sum_{k_2=0}^{N_2-1} X(k_1,k_2)\,e^{+j\frac{2\pi}{N_1}k_1 n_1}\,e^{+j\frac{2\pi}{N_2}k_2 n_2} $$
+        $$ x(n_1,n_2)=\frac{1}{N_1 N_2}\sum_{k_1=0}^{N_1-1}\sum_{k_2=0}^{N_2-1} X(k_1,k_2)\,e^{+j2\pi\left(\frac{k_1 n_1}{N_1}+\frac{k_2 n_2}{N_2}\right)} $$
       </div>
       <div class="remember">
         <span class="lab">Forward vs Inverse — spot the three differences</span>
-        <p>(1) The <strong>sign</strong> of the exponent flips (−j → +j). (2) The inverse has a <strong>1/(N₁N₂)</strong> normalization factor. (3) The forward sums over <strong>n</strong> (space) to give <strong>X(k)</strong>; the inverse sums over <strong>k</strong> (frequency) to give back <strong>x(n)</strong>. Everything else is identical.</p>
+        <p>(1) The <strong>sign</strong> of the exponent flips (−j → +j) — forward goes spatial→frequency, inverse goes frequency→spatial. (2) The inverse has a <strong>1/(N₁N₂)</strong> normalization factor (the forward sum has none, in this convention). (3) The forward sums over <strong>n</strong> (space) to give <strong>X(k)</strong>; the inverse sums over <strong>k</strong> (frequency) to give back <strong>x(n)</strong>. Everything else is identical.</p>
+        <p style="margin-top:8px">Memory trick: <strong>DFT → minus sign (e^{-j…})</strong>; <strong>IDFT → plus sign + the 1/(N₁N₂) factor</strong>.</p>
+      </div>
+
+      <div class="tip">
+        <span class="lab">The DFT is fully reversible</span>
+        <p><span class="k">x → (DFT) → X → (IDFT) → x</span>, exactly, with no information lost. This round-trip is what makes it safe to filter in the frequency domain and transform back (Topic 15's Convolution Theorem): <span class="k">y = x*h ⟷ Y(k₁,k₂) = X(k₁,k₂)·H(k₁,k₂)</span> — the same multiply-then-inverse-transform idea from Topic 07, now applied with full images instead of a small filter matrix.</p>
       </div>
     </section>
 
+    <!-- F9 -->
     <!-- F9 -->
     <section id="f9">
       <div class="eyebrow">Topic 09</div>
