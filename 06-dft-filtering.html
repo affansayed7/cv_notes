@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>06 · DFT Properties &amp; Frequency-Domain Filtering — CV Exam Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+<script>
+  window.MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['$$', '$$']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+
+<button class="menu-btn" id="menuBtn" aria-label="Open contents"><span></span></button>
+<div class="scrim" id="scrim"></div>
+
+<div class="shell">
+  <aside class="side" id="side">
+    <a class="brand" href="index.html">
+      <svg class="eye" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect width="40" height="40" rx="9" fill="#1F3BE8"/>
+        <path d="M6 20c4.5-6.5 9-9.5 14-9.5S29.5 13.5 34 20c-4.5 6.5-9 9.5-14 9.5S10.5 26.5 6 20Z" fill="#fff"/>
+        <circle cx="20" cy="20" r="6.2" fill="#1F3BE8"/>
+        <circle cx="20" cy="20" r="3" fill="#0d1b52"/>
+        <circle cx="17.6" cy="17.6" r="1.5" fill="#fff"/>
+      </svg>
+      <div><h1>Computer Vision</h1><div class="sub">Module 06</div></div>
+    </a>
+    <a class="back-link" href="index.html">← All modules</a>
+    <a class="back-link" href="05-frequency-domain.html">← Module 05</a>
+
+    <div class="nav-label">Algorithm Complexity</div>
+    <nav class="nav" id="nav">
+      <a href="#f10"><span class="num">01</span> Algorithm Complexity</a>
+    </nav>
+    <div class="nav-label">Properties of the DFT</div>
+    <nav class="nav">
+      <a href="#f11"><span class="num">02</span> Shifting &amp; Centering the DFT</a>
+      <a href="#f12"><span class="num">03</span> Symmetry &amp; the Spectrum</a>
+      <a href="#f13"><span class="num">04</span> Translation &amp; Rotation</a>
+      <a href="#f14"><span class="num">05</span> Low vs High Frequency Content</a>
+    </nav>
+    <div class="nav-label">Filtering</div>
+    <nav class="nav">
+      <a href="#f15"><span class="num">06</span> The Convolution Theorem</a>
+      <a href="#f16"><span class="num">07</span> Frequency-Domain Filtering Pipeline</a>
+    </nav>
+    <div class="nav-label">Filter Design</div>
+    <nav class="nav">
+      <a href="#f17"><span class="num">08</span> Steps of Performing Filtering</a>
+      <a href="#f18"><span class="num">09</span> The Need for Padding</a>
+      <a href="#f19"><span class="num">10</span> Frequency-Based Filters Overview</a>
+      <a href="#f20"><span class="num">11</span> Ideal Lowpass (ILPF) &amp; Ringing</a>
+      <a href="#f21"><span class="num">12</span> Gaussian Lowpass (GLPF)</a>
+      <a href="#f22"><span class="num">13</span> Butterworth Lowpass (BLPF)</a>
+      <a href="#f23"><span class="num">14</span> Highpass Filters</a>
+    </nav>
+    <div class="nav-label">Revision</div>
+    <nav class="nav">
+      <a href="#glossary"><span class="num">★</span> All Definitions — Cram Sheet</a>
+    </nav>
+  </aside>
+
+  <main>
+    <header class="hero">
+      <div class="kick">Module 06 · Frequency Domain — Part 2</div>
+      <h2>DFT Properties &amp; <em>Filtering.</em></h2>
+      <p>Continuing directly from <a class="inl" href="05-frequency-domain.html">Module 05</a>: FFT algorithm complexity, the DFT's properties (centering, symmetry, translation/rotation, low vs high frequency content), the Convolution Theorem, the full frequency-domain filtering pipeline, and the complete filter-design toolkit — padding, and Ideal/Gaussian/Butterworth low- and high-pass filters with ringing behaviour.</p>
+      <div class="meta">
+        <span class="chip">14 <b>topics</b></span>
+        <span class="chip">Gonzalez &amp; Woods · <b>Ch. 4</b></span>
+        <span class="chip">Full derivations + numericals</span>
+      </div>
+    </header>
+
+    <section id="f10">
+      <div class="eyebrow">Topic 01</div>
+      <h3>Algorithm Complexity</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The FFT reduces the complexity of computing an N-point (or N×N) DFT from the order of N² (or N⁴ in 2D, direct) down to the order of N·log₂N (or N²·log₂N in 2D), which is the reason large-scale frequency-domain processing is practical.</p>
+      </div>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Method</th><th>2D complexity (N×N image)</th></tr></thead>
+          <tbody>
+            <tr><td>Direct DFT computation</td><td><span class="k">O(N⁴)</span></td></tr>
+            <tr><td>Row–column decomposition (direct 1D DFT)</td><td><span class="k">O(N³)</span></td></tr>
+            <tr><td>Full FFT (row–column + Cooley–Tukey)</td><td><span class="k">≈ 2N²·log₂N</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <p style="margin:0">The FFT algorithm was developed in the <strong>1960s for seismic exploration</strong>. Improvements reduced the DFT complexity to <span class="k">2N²·log₂N</span>. For <span class="k">N=256</span>: <span class="k">2N²·log₂N ≈ 10⁶</span> operations — <strong>a few seconds on a workstation</strong>, versus the vastly larger direct-computation cost.</p>
+      </div>
+    </section>
+
+    <!-- F11 -->
+    <section id="f11">
+      <div class="eyebrow">Topic 02 · Properties of the DFT</div>
+      <h3>Shifting &amp; Centering the DFT</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>Multiplying an image by (−1)^(x+y) before computing its DFT shifts the origin (the zero-frequency / DC component) of the transform to the centre of the frequency rectangle, at (M/2, N/2). This "centering" makes the spectrum easier to view and to filter, since low frequencies gather in the middle.</p>
+      </div>
+
+      <div class="formula">
+        <span class="cap">The centering (shift) property</span>
+        $$ f(x,y)\;\longleftrightarrow\;F(u,v) $$
+        $$ f(x,y)\cdot(-1)^{x+y}\;\longleftrightarrow\;F\!\left(u-\tfrac{M}{2},\,v-\tfrac{N}{2}\right) $$
+      </div>
+      <p>It is common practice to multiply the input image by <span class="k">(−1)^(x+y)</span> prior to computing the FT. This shifts the centre of the transform to <span class="k">(M/2, N/2)</span>.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 170" role="img" aria-label="Uncentered spectrum with bright corners vs centered spectrum with bright middle">
+            <text x="150" y="16" class="diag-mono" font-size="11" fill="#C0492B" text-anchor="middle">uncentered — DC in corners</text>
+            <rect x="60" y="30" width="180" height="120" fill="#111"/>
+            <circle cx="60" cy="30" r="12" fill="#fff" opacity=".9"/><circle cx="240" cy="30" r="12" fill="#fff" opacity=".9"/>
+            <circle cx="60" cy="150" r="12" fill="#fff" opacity=".9"/><circle cx="240" cy="150" r="12" fill="#fff" opacity=".9"/>
+
+            <path d="M270 90 h50" stroke="#14171C" stroke-width="1.8"/>
+            <polygon points="326,90 314,84 314,96" fill="#14171C"/>
+            <text x="296" y="78" class="diag-mono" font-size="9" fill="#6B7480" text-anchor="middle">×(−1)^(x+y)</text>
+
+            <text x="480" y="16" class="diag-mono" font-size="11" fill="#3A7D44" text-anchor="middle">centered — DC in middle</text>
+            <rect x="390" y="30" width="180" height="120" fill="#111"/>
+            <circle cx="480" cy="90" r="16" fill="#fff" opacity=".95"/>
+          </svg>
+        </div>
+        <figcaption>Without centering the zero-frequency term sits at the corners; ×(−1)^(x+y) brings it to the middle</figcaption>
+      </figure>
+    </section>
+
+    <!-- F12 -->
+    <section id="f12">
+      <div class="eyebrow">Topic 03</div>
+      <h3>Symmetry &amp; the Spectrum</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>For a real-valued image, the Fourier transform is conjugate symmetric: F(u,v) = F*(−u,−v). Consequently, the Fourier spectrum (the magnitude |F(u,v)|) is symmetric about the origin: |F(u,v)| = |F(−u,−v)|.</p>
+      </div>
+
+      <div class="formula">
+        <span class="cap">Conjugate symmetry (real image)</span>
+        $$ F(u,v)=F^{*}(-u,-v) $$
+      </div>
+      <div class="formula">
+        <span class="cap">Magnitude (spectrum) is symmetric</span>
+        $$ |F(u,v)|=|F(-u,-v)| $$
+      </div>
+
+      <h4>The three descriptors of the transform</h4>
+      <p>Since <span class="k">F(u,v)</span> is complex, we describe it with:</p>
+      <div class="formula">
+        <span class="cap">Spectrum, phase, and power</span>
+        $$ |F(u,v)|=\sqrt{R^2+I^2}\ \text{(magnitude / spectrum)} \qquad \phi(u,v)=\tan^{-1}\!\frac{I}{R}\ \text{(phase angle)} $$
+        $$ P(u,v)=|F(u,v)|^2=R^2+I^2 \ \text{(power spectrum)} $$
+      </div>
+      <p>where <span class="k">R</span> and <span class="k">I</span> are the real and imaginary parts of <span class="k">F(u,v)</span>.</p>
+
+      <div class="tip">
+        <span class="lab">Why we log-transform the spectrum for display</span>
+        <p>A Fourier spectrum has an enormous dynamic range (the DC term dwarfs everything). To make it visible we apply <span class="k">D(u,v)=c·log(1+|F(u,v)|)</span> — the log transform from Module 02. The "computing spectrum" figure shows: a rectangle image → its spectrum (tiny bright spots in the corners) → the centered spectrum → the log-transformed spectrum (now the detail is visible).</p>
+      </div>
+    </section>
+
+    <!-- F13 -->
+    <section id="f13">
+      <div class="eyebrow">Topic 04</div>
+      <h3>Translation &amp; Rotation Properties</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>Translating an image in space does not change the magnitude of its Fourier spectrum (only its phase); rotating an image by an angle rotates its Fourier spectrum by the same angle. These properties show that the spectrum's shape depends on the image's frequency content and orientation, not on its position.</p>
+      </div>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Spatial operation</th><th>Effect on the Fourier transform</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Translation</strong> (shift the image by x₀, y₀)</td><td>only the <strong>phase</strong> changes (multiplied by a phase term); the <strong>magnitude spectrum |F| is unchanged</strong></td></tr>
+            <tr><td><strong>Rotation</strong> (rotate the image by θ)</td><td>the spectrum <strong>rotates by the same angle θ</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="formula">
+        <span class="cap">Translation property</span>
+        $$ f(x-x_0,\,y-y_0)\;\longleftrightarrow\;F(u,v)\,e^{-j2\pi\left(\frac{ux_0}{M}+\frac{vy_0}{N}\right)} $$
+      </div>
+      <div class="remember">
+        <span class="lab">The intuition</span>
+        <p>Moving an object around an image doesn't change <em>which</em> frequencies are present (edges are still edges, textures still textures) — only <em>where</em> they align, which lives in the phase. But rotating the object rotates its edges/textures, so the frequency content rotates with it.</p>
+      </div>
+    </section>
+
+    <!-- F14 -->
+    <section id="f14">
+      <div class="eyebrow">Topic 05</div>
+      <h3>Low vs High Frequency Content</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>In the Fourier spectrum, the low-frequency components (near the centre of a centered spectrum) are responsible for the general gray-level appearance of an image, while the high-frequency components (away from the centre) are responsible for its fine detail such as edges and texture.</p>
+      </div>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Spectrum region</th><th>Frequencies</th><th>Responsible for</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Centre</strong> (of centered spectrum)</td><td>low frequency</td><td>general gray-level <strong>appearance</strong> — the smooth, overall look</td></tr>
+            <tr><td><strong>Away from centre</strong></td><td>high frequency</td><td><strong>detail</strong> — edges, sharp transitions, fine texture</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 180" role="img" aria-label="Centered spectrum labelled: bright centre = general appearance, outer ring = detail">
+            <rect x="230" y="20" width="180" height="140" fill="#111"/>
+            <circle cx="320" cy="90" r="34" fill="#fff" opacity=".85"/>
+            <circle cx="320" cy="90" r="18" fill="#fff"/>
+            <text x="320" y="94" class="diag-mono" font-size="9" fill="#111" text-anchor="middle">low f</text>
+            <line x1="130" y1="60" x2="288" y2="82" stroke="#1F3BE8" stroke-width="1.4"/>
+            <text x="120" y="58" class="diag-mono" font-size="10" fill="#1F3BE8" text-anchor="end">general appearance</text>
+            <line x1="510" y1="140" x2="392" y2="120" stroke="#E08A00" stroke-width="1.4"/>
+            <text x="518" y="144" class="diag-mono" font-size="10" fill="#E08A00">detail (edges)</text>
+            <text x="320" y="176" class="diag-mono" font-size="10" fill="#6B7480" text-anchor="middle">centered log-magnitude spectrum</text>
+          </svg>
+        </div>
+        <figcaption>Reconstructing an image from only the central (low-freq) part gives a blurred version; from only the outer (high-freq) part gives edges</figcaption>
+      </figure>
+      <div class="tip">
+        <span class="lab">The reconstruction demo</span>
+        <p>Keeping progressively more of the spectrum (e.g. 5% → 10% → 20% → 50% of the coefficients, from the centre outward) and inverse-transforming shows the image going from very blurred to nearly perfect — visual proof that <strong>low frequencies carry the bulk of the appearance</strong> and high frequencies add the crisp detail.</p>
+      </div>
+    </section>
+
+    <!-- F15 -->
+    <section id="f15">
+      <div class="eyebrow">Topic 06 · Filtering</div>
+      <h3>The Convolution Theorem</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The Convolution Theorem states that convolution in the spatial domain is equivalent to multiplication in the frequency domain, and vice versa. That is, if g = f ∗ h (convolution), then its Fourier transform is G = F·H (point-wise product).</p>
+      </div>
+
+      <div class="formula">
+        <span class="cap">The convolution theorem (both directions)</span>
+        $$ g = f * h \;\;\longleftrightarrow\;\; G = F\cdot H $$
+        $$ g = f\cdot h \;\;\longleftrightarrow\;\; G = F * H $$
+      </div>
+      <p>where <span class="k">F, H, G</span> are the Fourier transforms of <span class="k">f, h, g</span> respectively.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 180" role="img" aria-label="Two routes to compute g: convolve in space, or transform, multiply, inverse-transform">
+            <text x="320" y="18" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">two equivalent routes to the filtered image g</text>
+            <g class="diag-mono" font-size="12" text-anchor="middle">
+              <rect x="40" y="35" width="80" height="40" rx="6" fill="#EDF0FF" stroke="#1F3BE8"/><text x="80" y="60" fill="#132a9c">f</text>
+              <rect x="150" y="35" width="80" height="40" rx="6" fill="#EDF0FF" stroke="#1F3BE8"/><text x="190" y="60" fill="#132a9c">h</text>
+              <rect x="90" y="120" width="100" height="40" rx="6" fill="#FFF6E6" stroke="#E08A00"/><text x="140" y="145" fill="#8a5200">g = f ∗ h</text>
+              <path d="M80 78 L130 118" stroke="#1F3BE8"/><path d="M190 78 L150 118" stroke="#1F3BE8"/>
+              <text x="200" y="105" fill="#C0492B" font-size="10">spatial: convolve</text>
+            </g>
+            <g class="diag-mono" font-size="12" text-anchor="middle">
+              <rect x="360" y="35" width="70" height="36" rx="6" fill="#EDF0FF" stroke="#1F3BE8"/><text x="395" y="58" fill="#132a9c">F</text>
+              <rect x="470" y="35" width="70" height="36" rx="6" fill="#EDF0FF" stroke="#1F3BE8"/><text x="505" y="58" fill="#132a9c">H</text>
+              <rect x="405" y="115" width="120" height="36" rx="6" fill="#FFF6E6" stroke="#E08A00"/><text x="465" y="138" fill="#8a5200">G = F · H</text>
+              <text x="345" y="30" fill="#6B7480" font-size="9">FT of f</text>
+              <text x="555" y="30" fill="#6B7480" font-size="9">FT of h</text>
+              <path d="M395 74 L450 113" stroke="#1F3BE8"/><path d="M505 74 L490 113" stroke="#1F3BE8"/>
+              <text x="595" y="100" fill="#C0492B" font-size="10">freq: multiply</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>Convolving f and h in space ≡ multiplying F and H in frequency — the theorem that makes frequency-domain filtering worthwhile</figcaption>
+      </figure>
+
+      <div class="remember">
+        <span class="lab">How you actually use it</span>
+        <p>To filter <span class="k">g = f ∗ h</span> without doing the expensive convolution: (1) take the FT of both — <span class="k">F</span> and <span class="k">H</span>; (2) <strong>multiply</strong> them point-wise — <span class="k">G = F·H</span>; (3) take the <strong>inverse FT</strong> of <span class="k">G</span> to get <span class="k">g</span>. For large kernels this three-step route is far cheaper than direct convolution (Module 05, Topic 03).</p>
+      </div>
+
+      <div class="card">
+        <h4 style="margin-top:0">Numerical intuition — noise removal example</h4>
+        <p style="margin:0">A signal = sum of 3 sinusoids (20, 50, 80 Hz) + random noise. Filtering in the <strong>time domain</strong> with a length-5 averaging filter <span class="k">[1 1 1 1 1]/5</span> smooths it but blurs the peaks. Filtering in the <strong>frequency domain</strong> with a cut-off at 90 Hz cleanly removes the high-frequency noise while keeping the three sinusoids intact — a direct demonstration of why frequency-domain filtering is so precise for frequency-selective tasks.</p>
+      </div>
+    </section>
+
+    <!-- F16 -->
+    <section id="f16">
+      <div class="eyebrow">Topic 07</div>
+      <h3>The Frequency-Domain Filtering Pipeline</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>Frequency-domain filtering enhances an image by: transforming it to the frequency domain with the FT, multiplying by a filter function H(u,v), and transforming the result back with the inverse FT. The enhanced image is g(x,y) = Real{ ℱ⁻¹[ H(u,v)·F(u,v) ] }.</p>
+      </div>
+
+      <div class="formula">
+        <span class="cap">The complete filtering equation</span>
+        $$ g(x,y)=\text{Real}\Big\{\,\mathcal{F}^{-1}\big[\,H(u,v)\,F(u,v)\,\big]\Big\} $$
+      </div>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 180" role="img" aria-label="Pipeline: input image, FT, multiply by H(u,v), inverse FT, output image">
+            <g class="diag-mono" font-size="11" text-anchor="middle">
+              <rect x="20" y="70" width="90" height="44" rx="6" fill="#F5F5F5" stroke="#DBE0E7"/><text x="65" y="90" fill="#3A4048">f(x,y)</text><text x="65" y="105" fill="#6B7480" font-size="9">input</text>
+              <path d="M112 92 h30" stroke="#14171C"/><polygon points="146,92 136,87 136,97" fill="#14171C"/>
+              <rect x="146" y="70" width="90" height="44" rx="6" fill="#EDF0FF" stroke="#1F3BE8"/><text x="191" y="88" fill="#132a9c">Fourier</text><text x="191" y="103" fill="#132a9c">transform</text>
+              <path d="M238 92 h30" stroke="#14171C"/><polygon points="272,92 262,87 262,97" fill="#14171C"/>
+              <text x="253" y="128" fill="#6B7480" font-size="9">F(u,v)</text>
+              <rect x="272" y="66" width="96" height="52" rx="6" fill="#FFF6E6" stroke="#E08A00" stroke-width="2"/><text x="320" y="86" fill="#8a5200">Filter</text><text x="320" y="101" fill="#8a5200">H(u,v)</text>
+              <path d="M370 92 h30" stroke="#14171C"/><polygon points="404,92 394,87 394,97" fill="#14171C"/>
+              <text x="388" y="128" fill="#6B7480" font-size="8.5">H·F</text>
+              <rect x="404" y="70" width="98" height="44" rx="6" fill="#EDF0FF" stroke="#1F3BE8"/><text x="453" y="88" fill="#132a9c">Inverse</text><text x="453" y="103" fill="#132a9c">FT</text>
+              <path d="M504 92 h30" stroke="#14171C"/><polygon points="538,92 528,87 528,97" fill="#14171C"/>
+              <rect x="538" y="70" width="90" height="44" rx="6" fill="#F5F5F5" stroke="#DBE0E7"/><text x="583" y="90" fill="#3A4048">g(x,y)</text><text x="583" y="105" fill="#6B7480" font-size="9">enhanced</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>Input → FT → multiply by filter H(u,v) → inverse FT → enhanced output. (Pre/post-processing steps may bracket the pipeline.)</figcaption>
+      </figure>
+
+      <div class="remember">
+        <span class="lab">Choosing H(u,v) decides the filter</span>
+        <p>The filter function <span class="k">H(u,v)</span> is where you decide what to keep: a <strong>lowpass</strong> H (passes the centre, blocks the edges) <strong>smooths/blurs</strong>; a <strong>highpass</strong> H (blocks the centre, passes the edges) <strong>sharpens / extracts edges</strong>. This is the frequency-domain counterpart of the spatial smoothing vs sharpening filters from Module 03 — connected by the Convolution Theorem.</p>
+      </div>
+    </section>
+
+    <!-- F17 steps -->
+    <section id="f17">
+      <div class="eyebrow">Topic 08 · Filter Design</div>
+      <h3>Steps of Performing Frequency-Domain Filtering</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The standard frequency-domain filtering procedure pads the image, centers its transform, multiplies by a filter transfer function H(u,v), inverse-transforms, and crops back to the original size. Padding to P=2M, Q=2N is required to prevent wraparound (circular-convolution) errors.</p>
+      </div>
+
+      <div class="card">
+        <h4 style="margin-top:0">The 8-step procedure (Gonzalez &amp; Woods)</h4>
+        <ol style="margin-bottom:0">
+          <li>Given an input image <span class="k">f(x,y)</span> of size <span class="k">M×N</span>, obtain padding sizes <span class="k">P = 2M</span> and <span class="k">Q = 2N</span>.</li>
+          <li>Form a <strong>padded</strong> image <span class="k">f_p(x,y)</span> of size <span class="k">P×Q</span> using zero-, mirror-, or replicate-padding.</li>
+          <li>Multiply <span class="k">f_p(x,y)</span> by <span class="k">(−1)^{x+y}</span> to <strong>center</strong> the transform on the P×Q frequency rectangle.</li>
+          <li>Compute the DFT <span class="k">F(u,v)</span> of the image from step 3.</li>
+          <li>Construct a real, symmetric filter transfer function <span class="k">H(u,v)</span> of size P×Q, centered at <span class="k">(P/2, Q/2)</span>.</li>
+          <li>Form the product <span class="k">G(u,v) = H(u,v)·F(u,v)</span> by <strong>elementwise</strong> multiplication.</li>
+          <li>Obtain the filtered image (size P×Q): <span class="k">g_p(x,y) = Real{ℱ⁻¹[G(u,v)]}·(−1)^{x+y}</span>.</li>
+          <li>Obtain the final result <span class="k">g(x,y)</span> of size <span class="k">M×N</span> by extracting the top-left M×N region from <span class="k">g_p(x,y)</span>.</li>
+        </ol>
+      </div>
+      <div class="remember">
+        <span class="lab">The (−1)^(x+y) appears twice</span>
+        <p>Once in step 3 (to center the spectrum before filtering) and again in step 7 (to undo the centering after the inverse transform). Both are needed for the result to come out correct and right-side-up.</p>
+      </div>
+    </section>
+
+    <!-- F18 padding -->
+    <section id="f18">
+      <div class="eyebrow">Topic 09</div>
+      <h3>The Need for Padding</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>Multiplication in the frequency domain corresponds to circular (periodic) convolution in the spatial domain. Because both functions are treated as periodic, without padding the tail of one period wraps around and corrupts the other — so the image and filter are zero-padded to P=2M, Q=2N to give the linear-convolution result.</p>
+      </div>
+
+      <ul>
+        <li>Because we are convolving two <strong>periodic</strong> functions, the convolution itself is periodic — adjacent periods can overlap and interfere. This is called <strong>wraparound error</strong>.</li>
+        <li>Multiplication in the frequency domain <span class="k">G = H·F</span> corresponds to <strong>circular convolution</strong> in the spatial domain, not the linear convolution we actually want.</li>
+        <li>Padding both functions to size <span class="k">P = 2M</span>, <span class="k">Q = 2N</span> (or at least <span class="k">P ≥ 2M−1</span>) separates the periods enough that the circular convolution equals the desired <strong>linear convolution</strong>.</li>
+      </ul>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 150" role="img" aria-label="Without padding, periods overlap causing wraparound; with padding they are separated">
+            <text x="150" y="16" class="diag-mono" font-size="11" fill="#C0492B" text-anchor="middle">no padding — periods overlap</text>
+            <rect x="40" y="30" width="90" height="60" fill="#EDF0FF" stroke="#1F3BE8"/>
+            <rect x="125" y="30" width="90" height="60" fill="#FDECEC" stroke="#C0492B"/>
+            <rect x="115" y="30" width="20" height="60" fill="#C0492B" opacity=".35"/>
+            <text x="150" y="108" class="diag-txt" font-size="10" fill="#6B7480" text-anchor="middle">tail wraps into next period ✗</text>
+
+            <text x="480" y="16" class="diag-mono" font-size="11" fill="#3A7D44" text-anchor="middle">padded to 2M — periods clear</text>
+            <rect x="370" y="30" width="70" height="60" fill="#EDF0FF" stroke="#1F3BE8"/>
+            <rect x="440" y="30" width="50" height="60" fill="#F5F5F5" stroke="#DBE0E7" stroke-dasharray="3 3"/>
+            <rect x="500" y="30" width="70" height="60" fill="#E4F5E9" stroke="#3A7D44"/>
+            <rect x="570" y="30" width="30" height="60" fill="#F5F5F5" stroke="#DBE0E7" stroke-dasharray="3 3"/>
+            <text x="480" y="108" class="diag-txt" font-size="10" fill="#6B7480" text-anchor="middle">zero-pad (grey) gives clean separation ✓</text>
+          </svg>
+        </div>
+        <figcaption>Padding to P=2M, Q=2N prevents one period's convolution tail from wrapping into the next</figcaption>
+      </figure>
+    </section>
+
+    <!-- F19 filter overview -->
+    <section id="f19">
+      <div class="eyebrow">Topic 10</div>
+      <h3>Frequency-Based Filters — Overview</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>A lowpass filter passes low-frequency components and attenuates high frequencies, which blurs (smooths) the image. A highpass filter passes high-frequency components and attenuates low frequencies, which sharpens the image and extracts edges.</p>
+      </div>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Filter</th><th>Passes</th><th>Blocks</th><th>Effect on image</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Lowpass (LPF)</strong></td><td>low frequencies (centre)</td><td>high frequencies (edges of spectrum)</td><td><strong>blurs / smooths</strong> — restricts data to low-freq components</td></tr>
+            <tr><td><strong>Highpass (HPF)</strong></td><td>high frequencies</td><td>low frequencies</td><td><strong>sharpens / extracts edges</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Each comes in <strong>three flavours</strong> — Ideal, Butterworth, and Gaussian — which differ in how sharply they cut off. The distance from the centre of the (centered) frequency rectangle is:</p>
+      <div class="formula">
+        <span class="cap">Distance from the frequency-domain centre</span>
+        $$ D(u,v)=\Big[(u-\tfrac{M}{2})^2+(v-\tfrac{N}{2})^2\Big]^{1/2} $$
+      </div>
+      <p><span class="k">D₀</span> (a chosen constant) is the <strong>cutoff frequency</strong> — the radius at which the filter transitions.</p>
+    </section>
+
+    <!-- F20 ILPF -->
+    <section id="f20">
+      <div class="eyebrow">Topic 11</div>
+      <h3>Ideal Lowpass Filter (ILPF)</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The Ideal Lowpass Filter passes, without attenuation, all frequencies inside a circle of radius D₀ about the origin and completely removes all frequencies outside it. It has a perfectly sharp cutoff, but this abrupt transition causes ringing artifacts in the filtered image.</p>
+      </div>
+
+      <div class="formula">
+        <span class="cap">ILPF transfer function</span>
+        $$ H(u,v)=\begin{cases} 1 & \text{if } D(u,v)\le D_0\\ 0 & \text{if } D(u,v) > D_0 \end{cases} $$
+      </div>
+      <p>The filter is <strong>radially symmetric</strong> about the origin — a flat cylinder of radius <span class="k">D₀</span>: everything inside passes untouched, everything outside is zeroed.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 170" role="img" aria-label="ILPF: a sharp cylinder cross-section, and ringing artifacts in the result">
+            <text x="150" y="16" class="diag-mono" font-size="11" fill="#1F3BE8" text-anchor="middle">ILPF radial cross-section</text>
+            <line x1="40" y1="130" x2="270" y2="130" stroke="#14171C" stroke-width="1.2"/>
+            <line x1="155" y1="140" x2="155" y2="30" stroke="#DBE0E7"/>
+            <path d="M40 130 L40 45 L110 45 L110 130 L200 130 L200 45 L270 45 L270 130" fill="none" stroke="#1F3BE8" stroke-width="2.4"/>
+            <text x="110" y="145" class="diag-mono" font-size="10" fill="#C0492B">−D₀</text>
+            <text x="195" y="145" class="diag-mono" font-size="10" fill="#C0492B">D₀</text>
+            <text x="40" y="42" class="diag-mono" font-size="10" fill="#6B7480">1</text>
+
+            <text x="480" y="16" class="diag-mono" font-size="11" fill="#E08A00" text-anchor="middle">result: ringing + blurring</text>
+            <rect x="390" y="28" width="180" height="120" fill="#888"/>
+            <g stroke="#fff" fill="none" opacity=".7"><circle cx="480" cy="88" r="20"/><circle cx="480" cy="88" r="34"/><circle cx="480" cy="88" r="48"/></g>
+            <text x="480" y="162" class="diag-txt" font-size="9.5" fill="#6B7480" text-anchor="middle">concentric ripples around sharp features</text>
+          </svg>
+        </div>
+        <figcaption>The sharp cutoff (a "brick wall") produces ringing — concentric ripples — around edges in the output</figcaption>
+      </figure>
+
+      <div class="warn">
+        <span class="lab">Ringing — the price of a sharp cutoff</span>
+        <p>Because the ILPF has a sharp discontinuity in frequency, its spatial-domain equivalent is a <strong>sinc-like function with oscillating side-lobes</strong>. Convolving with those side-lobes creates <strong>ringing and blurring</strong> around edges. The ringing is <strong>more severe the narrower</strong> the filter (the smaller <span class="k">D₀</span>). This is why the ideal filter is rarely used in practice.</p>
+      </div>
+    </section>
+
+    <!-- F21 GLPF -->
+    <section id="f21">
+      <div class="eyebrow">Topic 12</div>
+      <h3>Gaussian Lowpass Filter (GLPF)</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The Gaussian Lowpass Filter has a transfer function shaped like a Gaussian, giving a smooth transition from pass to stop with no sharp discontinuity. Because its spatial-domain form is also Gaussian (no side-lobes), it produces absolutely no ringing artifacts.</p>
+      </div>
+
+      <div class="formula">
+        <span class="cap">GLPF transfer function</span>
+        $$ H(u,v)=e^{-\frac{D^2(u,v)}{2\sigma^2}} \qquad\text{or, with } \sigma=D_0:\qquad H(u,v)=e^{-\frac{D^2(u,v)}{2D_0^2}} $$
+      </div>
+      <p>where <span class="k">σ</span> is the measure of the spread of the Gaussian curve. Setting <span class="k">σ = D₀</span> makes <span class="k">D₀</span> the cutoff where <span class="k">H</span> drops to <span class="k">e^{−1/2} ≈ 0.607</span> of its peak.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 160" role="img" aria-label="GLPF: smooth bell cross-section, no ringing in result">
+            <text x="150" y="16" class="diag-mono" font-size="11" fill="#1F3BE8" text-anchor="middle">GLPF radial cross-section</text>
+            <line x1="40" y1="130" x2="270" y2="130" stroke="#14171C" stroke-width="1.2"/>
+            <path d="M40 128 C 110 125, 130 40, 155 40 C 180 40, 200 125, 270 128" fill="none" stroke="#1F3BE8" stroke-width="2.4"/>
+            <line x1="40" y1="88" x2="270" y2="88" stroke="#DBE0E7" stroke-dasharray="3 3"/>
+            <text x="20" y="92" class="diag-mono" font-size="9" fill="#6B7480">.607</text>
+            <text x="40" y="42" class="diag-mono" font-size="10" fill="#6B7480">1</text>
+
+            <text x="480" y="16" class="diag-mono" font-size="11" fill="#3A7D44" text-anchor="middle">result: smooth blur, NO ringing</text>
+            <rect x="390" y="28" width="180" height="120" fill="#999" style="filter:blur(1px)"/>
+            <circle cx="480" cy="88" r="30" fill="#bbb"/>
+            <text x="480" y="162" class="diag-txt" font-size="9.5" fill="#6B7480" text-anchor="middle">clean — no concentric ripples</text>
+          </svg>
+        </div>
+        <figcaption>Smooth Gaussian falloff → smooth impulse response → no ringing. The trade-off is a more gradual (less selective) cutoff</figcaption>
+      </figure>
+      <div class="remember">
+        <span class="lab">ILPF vs GLPF</span>
+        <p>ILPF: sharpest cutoff, but <strong>rings</strong>. GLPF: <strong>no ringing</strong> ever (guaranteed, because a Gaussian's transform is a Gaussian with no negative side-lobes), but a gentler cutoff so it blurs a bit more for the same <span class="k">D₀</span>. Butterworth sits between them.</p>
+      </div>
+    </section>
+
+    <!-- F22 BLPF -->
+    <section id="f22">
+      <div class="eyebrow">Topic 13</div>
+      <h3>Butterworth Lowpass Filter (BLPF)</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>The Butterworth Lowpass Filter has a smooth transfer function controlled by an order n. It has no sharp discontinuity and no single clear cutoff; a low order (n=1,2) behaves like a Gaussian with no ringing, while a high order approaches the ideal filter (sharper cutoff, but ringing reappears).</p>
+      </div>
+
+      <div class="formula">
+        <span class="cap">BLPF transfer function (order n, cutoff D₀)</span>
+        $$ H(u,v)=\frac{1}{1+\big[D(u,v)/D_0\big]^{2n}} $$
+      </div>
+      <p>At <span class="k">D(u,v)=D₀</span>, <span class="k">H = 1/(1+1) = 0.5</span> regardless of <span class="k">n</span> — so <span class="k">D₀</span> is the <strong>half-power point</strong>. The order <span class="k">n</span> controls the steepness of the transition.</p>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 480 170" role="img" aria-label="Butterworth cross-sections for increasing order n, getting sharper">
+            <text x="240" y="16" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">BLPF cross-section vs order n</text>
+            <line x1="40" y1="130" x2="440" y2="130" stroke="#14171C" stroke-width="1.2"/>
+            <line x1="40" y1="140" x2="40" y2="30" stroke="#14171C" stroke-width="1.2"/>
+            <line x1="240" y1="130" x2="240" y2="30" stroke="#DBE0E7" stroke-dasharray="3 3"/>
+            <text x="236" y="145" class="diag-mono" font-size="10" fill="#C0492B">D₀</text>
+            <path d="M40 45 C 140 55, 200 95, 240 110 C 300 130, 380 132, 440 132" fill="none" stroke="#1F3BE8" stroke-width="2"/>
+            <text x="90" y="50" class="diag-mono" font-size="10" fill="#1F3BE8">n=1</text>
+            <path d="M40 45 C 180 47, 220 70, 240 100 C 265 128, 320 132, 440 132" fill="none" stroke="#E08A00" stroke-width="2"/>
+            <text x="330" y="120" class="diag-mono" font-size="10" fill="#E08A00">n=4 (sharper)</text>
+            <text x="30" y="48" class="diag-mono" font-size="9" fill="#6B7480">1</text>
+          </svg>
+        </div>
+        <figcaption>Increasing n sharpens the cutoff toward the ideal filter; low n stays smooth like a Gaussian</figcaption>
+      </figure>
+      <div class="tip">
+        <span class="lab">The order n is the tuning knob</span>
+        <p><span class="k">n=1</span>: very smooth, Gaussian-like, no ringing. <span class="k">n=2</span>: a good compromise (mild transition, negligible ringing) — the most commonly used. <span class="k">n</span> large (e.g. 20): approaches the ILPF and ringing returns. Butterworth lets you <strong>dial</strong> between "no ringing" and "sharp cutoff".</p>
+      </div>
+    </section>
+
+    <!-- F23 HPF -->
+    <section id="f23">
+      <div class="eyebrow">Topic 14</div>
+      <h3>Highpass Filters (Ideal, Butterworth, Gaussian)</h3>
+      <div class="definition"><span class="lab">Definition — memorise this</span>
+        <p>A highpass filter is obtained from the corresponding lowpass filter by H_hp(u,v) = 1 − H_lp(u,v). It passes high frequencies (fine detail and edges) and blocks low frequencies (the smooth background), producing a sharpened / edge-enhanced image.</p>
+      </div>
+
+      <div class="formula">
+        <span class="cap">The master relationship</span>
+        $$ H_{hp}(u,v)=1-H_{lp}(u,v) $$
+      </div>
+      <p>Apply it to each of the three lowpass filters:</p>
+
+      <div class="formula">
+        <span class="cap">Ideal Highpass (IHPF)</span>
+        $$ H(u,v)=\begin{cases} 1 & \text{if } D(u,v) > D_0\\ 0 & \text{if } D(u,v)\le D_0 \end{cases} $$
+      </div>
+      <div class="formula">
+        <span class="cap">Butterworth Highpass (BHPF)</span>
+        $$ H(u,v)=\frac{1}{1+\big[D_0/D(u,v)\big]^{2n}} $$
+      </div>
+      <div class="formula">
+        <span class="cap">Gaussian Highpass (GHPF)</span>
+        $$ H(u,v)=1-e^{-\frac{D^2(u,v)}{2D_0^2}} $$
+      </div>
+
+      <div class="twrap">
+        <table>
+          <thead><tr><th>Highpass filter</th><th>Cutoff behaviour</th><th>Ringing?</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Ideal (IHPF)</strong></td><td>brick-wall: blocks all <span class="k">D≤D₀</span>, passes all <span class="k">D&gt;D₀</span></td><td><strong>yes</strong> — strong ringing</td></tr>
+            <tr><td><strong>Butterworth (BHPF)</strong></td><td>smooth, order-<span class="k">n</span> controlled</td><td>mild (grows with <span class="k">n</span>)</td></tr>
+            <tr><td><strong>Gaussian (GHPF)</strong></td><td>smoothest transition</td><td><strong>none</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure>
+        <div class="fig">
+          <svg viewBox="0 0 640 160" role="img" aria-label="Highpass filtering result: edges extracted, smooth areas darkened">
+            <text x="150" y="16" class="diag-mono" font-size="11" fill="#6B7480" text-anchor="middle">original image</text>
+            <rect x="50" y="28" width="180" height="120" fill="#c9c9c9"/>
+            <rect x="50" y="28" width="90" height="120" fill="#8a8a8a"/>
+            <circle cx="180" cy="90" r="28" fill="#e5e5e5"/>
+
+            <path d="M258 88 h40" stroke="#14171C" stroke-width="1.8"/>
+            <polygon points="304,88 292,82 292,94" fill="#14171C"/>
+            <text x="278" y="76" class="diag-mono" font-size="9" fill="#6B7480" text-anchor="middle">HPF</text>
+
+            <text x="490" y="16" class="diag-mono" font-size="11" fill="#E08A00" text-anchor="middle">highpass result — edges only</text>
+            <rect x="400" y="28" width="180" height="120" fill="#141414"/>
+            <line x1="490" y1="28" x2="490" y2="148" stroke="#fff" stroke-width="1.6"/>
+            <circle cx="520" cy="90" r="28" fill="none" stroke="#fff" stroke-width="1.6"/>
+          </svg>
+        </div>
+        <figcaption>Highpass filtering keeps edges/detail and suppresses the smooth interior — the frequency-domain way to sharpen</figcaption>
+      </figure>
+      <div class="remember">
+        <span class="lab">Exam-favourite fact</span>
+        <p>Every highpass filter is just <span class="k">1 − (its lowpass version)</span>. So if you can write the three lowpass transfer functions, you get the three highpass ones for free. Same ringing behaviour carries over: <strong>Ideal rings, Gaussian never rings, Butterworth is tunable</strong>.</p>
+      </div>
+    </section>
+
+    <!-- GLOSSARY -->
+    <section id="glossary">
+      <div class="eyebrow">Cram Sheet</div>
+      <h3>All Definitions, In One Place</h3>
+      <p>Every "Definition — memorise this" box from the topics above. See <a class="inl" href="05-frequency-domain.html">Module 05</a>'s own cram sheet for the fundamentals (spatial frequency through FFT).</p>
+
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">1. Algorithm Complexity</h4><p style="margin:0;font-size:14px">FFT reduces an N-point DFT from O(N²) to O(N·log₂N) (2D: O(N⁴) direct → O(N²·log₂N)), making large-scale frequency processing practical.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">2. Shifting / Centering the DFT</h4><p style="margin:0;font-size:14px">Multiplying the image by (−1)^(x+y) before the DFT shifts the zero-frequency (DC) term to the centre (M/2, N/2), making the spectrum easier to view and filter.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">3. Symmetry &amp; Spectrum</h4><p style="margin:0;font-size:14px">For a real image, F(u,v)=F*(−u,−v) (conjugate symmetric), so the magnitude spectrum is symmetric: |F(u,v)|=|F(−u,−v)|. Spectrum = magnitude, phase = angle, power = |F|².</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">4. Translation &amp; Rotation</h4><p style="margin:0;font-size:14px">Translating an image changes only the FT phase, not the magnitude spectrum; rotating the image rotates its spectrum by the same angle.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">5. Low vs High Frequency</h4><p style="margin:0;font-size:14px">Low-frequency components (centre of a centered spectrum) give the general gray-level appearance; high-frequency components (outer region) give the fine detail (edges, texture).</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">6. Convolution Theorem</h4><p style="margin:0;font-size:14px">Convolution in space = multiplication in frequency: g=f∗h ⟷ G=F·H (and g=f·h ⟷ G=F∗H). This is why frequency-domain filtering works.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">7. Frequency-Domain Filtering</h4><p style="margin:0;font-size:14px">Transform to frequency, multiply by filter H(u,v), inverse-transform back: g(x,y)=Real{ℱ⁻¹[H(u,v)F(u,v)]}. Lowpass H smooths; highpass H sharpens.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">8. Steps of Filtering</h4><p style="margin:0;font-size:14px">Pad to P=2M, Q=2N → center with (−1)^(x+y) → DFT → multiply by H(u,v) → inverse DFT → undo centering → crop back to M×N.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">9. Need for Padding</h4><p style="margin:0;font-size:14px">Multiplication in frequency = circular convolution in space; padding to 2M×2N prevents wraparound error so the result equals true linear convolution.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">10. Lowpass vs Highpass</h4><p style="margin:0;font-size:14px">LPF passes low freq (blurs); HPF passes high freq (sharpens/edges). D(u,v)=√((u−M/2)²+(v−N/2)²); D₀ = cutoff frequency.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">11. Ideal Lowpass (ILPF)</h4><p style="margin:0;font-size:14px">H=1 if D≤D₀ else 0. Sharp brick-wall cutoff → severe ringing (worse for smaller D₀).</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">12. Gaussian Lowpass (GLPF)</h4><p style="margin:0;font-size:14px">H=e^(−D²/2D₀²). Smooth transition → no ringing ever; gentler (more blurring) cutoff.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">13. Butterworth Lowpass (BLPF)</h4><p style="margin:0;font-size:14px">H=1/(1+[D/D₀]^(2n)). Order n tunes sharpness: n=1–2 smooth like Gaussian, large n approaches ideal (ringing returns). H=0.5 at D₀.</p></div>
+      <div class="card" style="margin:12px 0"><h4 style="margin:0 0 6px 0;font-size:15px">14. Highpass Filters</h4><p style="margin:0;font-size:14px">H_hp = 1 − H_lp. Ideal (rings), Butterworth 1/(1+[D₀/D]^(2n)) (tunable), Gaussian 1−e^(−D²/2D₀²) (no ringing).</p></div>
+    </section>
+
+    <footer>
+      <p class="mono">// end of module 06 — <a class="inl" href="index.html">back to all modules</a></p>
+      <p>Built for revision from the course deck (Frequency Domain Enhancement). References: Gonzalez &amp; Woods, <em>Digital Image Processing</em>, Ch. 4.</p>
+    </footer>
+
+  </main>
+</div>
+
+<script src="nav.js"></script>
+</body>
+</html>
