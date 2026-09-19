@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harris Corner Detection — Complete Guide</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<style>
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --card-border: #334155;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent2: #818cf8;
+  --accent3: #f472b6;
+  --accent4: #34d399;
+  --heading: #f8fafc;
+  --code-bg: #0f172a;
+  --corner-color: #f59e0b;
+  --edge-color: #3b82f6;
+  --flat-color: #6b7280;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.8;
+  font-size: 17px;
+}
+.container { max-width: 900px; margin: 0 auto; padding: 20px 16px 80px; }
+
+/* Hero */
+.hero {
+  text-align: center;
+  padding: 60px 20px 40px;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1a1a2e 100%);
+  border-bottom: 2px solid var(--accent);
+  margin-bottom: 40px;
+}
+.hero h1 {
+  font-size: 2.4em;
+  color: var(--accent);
+  margin-bottom: 10px;
+  font-weight: 800;
+}
+.hero .subtitle {
+  color: var(--text-muted);
+  font-size: 1.1em;
+}
+.hero .course {
+  color: var(--accent2);
+  font-size: 0.95em;
+  margin-top: 8px;
+}
+
+/* Sections */
+.section {
+  margin-bottom: 50px;
+}
+h2 {
+  font-size: 1.7em;
+  color: var(--accent);
+  border-bottom: 2px solid var(--card-border);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+h3 {
+  font-size: 1.3em;
+  color: var(--accent2);
+  margin: 25px 0 12px;
+  font-weight: 600;
+}
+h4 {
+  font-size: 1.1em;
+  color: var(--accent4);
+  margin: 20px 0 10px;
+}
+p { margin-bottom: 16px; }
+
+/* Cards */
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 20px 0;
+}
+.card.highlight {
+  border-left: 4px solid var(--accent);
+}
+.card.warning {
+  border-left: 4px solid var(--corner-color);
+}
+.card.formula {
+  border-left: 4px solid var(--accent2);
+  text-align: center;
+  font-size: 1.1em;
+}
+.card-title {
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 10px;
+  font-size: 1.05em;
+}
+
+/* SVG diagrams */
+.diagram-container {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 24px 0;
+  text-align: center;
+  overflow-x: auto;
+}
+.diagram-container .caption {
+  color: var(--text-muted);
+  font-size: 0.9em;
+  margin-top: 12px;
+  font-style: italic;
+}
+
+/* Steps */
+.step {
+  display: flex;
+  gap: 16px;
+  margin: 20px 0;
+  align-items: flex-start;
+}
+.step-num {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.1em;
+}
+.step-content {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+.step-content h4 {
+  margin-top: 0;
+  color: var(--accent);
+}
+
+/* Pipeline */
+.pipeline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0;
+}
+.pipeline-box {
+  background: var(--accent);
+  color: var(--bg);
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95em;
+  text-align: center;
+}
+.pipeline-arrow {
+  color: var(--accent);
+  font-size: 1.4em;
+  font-weight: bold;
+}
+
+/* Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  background: var(--card);
+  border-radius: 8px;
+  overflow: hidden;
+}
+th {
+  background: var(--accent);
+  color: var(--bg);
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 700;
+}
+td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--card-border);
+}
+tr:last-child td { border-bottom: none; }
+
+/* TOC */
+.toc {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 40px;
+}
+.toc h3 { margin-top: 0; color: var(--accent); }
+.toc ol { padding-left: 24px; }
+.toc li { margin: 6px 0; }
+.toc a { color: var(--accent2); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+
+/* KaTeX */
+.katex { font-size: 1.1em; }
+.katex-display { margin: 16px 0; overflow-x: auto; }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .hero h1 { font-size: 1.6em; }
+  h2 { font-size: 1.4em; }
+  .step { flex-direction: column; }
+  .step-num { align-self: flex-start; }
+  .pipeline { flex-direction: column; }
+  .pipeline-arrow { transform: rotate(90deg); }
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Harris Corner Detection</h1>
+  <div class="subtitle">A Complete Step-by-Step Guide to Finding Corners in Images</div>
+  <div class="course">CS 143 — Introduction to Computer Vision &bull; Brown University &bull; James Hays</div>
+</div>
+
+<div class="container">
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+  <h3>Table of Contents</h3>
+  <ol>
+    <li><a href="#s1">What Are Interest Points and Why Do We Need Them?</a></li>
+    <li><a href="#s2">Real-World Applications of Keypoints</a></li>
+    <li><a href="#s3">The Keypoint Matching Pipeline</a></li>
+    <li><a href="#s4">What Makes a Good Keypoint?</a></li>
+    <li><a href="#s5">Approaches to Corner Detection</a></li>
+    <li><a href="#s6">The Core Idea Behind Harris Corner Detection</a></li>
+    <li><a href="#s7">Flat, Edge, or Corner? — The Three Region Types</a></li>
+    <li><a href="#s8">Image Gradients — The Foundation</a></li>
+    <li><a href="#s9">Gradient Distributions — Seeing Patterns in I<sub>x</sub>–I<sub>y</sub> Space</a></li>
+    <li><a href="#s10">Fitting an Ellipse — The Second Moment Matrix</a></li>
+    <li><a href="#s11">Eigenvalues — The Key to Classification</a></li>
+    <li><a href="#s12">The Harris Response Function</a></li>
+    <li><a href="#s13">The Complete Harris Detector Algorithm (6 Steps)</a></li>
+    <li><a href="#s14">Non-Maxima Suppression</a></li>
+    <li><a href="#s15">Invariance Properties of Harris</a></li>
+    <li><a href="#s16">The Scale Problem and Multi-Scale Detection</a></li>
+    <li><a href="#s17">Laplacian of Gaussian (LoG) and Scale Space</a></li>
+    <li><a href="#s18">Finding the Optimal Scale — Cross-Scale Maximum</a></li>
+  </ol>
+</div>
+
+<!-- SECTION 1 -->
+<div class="section" id="s1">
+  <h2>1. What Are Interest Points and Why Do We Need Them?</h2>
+  <p>Imagine you're looking at a photograph of a busy street scene. Your eyes don't process every single pixel equally — they naturally jump to "interesting" spots: the corner of a building, the tip of a street sign, the junction where two lanes meet. These visually distinctive locations are exactly what computer vision calls <strong>interest points</strong>, also known as <strong>keypoints</strong> or <strong>feature points</strong>. All three terms mean the same thing — they're special locations in an image that stand out from their surroundings.</p>
+  <p>But why do computers need to find these points? Think of it this way: a typical image might have millions of pixels. If you want to compare two images — say, to figure out if they show the same building from different angles — you can't practically compare every pixel against every other pixel. Instead, you need a smart shortcut. You find a small set of distinctive points in each image, describe what each point "looks like," and then match those descriptions across images. Interest points are the foundation of that shortcut.</p>
+
+  <div class="card highlight">
+    <div class="card-title">Key Insight</div>
+    Interest points are locations in an image that are <strong>distinctive</strong> and <strong>informative</strong>. They reduce millions of pixels to a manageable set of meaningful landmarks, making it possible to efficiently compare, track, and understand images.
+  </div>
+</div>
+
+<!-- SECTION 2 -->
+<div class="section" id="s2">
+  <h2>2. Real-World Applications of Keypoints</h2>
+  <p>Interest points aren't just an academic exercise — they power some of the most important tasks in computer vision. Let's walk through the major applications to understand why this topic matters so much.</p>
+
+  <p><strong>Object Tracking:</strong> Imagine a self-driving car following the vehicle ahead. The system detects keypoints on the car in front (perhaps on its tail lights and license plate corners) and then tracks those same points frame by frame. As those keypoints move across frames, the system knows where the car went, how fast it's moving, and whether it's getting closer or farther away.</p>
+
+  <p><strong>Image Stitching (Panoramas):</strong> When your phone creates a panoramic photo, it takes multiple overlapping shots and stitches them together. But how does it know which parts overlap? It finds keypoints in each image, matches the shared keypoints across adjacent photos, and uses those correspondences to align and blend the images seamlessly.</p>
+
+  <p><strong>3D Reconstruction:</strong> From multiple 2D photographs of a building, you can actually build a 3D model. The trick is to find the same keypoints visible in different photos, figure out the camera positions using geometry, and then triangulate the 3D position of each point. This is the principle behind photogrammetry and tools like structure from motion.</p>
+
+  <p><strong>Object Recognition:</strong> If you want a robot to recognize a coffee mug regardless of the angle it's viewed from, you can build a database of keypoint descriptors from many views of mugs. When the robot sees a new object, it extracts keypoints, computes descriptors, and checks for matches against the database.</p>
+
+  <p><strong>Robot Navigation:</strong> A robot exploring an unknown room can use keypoints as landmarks. By recognizing previously seen keypoints, it knows when it has returned to a familiar location — this is called "loop closure" in SLAM (Simultaneous Localization and Mapping).</p>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 760 200" width="100%" style="max-width:760px">
+      <defs>
+        <linearGradient id="appGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#38bdf8;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#818cf8;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <!-- Boxes -->
+      <rect x="10" y="30" width="120" height="55" rx="8" fill="url(#appGrad)" opacity="0.9"/>
+      <text x="70" y="55" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="700">Object</text>
+      <text x="70" y="70" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="700">Tracking</text>
+
+      <rect x="155" y="30" width="120" height="55" rx="8" fill="url(#appGrad)" opacity="0.9"/>
+      <text x="215" y="55" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="700">Image</text>
+      <text x="215" y="70" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="700">Stitching</text>
+
+      <rect x="300" y="30" width="120" height="55" rx="8" fill="url(#appGrad)" opacity="0.9"/>
+      <text x="360" y="55" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="700">3D</text>
+      <text x="360" y="70" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="700">Reconstruction</text>
+
+      <rect x="445" y="30" width="120" height="55" rx="8" fill="url(#appGrad)" opacity="0.9"/>
+      <text x="505" y="55" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="700">Object</text>
+      <text x="505" y="70" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="700">Recognition</text>
+
+      <rect x="590" y="30" width="150" height="55" rx="8" fill="url(#appGrad)" opacity="0.9"/>
+      <text x="665" y="55" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="700">Robot Navigation</text>
+      <text x="665" y="70" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="700">/ SLAM</text>
+
+      <!-- Central concept -->
+      <rect x="250" y="120" width="260" height="55" rx="10" fill="#f59e0b" opacity="0.95"/>
+      <text x="380" y="148" text-anchor="middle" fill="#0f172a" font-size="16" font-weight="800">INTEREST POINTS</text>
+      <text x="380" y="165" text-anchor="middle" fill="#0f172a" font-size="11">The foundation of all these tasks</text>
+
+      <!-- Lines -->
+      <line x1="70" y1="85" x2="310" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <line x1="215" y1="85" x2="340" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <line x1="360" y1="85" x2="380" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <line x1="505" y1="85" x2="430" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <line x1="665" y1="85" x2="470" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3"/>
+    </svg>
+    <div class="caption">Interest points serve as the foundation for many core computer vision tasks.</div>
+  </div>
+</div>
+
+<!-- SECTION 3 -->
+<div class="section" id="s3">
+  <h2>3. The Keypoint Matching Pipeline</h2>
+  <p>Whenever you want to use interest points to compare or relate two images, you follow a specific pipeline. Think of it like a recipe with five steps — every keypoint-based system follows this same recipe, whether it's stitching panoramas or tracking objects.</p>
+
+  <div class="pipeline">
+    <div class="pipeline-box">1. Detect<br><small>Find keypoints</small></div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-box">2. Define Region<br><small>Area around point</small></div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-box">3. Normalize<br><small>Make comparable</small></div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-box">4. Describe<br><small>Compute descriptor</small></div>
+    <div class="pipeline-arrow">→</div>
+    <div class="pipeline-box">5. Match<br><small>Find pairs</small></div>
+  </div>
+
+  <p><strong>Step 1 — Detection:</strong> First, you scan through the image and find locations that look "interesting." This is where detectors like Harris come in. The goal is to find points that are distinctive enough that you'd be able to find the same point again in another image.</p>
+
+  <p><strong>Step 2 — Define a Region:</strong> Once you have a keypoint, you need to look at a patch of pixels around it. The size and shape of this region matters — too small and you won't capture enough information, too large and you'll include too much background noise.</p>
+
+  <p><strong>Step 3 — Normalize:</strong> The region you extract might be rotated or scaled differently in two images. Normalization accounts for these differences, making the patch look the same regardless of orientation or size.</p>
+
+  <p><strong>Step 4 — Compute a Descriptor:</strong> Now you convert the normalized patch into a compact numerical representation — a vector of numbers called a "descriptor." Think of it as a fingerprint for that keypoint. Popular descriptors include SIFT, SURF, and ORB.</p>
+
+  <p><strong>Step 5 — Match:</strong> Finally, you compare descriptors across two images. If two descriptors are very similar (close in distance), their keypoints probably correspond to the same physical point in the scene.</p>
+</div>
+
+<!-- SECTION 4 -->
+<div class="section" id="s4">
+  <h2>4. What Makes a Good Keypoint?</h2>
+  <p>Not all points in an image are equally useful as keypoints. A good keypoint must have two essential properties:</p>
+
+  <div class="card highlight">
+    <div class="card-title">Property 1: Repeatability</div>
+    <p>The same keypoint must be found in different images of the same scene, even when the viewing angle, lighting, or scale changes. If you detect a corner on a building in one photo but fail to find it in another photo of the same building, that keypoint is useless for matching.</p>
+  </div>
+
+  <div class="card highlight">
+    <div class="card-title">Property 2: Distinctiveness (Saliency)</div>
+    <p>Each keypoint should look different from other keypoints. If every detected point looks the same (imagine a smooth white wall — every point on it is identical), you can't tell which point corresponds to which. The keypoint's local neighborhood must have a unique "signature" that distinguishes it from other keypoints.</p>
+  </div>
+
+  <p>Think of it like giving someone directions using landmarks. "Turn left at the big oak tree next to the red mailbox" works because that combination is unique and easy to find again. "Turn left somewhere on the grassy field" doesn't work because every spot on the field looks the same.</p>
+</div>
+
+<!-- SECTION 5 -->
+<div class="section" id="s5">
+  <h2>5. Approaches to Corner Detection</h2>
+  <p>There are two main strategies for detecting corners, and they come from fundamentally different ways of thinking about images:</p>
+
+  <h3>Approach 1: Boundary-Based</h3>
+  <p>First, you detect edges to find the outlines of objects. Then you look for points where those edges meet at sharp angles — those are corners. This approach sounds logical, but it has a big practical problem: detecting edges reliably is itself a hard problem. Edges can be noisy, broken, or ambiguous, and any errors in edge detection cascade into corner detection errors.</p>
+
+  <h3>Approach 2: Brightness-Based (Image Derivatives)</h3>
+  <p>Instead of finding edges first, you directly analyze how pixel brightness changes in the neighborhood of each point. You compute <strong>image derivatives</strong> — mathematical measures of how quickly brightness changes in the horizontal and vertical directions. Corners are places where brightness changes sharply in <em>multiple</em> directions. This approach is more robust and is what Harris Corner Detection uses.</p>
+
+  <div class="card warning">
+    <div class="card-title">Why Harris Uses the Brightness Approach</div>
+    The derivative-based approach avoids the fragile intermediate step of edge detection. By looking directly at intensity changes, it's more robust to noise and gives a continuous "cornerness" score rather than a brittle yes/no edge decision.
+  </div>
+</div>
+
+<!-- SECTION 6 -->
+<div class="section" id="s6">
+  <h2>6. The Core Idea Behind Harris Corner Detection</h2>
+  <p>Here's the beautiful insight behind the Harris detector, and it's wonderfully simple once you see it. Imagine placing a small window (a patch of pixels) on the image and then sliding that window a tiny bit in every direction — up, down, left, right, and diagonally. Now ask yourself: how much does the content inside the window change as I slide it?</p>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 720 280" width="100%" style="max-width:720px">
+      <!-- Flat region -->
+      <rect x="20" y="30" width="200" height="180" rx="6" fill="#374151" stroke="#6b7280" stroke-width="2"/>
+      <text x="120" y="20" text-anchor="middle" fill="#6b7280" font-size="15" font-weight="700">FLAT REGION</text>
+      <!-- Uniform fill -->
+      <rect x="40" y="50" width="160" height="140" rx="4" fill="#4b5563"/>
+      <!-- Window -->
+      <rect x="80" y="90" width="50" height="50" rx="2" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="6,3"/>
+      <!-- Arrows -->
+      <line x1="105" y1="90" x2="105" y2="70" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowGray)"/>
+      <line x1="105" y1="140" x2="105" y2="160" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowGray)"/>
+      <line x1="80" y1="115" x2="60" y2="115" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowGray)"/>
+      <line x1="130" y1="115" x2="150" y2="115" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowGray)"/>
+      <text x="120" y="240" text-anchor="middle" fill="#6b7280" font-size="13" font-weight="600">"No change"</text>
+      <text x="120" y="258" text-anchor="middle" fill="#6b7280" font-size="12">in any direction</text>
+
+      <defs>
+        <marker id="arrowGray" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="#94a3b8"/>
+        </marker>
+        <marker id="arrowBlue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="#3b82f6"/>
+        </marker>
+        <marker id="arrowAmber" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="#f59e0b"/>
+        </marker>
+      </defs>
+
+      <!-- Edge region -->
+      <rect x="260" y="30" width="200" height="180" rx="6" fill="#374151" stroke="#3b82f6" stroke-width="2"/>
+      <text x="360" y="20" text-anchor="middle" fill="#3b82f6" font-size="15" font-weight="700">EDGE</text>
+      <!-- Two-tone fill -->
+      <rect x="280" y="50" width="80" height="140" rx="0" fill="#1e3a5f"/>
+      <rect x="360" y="50" width="80" height="140" rx="0" fill="#60a5fa"/>
+      <!-- Window -->
+      <rect x="320" y="90" width="50" height="50" rx="2" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="6,3"/>
+      <!-- Arrows: horizontal have change, vertical don't -->
+      <line x1="345" y1="90" x2="345" y2="70" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowGray)"/>
+      <line x1="345" y1="140" x2="345" y2="160" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowGray)"/>
+      <line x1="320" y1="115" x2="296" y2="115" stroke="#3b82f6" stroke-width="3" marker-end="url(#arrowBlue)"/>
+      <line x1="370" y1="115" x2="394" y2="115" stroke="#3b82f6" stroke-width="3" marker-end="url(#arrowBlue)"/>
+      <text x="360" y="240" text-anchor="middle" fill="#3b82f6" font-size="13" font-weight="600">"Change in one direction"</text>
+      <text x="360" y="258" text-anchor="middle" fill="#3b82f6" font-size="12">no change along edge</text>
+
+      <!-- Corner region -->
+      <rect x="500" y="30" width="200" height="180" rx="6" fill="#374151" stroke="#f59e0b" stroke-width="2"/>
+      <text x="600" y="20" text-anchor="middle" fill="#f59e0b" font-size="15" font-weight="700">CORNER</text>
+      <!-- L-shaped corner -->
+      <rect x="520" y="50" width="160" height="140" rx="0" fill="#1e3a5f"/>
+      <rect x="520" y="120" width="100" height="70" rx="0" fill="#60a5fa"/>
+      <rect x="520" y="50" width="100" height="70" rx="0" fill="#60a5fa"/>
+      <!-- Window on corner -->
+      <rect x="580" y="95" width="50" height="50" rx="2" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="6,3"/>
+      <!-- All arrows show change -->
+      <line x1="605" y1="95" x2="605" y2="72" stroke="#f59e0b" stroke-width="3" marker-end="url(#arrowAmber)"/>
+      <line x1="605" y1="145" x2="605" y2="168" stroke="#f59e0b" stroke-width="3" marker-end="url(#arrowAmber)"/>
+      <line x1="580" y1="120" x2="556" y2="120" stroke="#f59e0b" stroke-width="3" marker-end="url(#arrowAmber)"/>
+      <line x1="630" y1="120" x2="654" y2="120" stroke="#f59e0b" stroke-width="3" marker-end="url(#arrowAmber)"/>
+      <text x="600" y="240" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="600">"Change in ALL directions"</text>
+      <text x="600" y="258" text-anchor="middle" fill="#f59e0b" font-size="12">→ this is a corner!</text>
+    </svg>
+    <div class="caption">The Harris idea: slide a window and measure intensity change. Corners cause large changes in every direction.</div>
+  </div>
+
+  <p>The mathematical way to express this "sliding window" idea uses a function called <strong>E(u, v)</strong>, which measures the total change in intensity when you shift the window by amounts <em>u</em> (horizontal) and <em>v</em> (vertical):</p>
+
+  <div class="card formula">
+    $$E(u, v) = \sum_{x,y} w(x,y) \left[ I(x+u, y+v) - I(x,y) \right]^2$$
+  </div>
+
+  <p>Here, \(w(x,y)\) is a <strong>window function</strong> — it can be a simple rectangular window (all ones) or a Gaussian that gives more weight to the center. \(I(x,y)\) is the pixel intensity at position \((x,y)\), and \(I(x+u, y+v)\) is the intensity at the shifted position. The squared difference measures how much each pixel changed, and summing over all pixels in the window gives the total change.</p>
+
+  <p>At a <strong>flat</strong> region, \(E(u,v)\) is close to zero for all shifts — nothing changes when you slide. At an <strong>edge</strong>, \(E(u,v)\) is large when you shift perpendicular to the edge but small when you shift along it. At a <strong>corner</strong>, \(E(u,v)\) is large in every direction. That last case — significant change everywhere — is exactly what tells us "this is a corner."</p>
+</div>
+
+<!-- SECTION 7 -->
+<div class="section" id="s7">
+  <h2>7. Flat, Edge, or Corner? — The Three Region Types</h2>
+  <p>Every small patch in an image falls into one of three categories based on how it behaves when you slide a window over it. Understanding these three types is absolutely essential to grasping the Harris detector.</p>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 720 340" width="100%" style="max-width:720px">
+      <!-- E(u,v) surface for FLAT -->
+      <text x="120" y="20" text-anchor="middle" fill="#6b7280" font-size="14" font-weight="700">Flat Region</text>
+      <text x="120" y="38" text-anchor="middle" fill="#6b7280" font-size="11">E(u,v) surface</text>
+      <!-- Flat surface - very flat -->
+      <ellipse cx="120" cy="120" rx="80" ry="40" fill="none" stroke="#6b7280" stroke-width="2"/>
+      <ellipse cx="120" cy="115" rx="60" ry="30" fill="none" stroke="#6b7280" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="120" cy="110" rx="40" ry="20" fill="none" stroke="#6b7280" stroke-width="1" opacity="0.3"/>
+      <text x="120" y="180" text-anchor="middle" fill="#6b7280" font-size="12">Nearly flat everywhere</text>
+      <text x="120" y="196" text-anchor="middle" fill="#6b7280" font-size="12">E ≈ 0 in all directions</text>
+
+      <!-- E(u,v) surface for EDGE -->
+      <text x="360" y="20" text-anchor="middle" fill="#3b82f6" font-size="14" font-weight="700">Edge</text>
+      <text x="360" y="38" text-anchor="middle" fill="#3b82f6" font-size="11">E(u,v) surface</text>
+      <!-- Ridge shape -->
+      <path d="M280,130 Q320,50 360,130 Q400,50 440,130" fill="none" stroke="#3b82f6" stroke-width="2.5"/>
+      <path d="M290,140 Q330,80 360,140" fill="none" stroke="#3b82f6" stroke-width="1.5" opacity="0.5"/>
+      <path d="M360,140 Q390,80 430,140" fill="none" stroke="#3b82f6" stroke-width="1.5" opacity="0.5"/>
+      <line x1="280" y1="130" x2="440" y2="130" stroke="#3b82f6" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+      <text x="360" y="180" text-anchor="middle" fill="#3b82f6" font-size="12">Ridge: high in one direction</text>
+      <text x="360" y="196" text-anchor="middle" fill="#3b82f6" font-size="12">flat in another</text>
+
+      <!-- E(u,v) surface for CORNER -->
+      <text x="600" y="20" text-anchor="middle" fill="#f59e0b" font-size="14" font-weight="700">Corner</text>
+      <text x="600" y="38" text-anchor="middle" fill="#f59e0b" font-size="11">E(u,v) surface</text>
+      <!-- Peak shape -->
+      <ellipse cx="600" cy="130" rx="80" ry="40" fill="none" stroke="#f59e0b" stroke-width="1.5" opacity="0.5"/>
+      <ellipse cx="600" cy="115" rx="55" ry="28" fill="none" stroke="#f59e0b" stroke-width="1.5" opacity="0.7"/>
+      <ellipse cx="600" cy="98" rx="30" ry="15" fill="none" stroke="#f59e0b" stroke-width="2"/>
+      <circle cx="600" cy="82" r="5" fill="#f59e0b"/>
+      <text x="600" y="180" text-anchor="middle" fill="#f59e0b" font-size="12">Sharp peak: high in ALL</text>
+      <text x="600" y="196" text-anchor="middle" fill="#f59e0b" font-size="12">directions → CORNER!</text>
+
+      <!-- Eigenvalue diagram below -->
+      <text x="360" y="230" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="700">Eigenvalue Space (λ₁ vs λ₂)</text>
+
+      <!-- Axes -->
+      <line x1="180" y1="330" x2="540" y2="330" stroke="#94a3b8" stroke-width="1.5"/>
+      <line x1="180" y1="330" x2="180" y2="250" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="540" y="325" text-anchor="end" fill="#94a3b8" font-size="12">λ₁ →</text>
+      <text x="195" y="256" fill="#94a3b8" font-size="12">λ₂ ↑</text>
+
+      <!-- Flat region (origin) -->
+      <circle cx="220" cy="315" r="22" fill="#6b7280" opacity="0.3" stroke="#6b7280" stroke-width="1.5"/>
+      <text x="220" y="318" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">Flat</text>
+
+      <!-- Edge regions (along axes) -->
+      <ellipse cx="400" cy="318" rx="70" ry="14" fill="#3b82f6" opacity="0.2" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="400" y="322" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">Edge (λ₁ ≫ λ₂)</text>
+
+      <ellipse cx="195" cy="280" rx="14" ry="35" fill="#3b82f6" opacity="0.2" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="230" y="280" fill="#e2e8f0" font-size="10" font-weight="600">Edge</text>
+      <text x="230" y="292" fill="#e2e8f0" font-size="10">(λ₂ ≫ λ₁)</text>
+
+      <!-- Corner region (upper right) -->
+      <ellipse cx="430" cy="270" rx="60" ry="30" fill="#f59e0b" opacity="0.2" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="430" y="274" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="700">Corner</text>
+    </svg>
+    <div class="caption">Top: how E(u,v) looks for each region type. Bottom: how eigenvalues λ₁ and λ₂ classify each type.</div>
+  </div>
+</div>
+
+<!-- SECTION 8 -->
+<div class="section" id="s8">
+  <h2>8. Image Gradients — The Foundation</h2>
+  <p>Before we can build the Harris detector, we need to understand <strong>image gradients</strong> — the mathematical building blocks that tell us how brightness changes across the image.</p>
+
+  <p>An image gradient is simply a measure of how quickly pixel intensity changes as you move in a particular direction. There are two partial derivatives:</p>
+
+  <div class="card formula">
+    $$I_x = \frac{\partial I}{\partial x} \quad \text{(horizontal change)} \qquad I_y = \frac{\partial I}{\partial y} \quad \text{(vertical change)}$$
+  </div>
+
+  <p>\(I_x\) tells you how fast brightness changes as you move horizontally (left-right), and \(I_y\) tells you the same for vertical movement (up-down). In practice, you compute these by convolving the image with simple derivative filters like the Sobel operator.</p>
+
+  <p>Now here's the key insight about how gradients behave in different regions:</p>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 720 250" width="100%" style="max-width:720px">
+      <!-- Flat -->
+      <text x="120" y="20" text-anchor="middle" fill="#6b7280" font-size="14" font-weight="700">Flat Region</text>
+      <rect x="40" y="35" width="160" height="90" rx="6" fill="#374151" stroke="#6b7280"/>
+      <!-- Tiny arrows (very small gradients) -->
+      <circle cx="80" cy="75" r="2" fill="#6b7280"/>
+      <circle cx="100" cy="82" r="2" fill="#6b7280"/>
+      <circle cx="120" cy="78" r="2" fill="#6b7280"/>
+      <circle cx="140" cy="80" r="2" fill="#6b7280"/>
+      <circle cx="160" cy="76" r="2" fill="#6b7280"/>
+      <text x="120" y="148" text-anchor="middle" fill="#6b7280" font-size="12">Iₓ ≈ 0, Iy ≈ 0</text>
+      <text x="120" y="165" text-anchor="middle" fill="#6b7280" font-size="11">Gradients nearly zero</text>
+
+      <!-- Edge (vertical edge = horizontal gradient) -->
+      <text x="360" y="20" text-anchor="middle" fill="#3b82f6" font-size="14" font-weight="700">Vertical Edge</text>
+      <rect x="280" y="35" width="160" height="90" rx="6" fill="#374151" stroke="#3b82f6"/>
+      <rect x="280" y="35" width="80" height="90" fill="#1e3a5f" rx="6"/>
+      <line x1="360" y1="35" x2="360" y2="125" stroke="#3b82f6" stroke-width="2"/>
+      <!-- Horizontal arrows -->
+      <line x1="340" y1="60" x2="320" y2="60" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrowBlue)"/>
+      <line x1="340" y1="80" x2="320" y2="80" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrowBlue)"/>
+      <line x1="340" y1="100" x2="320" y2="100" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrowBlue)"/>
+      <text x="360" y="148" text-anchor="middle" fill="#3b82f6" font-size="12">Iₓ is large, Iy ≈ 0</text>
+      <text x="360" y="165" text-anchor="middle" fill="#3b82f6" font-size="11">Strong gradient ⊥ to edge</text>
+
+      <!-- Corner -->
+      <text x="600" y="20" text-anchor="middle" fill="#f59e0b" font-size="14" font-weight="700">Corner</text>
+      <rect x="520" y="35" width="160" height="90" rx="6" fill="#374151" stroke="#f59e0b"/>
+      <rect x="520" y="35" width="80" height="45" fill="#1e3a5f"/>
+      <rect x="600" y="80" width="80" height="45" fill="#1e3a5f"/>
+      <!-- Multi-directional arrows -->
+      <line x1="590" y1="70" x2="570" y2="55" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrowAmber)"/>
+      <line x1="610" y1="70" x2="630" y2="55" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrowAmber)"/>
+      <line x1="590" y1="90" x2="570" y2="105" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrowAmber)"/>
+      <line x1="610" y1="90" x2="630" y2="105" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrowAmber)"/>
+      <text x="600" y="148" text-anchor="middle" fill="#f59e0b" font-size="12">Both Iₓ and Iy are large</text>
+      <text x="600" y="165" text-anchor="middle" fill="#f59e0b" font-size="11">Gradients in multiple directions</text>
+    </svg>
+    <div class="caption">Gradient behavior: flat regions have near-zero gradients, edges have strong gradients in one direction, corners in multiple directions.</div>
+  </div>
+</div>
+
+<!-- SECTION 9 -->
+<div class="section" id="s9">
+  <h2>9. Gradient Distributions — Seeing Patterns in I<sub>x</sub>–I<sub>y</sub> Space</h2>
+  <p>Here's one of the most elegant ideas in the Harris derivation. For every pixel in the window, you have a gradient vector \((I_x, I_y)\). If you plot all these gradient vectors as points on a 2D scatter plot — with \(I_x\) on the horizontal axis and \(I_y\) on the vertical axis — the shape of the resulting point cloud reveals what kind of region you're looking at.</p>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 720 280" width="100%" style="max-width:720px">
+      <!-- FLAT distribution -->
+      <text x="120" y="20" text-anchor="middle" fill="#6b7280" font-size="14" font-weight="700">Flat</text>
+      <!-- Axes -->
+      <line x1="40" y1="150" x2="200" y2="150" stroke="#475569" stroke-width="1"/>
+      <line x1="120" y1="70" x2="120" y2="230" stroke="#475569" stroke-width="1"/>
+      <text x="200" y="145" fill="#94a3b8" font-size="10">Iₓ</text>
+      <text x="126" y="76" fill="#94a3b8" font-size="10">Iy</text>
+      <!-- Tight cluster at origin -->
+      <circle cx="118" cy="152" r="2.5" fill="#6b7280" opacity="0.7"/>
+      <circle cx="122" cy="148" r="2.5" fill="#6b7280" opacity="0.7"/>
+      <circle cx="116" cy="147" r="2.5" fill="#6b7280" opacity="0.7"/>
+      <circle cx="121" cy="153" r="2.5" fill="#6b7280" opacity="0.7"/>
+      <circle cx="119" cy="149" r="2.5" fill="#6b7280" opacity="0.7"/>
+      <circle cx="123" cy="151" r="2.5" fill="#6b7280" opacity="0.7"/>
+      <circle cx="117" cy="150" r="2.5" fill="#6b7280" opacity="0.7"/>
+      <circle cx="120" cy="146" r="2.5" fill="#6b7280" opacity="0.7"/>
+      <ellipse cx="120" cy="150" rx="10" ry="10" fill="none" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="3,3"/>
+      <text x="120" y="252" text-anchor="middle" fill="#6b7280" font-size="12">Compact cluster at origin</text>
+      <text x="120" y="268" text-anchor="middle" fill="#6b7280" font-size="11">→ tiny ellipse</text>
+
+      <!-- EDGE distribution -->
+      <text x="360" y="20" text-anchor="middle" fill="#3b82f6" font-size="14" font-weight="700">Edge</text>
+      <line x1="280" y1="150" x2="440" y2="150" stroke="#475569" stroke-width="1"/>
+      <line x1="360" y1="70" x2="360" y2="230" stroke="#475569" stroke-width="1"/>
+      <text x="440" y="145" fill="#94a3b8" font-size="10">Iₓ</text>
+      <text x="366" y="76" fill="#94a3b8" font-size="10">Iy</text>
+      <!-- Elongated cluster along Ix axis -->
+      <circle cx="320" cy="150" r="2.5" fill="#3b82f6" opacity="0.7"/>
+      <circle cx="330" cy="148" r="2.5" fill="#3b82f6" opacity="0.7"/>
+      <circle cx="340" cy="152" r="2.5" fill="#3b82f6" opacity="0.7"/>
+      <circle cx="350" cy="149" r="2.5" fill="#3b82f6" opacity="0.7"/>
+      <circle cx="360" cy="151" r="2.5" fill="#3b82f6" opacity="0.7"/>
+      <circle cx="370" cy="148" r="2.5" fill="#3b82f6" opacity="0.7"/>
+      <circle cx="380" cy="152" r="2.5" fill="#3b82f6" opacity="0.7"/>
+      <circle cx="390" cy="150" r="2.5" fill="#3b82f6" opacity="0.7"/>
+      <circle cx="400" cy="149" r="2.5" fill="#3b82f6" opacity="0.7"/>
+      <ellipse cx="360" cy="150" rx="55" ry="8" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="3,3"/>
+      <text x="360" y="252" text-anchor="middle" fill="#3b82f6" font-size="12">Elongated along one axis</text>
+      <text x="360" y="268" text-anchor="middle" fill="#3b82f6" font-size="11">→ thin, stretched ellipse</text>
+
+      <!-- CORNER distribution -->
+      <text x="600" y="20" text-anchor="middle" fill="#f59e0b" font-size="14" font-weight="700">Corner</text>
+      <line x1="520" y1="150" x2="680" y2="150" stroke="#475569" stroke-width="1"/>
+      <line x1="600" y1="70" x2="600" y2="230" stroke="#475569" stroke-width="1"/>
+      <text x="680" y="145" fill="#94a3b8" font-size="10">Iₓ</text>
+      <text x="606" y="76" fill="#94a3b8" font-size="10">Iy</text>
+      <!-- Spread cluster -->
+      <circle cx="570" cy="120" r="2.5" fill="#f59e0b" opacity="0.7"/>
+      <circle cx="630" cy="130" r="2.5" fill="#f59e0b" opacity="0.7"/>
+      <circle cx="580" cy="170" r="2.5" fill="#f59e0b" opacity="0.7"/>
+      <circle cx="620" cy="125" r="2.5" fill="#f59e0b" opacity="0.7"/>
+      <circle cx="590" cy="140" r="2.5" fill="#f59e0b" opacity="0.7"/>
+      <circle cx="610" cy="160" r="2.5" fill="#f59e0b" opacity="0.7"/>
+      <circle cx="575" cy="155" r="2.5" fill="#f59e0b" opacity="0.7"/>
+      <circle cx="625" cy="145" r="2.5" fill="#f59e0b" opacity="0.7"/>
+      <circle cx="595" cy="130" r="2.5" fill="#f59e0b" opacity="0.7"/>
+      <ellipse cx="600" cy="147" rx="40" ry="32" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3,3"/>
+      <text x="600" y="252" text-anchor="middle" fill="#f59e0b" font-size="12">Spread in all directions</text>
+      <text x="600" y="268" text-anchor="middle" fill="#f59e0b" font-size="11">→ large, round-ish ellipse</text>
+    </svg>
+    <div class="caption">Gradient distributions in Iₓ–Iy space reveal the region type by the shape of the point cloud.</div>
+  </div>
+
+  <p>For a <strong>flat region</strong>, all gradients are nearly zero, so the points huddle tightly around the origin — a tiny, compact cluster. For an <strong>edge</strong>, gradients are strong perpendicular to the edge but weak along it, so the points stretch out into a long, thin cloud along one axis. For a <strong>corner</strong>, gradients point in many different directions, so the cloud spreads out broadly in two dimensions — a fat, roughly circular blob.</p>
+
+  <p>The brilliant mathematical move is to capture the shape of this cloud by fitting an ellipse to it. The orientation and size of this ellipse — specifically its semi-axes — tell us exactly what kind of region we have.</p>
+</div>
+
+<!-- SECTION 10 -->
+<div class="section" id="s10">
+  <h2>10. Fitting an Ellipse — The Second Moment Matrix</h2>
+  <p>To formalize the shape of the gradient distribution, we compute a 2×2 matrix called the <strong>Second Moment Matrix</strong> (also called the <strong>Structure Tensor</strong> or the <strong>Harris Matrix</strong>). This matrix captures the local gradient structure around each pixel.</p>
+
+  <p>Using a Taylor expansion approximation on the intensity change function \(E(u,v)\), we can show that:</p>
+
+  <div class="card formula">
+    $$E(u,v) \approx \begin{bmatrix} u & v \end{bmatrix} M \begin{bmatrix} u \\ v \end{bmatrix}$$
+  </div>
+
+  <p>where the matrix \(M\) is:</p>
+
+  <div class="card formula">
+    $$M = \sum_{x,y} w(x,y) \begin{bmatrix} I_x^2 & I_x I_y \\ I_x I_y & I_y^2 \end{bmatrix}$$
+  </div>
+
+  <p>Let's break this down in plain language. We compute three quantities at every pixel in our window: \(I_x^2\) (the squared horizontal gradient), \(I_y^2\) (the squared vertical gradient), and \(I_x I_y\) (the product of horizontal and vertical gradients). We then take weighted sums of these over the window to get the four entries of our matrix.</p>
+
+  <p>The window function \(w(x,y)\) is typically a Gaussian — this gives more weight to pixels near the center of the window and smoothly tapers off toward the edges. Using a Gaussian rather than a box window gives better results because it's less sensitive to the exact position of the window boundary.</p>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 600 200" width="100%" style="max-width:600px">
+      <!-- Matrix M -->
+      <text x="300" y="25" text-anchor="middle" fill="#e2e8f0" font-size="16" font-weight="700">The Second Moment Matrix M</text>
+      <!-- Big bracket left -->
+      <text x="140" y="110" text-anchor="middle" fill="#38bdf8" font-size="80" font-weight="300">[</text>
+      <!-- Matrix entries -->
+      <text x="230" y="90" text-anchor="middle" fill="#f59e0b" font-size="18">ΣwI²ₓ</text>
+      <text x="370" y="90" text-anchor="middle" fill="#818cf8" font-size="18">ΣwIₓIy</text>
+      <text x="230" y="135" text-anchor="middle" fill="#818cf8" font-size="18">ΣwIₓIy</text>
+      <text x="370" y="135" text-anchor="middle" fill="#34d399" font-size="18">ΣwI²y</text>
+      <!-- Big bracket right -->
+      <text x="460" y="110" text-anchor="middle" fill="#38bdf8" font-size="80" font-weight="300">]</text>
+      <!-- Labels -->
+      <text x="230" y="170" text-anchor="middle" fill="#f59e0b" font-size="11">horizontal</text>
+      <text x="230" y="183" text-anchor="middle" fill="#f59e0b" font-size="11">gradient energy</text>
+      <text x="370" y="170" text-anchor="middle" fill="#34d399" font-size="11">vertical</text>
+      <text x="370" y="183" text-anchor="middle" fill="#34d399" font-size="11">gradient energy</text>
+    </svg>
+    <div class="caption">The Second Moment Matrix M captures the gradient structure of the local neighborhood. It's symmetric, so it has real eigenvalues.</div>
+  </div>
+
+  <p>This matrix \(M\) is symmetric (the off-diagonal entries are identical), which is important because symmetric matrices have <strong>real eigenvalues</strong>. These eigenvalues are the key to the entire Harris detector.</p>
+</div>
+
+<!-- SECTION 11 -->
+<div class="section" id="s11">
+  <h2>11. Eigenvalues — The Key to Classification</h2>
+  <p>The eigenvalues \(\lambda_1\) and \(\lambda_2\) of the matrix \(M\) correspond to the lengths of the semi-axes of the ellipse fitted to the gradient distribution. They tell us how much the image intensity changes in the two principal directions of variation. Here's the key relationship:</p>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 700 360" width="100%" style="max-width:700px">
+      <!-- Axes -->
+      <line x1="100" y1="320" x2="650" y2="320" stroke="#94a3b8" stroke-width="2"/>
+      <line x1="100" y1="320" x2="100" y2="30" stroke="#94a3b8" stroke-width="2"/>
+      <text x="650" y="340" text-anchor="end" fill="#94a3b8" font-size="14" font-weight="600">λ₁ →</text>
+      <text x="115" y="40" fill="#94a3b8" font-size="14" font-weight="600">λ₂ ↑</text>
+
+      <!-- Flat region (bottom-left) -->
+      <rect x="110" y="250" width="110" height="65" rx="10" fill="#6b7280" opacity="0.15" stroke="#6b7280" stroke-width="2"/>
+      <text x="165" y="278" text-anchor="middle" fill="#6b7280" font-size="14" font-weight="700">FLAT</text>
+      <text x="165" y="298" text-anchor="middle" fill="#6b7280" font-size="11">λ₁ ≈ 0, λ₂ ≈ 0</text>
+
+      <!-- Edge along λ₁ axis -->
+      <rect x="280" y="250" width="300" height="65" rx="10" fill="#3b82f6" opacity="0.12" stroke="#3b82f6" stroke-width="2"/>
+      <text x="430" y="278" text-anchor="middle" fill="#3b82f6" font-size="14" font-weight="700">EDGE</text>
+      <text x="430" y="298" text-anchor="middle" fill="#3b82f6" font-size="11">λ₁ ≫ λ₂</text>
+
+      <!-- Edge along λ₂ axis -->
+      <rect x="110" y="80" width="110" height="160" rx="10" fill="#3b82f6" opacity="0.12" stroke="#3b82f6" stroke-width="2"/>
+      <text x="165" y="160" text-anchor="middle" fill="#3b82f6" font-size="14" font-weight="700">EDGE</text>
+      <text x="165" y="180" text-anchor="middle" fill="#3b82f6" font-size="11">λ₂ ≫ λ₁</text>
+
+      <!-- Corner (upper right) -->
+      <rect x="300" y="50" width="280" height="180" rx="16" fill="#f59e0b" opacity="0.12" stroke="#f59e0b" stroke-width="2.5"/>
+      <text x="440" y="130" text-anchor="middle" fill="#f59e0b" font-size="20" font-weight="800">CORNER</text>
+      <text x="440" y="155" text-anchor="middle" fill="#f59e0b" font-size="13">λ₁ large, λ₂ large</text>
+      <text x="440" y="175" text-anchor="middle" fill="#f59e0b" font-size="12">(both are big!)</text>
+
+      <!-- Diagonal line R = 0 -->
+      <line x1="100" y1="320" x2="580" y2="50" stroke="#f472b6" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.5"/>
+      <text x="500" y="70" fill="#f472b6" font-size="11" opacity="0.7">λ₁ = λ₂</text>
+    </svg>
+    <div class="caption">The eigenvalue plot: the region formed by λ₁ and λ₂ tells us whether we're at a flat region, an edge, or a corner. This is the most important diagram in Harris corner detection.</div>
+  </div>
+
+  <p><strong>Both eigenvalues are small</strong> → The ellipse is tiny → Gradients are weak everywhere → <span style="color:#6b7280;font-weight:600;">FLAT region</span>. Nothing interesting here.</p>
+
+  <p><strong>One eigenvalue is large, the other is small</strong> → The ellipse is long and thin → Gradients are strong in one direction only → <span style="color:#3b82f6;font-weight:600;">EDGE</span>. There's structure, but only in one direction.</p>
+
+  <p><strong>Both eigenvalues are large</strong> → The ellipse is big in both directions → Gradients are strong in multiple directions → <span style="color:#f59e0b;font-weight:600;">CORNER!</span> This is what we're looking for.</p>
+
+  <div class="card highlight">
+    <div class="card-title">The Ellipse Analogy</div>
+    Think of the eigenvalues as the width and height of an ellipse. A flat region gives you a dot (no axes). An edge gives you a thin cigar (one long axis). A corner gives you a big circle or a fat ellipse (both axes large). We want the fat shapes — those are corners.
+  </div>
+</div>
+
+<!-- SECTION 12 -->
+<div class="section" id="s12">
+  <h2>12. The Harris Response Function</h2>
+  <p>Now, computing eigenvalues for every pixel is computationally expensive (it involves solving a quadratic equation at each pixel). Harris and Stephens had a clever workaround: instead of computing \(\lambda_1\) and \(\lambda_2\) explicitly, they defined a <strong>response function</strong> \(R\) that can be computed directly from the matrix entries using just the determinant and trace:</p>
+
+  <div class="card formula">
+    $$R = \det(M) - \kappa \cdot [\text{trace}(M)]^2$$
+  </div>
+
+  <p>Where:</p>
+  <div class="card formula">
+    $$\det(M) = \lambda_1 \lambda_2 = (I_x^2)(I_y^2) - (I_x I_y)^2$$
+    $$\text{trace}(M) = \lambda_1 + \lambda_2 = I_x^2 + I_y^2$$
+  </div>
+
+  <p>So \(R\) is equivalently:</p>
+
+  <div class="card formula">
+    $$R = \lambda_1 \lambda_2 - \kappa(\lambda_1 + \lambda_2)^2$$
+  </div>
+
+  <p>The constant \(\kappa\) is a tunable parameter, typically set between <strong>0.04 and 0.06</strong>. This formula is elegant because the determinant (product of eigenvalues) is large only when both eigenvalues are large, while the trace (sum of eigenvalues) acts as a penalty for cases where one eigenvalue dominates.</p>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 600 220" width="100%" style="max-width:600px">
+      <text x="300" y="25" text-anchor="middle" fill="#e2e8f0" font-size="15" font-weight="700">Interpreting the Harris Response R</text>
+
+      <!-- R > 0 : Corner -->
+      <rect x="30" y="50" width="160" height="70" rx="10" fill="#f59e0b" opacity="0.2" stroke="#f59e0b" stroke-width="2"/>
+      <text x="110" y="80" text-anchor="middle" fill="#f59e0b" font-size="16" font-weight="800">R &gt; 0</text>
+      <text x="110" y="100" text-anchor="middle" fill="#f59e0b" font-size="13">→ CORNER</text>
+
+      <!-- R < 0 : Edge -->
+      <rect x="220" y="50" width="160" height="70" rx="10" fill="#3b82f6" opacity="0.2" stroke="#3b82f6" stroke-width="2"/>
+      <text x="300" y="80" text-anchor="middle" fill="#3b82f6" font-size="16" font-weight="800">R &lt; 0</text>
+      <text x="300" y="100" text-anchor="middle" fill="#3b82f6" font-size="13">→ EDGE</text>
+
+      <!-- |R| small : Flat -->
+      <rect x="410" y="50" width="160" height="70" rx="10" fill="#6b7280" opacity="0.2" stroke="#6b7280" stroke-width="2"/>
+      <text x="490" y="80" text-anchor="middle" fill="#6b7280" font-size="16" font-weight="800">|R| ≈ 0</text>
+      <text x="490" y="100" text-anchor="middle" fill="#6b7280" font-size="13">→ FLAT</text>
+
+      <!-- Explanation -->
+      <text x="300" y="165" text-anchor="middle" fill="#94a3b8" font-size="12">R is large and positive when both λ₁ and λ₂ are large → corner</text>
+      <text x="300" y="183" text-anchor="middle" fill="#94a3b8" font-size="12">R is negative when one eigenvalue dominates → edge</text>
+      <text x="300" y="201" text-anchor="middle" fill="#94a3b8" font-size="12">R is near zero when both eigenvalues are small → flat</text>
+    </svg>
+    <div class="caption">The sign and magnitude of R directly tell us the region type — no need to compute eigenvalues explicitly.</div>
+  </div>
+
+  <h3>Alternative Response Functions</h3>
+  <p>Other researchers later proposed simpler alternatives:</p>
+
+  <table>
+    <tr><th>Method</th><th>Formula</th><th>Year</th></tr>
+    <tr><td>Harris &amp; Stephens</td><td>\(R = \lambda_1 \lambda_2 - \kappa(\lambda_1 + \lambda_2)^2\)</td><td>1988</td></tr>
+    <tr><td>Kanade &amp; Tomasi</td><td>\(R = \min(\lambda_1, \lambda_2)\)</td><td>1994</td></tr>
+    <tr><td>Nobel</td><td>\(R = \frac{\det(M)}{\text{trace}(M) + \varepsilon}\)</td><td>1998</td></tr>
+  </table>
+
+  <p>The Kanade-Tomasi version is beautifully intuitive: a corner is simply a point where even the <em>smaller</em> eigenvalue is big. If the minimum eigenvalue exceeds a threshold, both must be large, so it's a corner.</p>
+</div>
+
+<!-- SECTION 13 -->
+<div class="section" id="s13">
+  <h2>13. The Complete Harris Detector Algorithm (6 Steps)</h2>
+  <p>Now let's put it all together into a complete, step-by-step algorithm. This is the actual procedure you'd implement in code.</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <h4>Compute Image Derivatives</h4>
+      <p>Apply derivative filters to the image to get \(I_x\) (horizontal gradient) and \(I_y\) (vertical gradient). Typically done using Sobel operators or simple difference filters like \([-1, 0, 1]\).</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <h4>Compute Products of Derivatives</h4>
+      <p>At every pixel, compute three products: \(I_x^2\), \(I_y^2\), and \(I_x I_y\). These are element-wise operations that give you three new images — one for each product.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <h4>Gaussian-Weighted Summation</h4>
+      <p>Apply a Gaussian filter to each of the three product images: \(S_{x^2} = G * I_x^2\), \(S_{y^2} = G * I_y^2\), and \(S_{xy} = G * I_x I_y\). This smooths the products over a local neighborhood, effectively computing the weighted sums that form the entries of the matrix \(M\). The Gaussian's \(\sigma\) controls the size of the neighborhood considered.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <h4>Build the Matrix M at Each Pixel</h4>
+      <p>At every pixel \((x,y)\), assemble the second moment matrix:
+      $$M(x,y) = \begin{bmatrix} S_{x^2}(x,y) & S_{xy}(x,y) \\ S_{xy}(x,y) & S_{y^2}(x,y) \end{bmatrix}$$</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-content">
+      <h4>Compute the Harris Response R</h4>
+      <p>For each pixel, compute:
+      $$R = \det(M) - \kappa \cdot [\text{trace}(M)]^2$$
+      This gives you a "cornerness score" at every pixel. High positive values indicate corners, negative values indicate edges, and values near zero indicate flat regions.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">6</div>
+    <div class="step-content">
+      <h4>Threshold and Non-Maxima Suppression</h4>
+      <p>First, discard all pixels where \(R\) is below a threshold. Then apply non-maxima suppression (NMS) — within a local neighborhood, keep only the pixel with the highest \(R\) value and suppress all others. This ensures you get clean, well-separated corner detections rather than dense clusters of responses.</p>
+    </div>
+  </div>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 750 120" width="100%" style="max-width:750px">
+      <!-- Step flow -->
+      <rect x="5" y="25" width="95" height="70" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+      <text x="52" y="52" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="600">Derivatives</text>
+      <text x="52" y="68" text-anchor="middle" fill="#94a3b8" font-size="10">Iₓ , Iy</text>
+
+      <text x="115" y="65" fill="#94a3b8" font-size="18">→</text>
+
+      <rect x="130" y="25" width="95" height="70" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+      <text x="177" y="52" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="600">Products</text>
+      <text x="177" y="68" text-anchor="middle" fill="#94a3b8" font-size="10">Iₓ², Iy², IₓIy</text>
+
+      <text x="240" y="65" fill="#94a3b8" font-size="18">→</text>
+
+      <rect x="255" y="25" width="95" height="70" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+      <text x="302" y="52" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="600">Gaussian</text>
+      <text x="302" y="68" text-anchor="middle" fill="#94a3b8" font-size="10">Sx², Sy², Sxy</text>
+
+      <text x="365" y="65" fill="#94a3b8" font-size="18">→</text>
+
+      <rect x="380" y="25" width="95" height="70" rx="8" fill="#1e293b" stroke="#818cf8" stroke-width="1.5"/>
+      <text x="427" y="52" text-anchor="middle" fill="#818cf8" font-size="11" font-weight="600">Matrix M</text>
+      <text x="427" y="68" text-anchor="middle" fill="#94a3b8" font-size="10">2×2 per pixel</text>
+
+      <text x="490" y="65" fill="#94a3b8" font-size="18">→</text>
+
+      <rect x="505" y="25" width="95" height="70" rx="8" fill="#1e293b" stroke="#f472b6" stroke-width="1.5"/>
+      <text x="552" y="52" text-anchor="middle" fill="#f472b6" font-size="11" font-weight="600">Response R</text>
+      <text x="552" y="68" text-anchor="middle" fill="#94a3b8" font-size="10">det - κ·tr²</text>
+
+      <text x="615" y="65" fill="#94a3b8" font-size="18">→</text>
+
+      <rect x="630" y="25" width="105" height="70" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+      <text x="682" y="50" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="700">Threshold</text>
+      <text x="682" y="66" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="700">+ NMS</text>
+      <text x="682" y="82" text-anchor="middle" fill="#94a3b8" font-size="10">→ Corners!</text>
+    </svg>
+    <div class="caption">The complete 6-step Harris detector pipeline — from raw image to detected corner locations.</div>
+  </div>
+</div>
+
+<!-- SECTION 14 -->
+<div class="section" id="s14">
+  <h2>14. Non-Maxima Suppression</h2>
+  <p>After computing the Harris response \(R\) at every pixel, you typically get clusters of high-response pixels near each corner — not a single clean point. Non-Maxima Suppression (NMS) cleans this up.</p>
+
+  <p>The idea is simple: slide a small window across the response map. Within each window position, find the pixel with the maximum \(R\) value. Only that pixel survives — all other pixels in the window are "suppressed" (set to zero or marked as non-corners). This way, each actual corner in the image produces exactly one detected point at its peak response location.</p>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 600 200" width="100%" style="max-width:600px">
+      <text x="300" y="22" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="700">Non-Maxima Suppression Example</text>
+
+      <!-- Before NMS -->
+      <text x="150" y="48" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="600">Before NMS</text>
+      <!-- Grid of R values -->
+      <g transform="translate(60,55)">
+        <rect x="0" y="0" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="15" y="20" text-anchor="middle" fill="#6b7280" font-size="11">2</text>
+        <rect x="30" y="0" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="45" y="20" text-anchor="middle" fill="#6b7280" font-size="11">5</text>
+        <rect x="60" y="0" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="75" y="20" text-anchor="middle" fill="#6b7280" font-size="11">3</text>
+        <rect x="90" y="0" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="105" y="20" text-anchor="middle" fill="#6b7280" font-size="11">1</text>
+        <rect x="120" y="0" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="135" y="20" text-anchor="middle" fill="#6b7280" font-size="11">4</text>
+        <rect x="150" y="0" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="165" y="20" text-anchor="middle" fill="#6b7280" font-size="11">6</text>
+
+        <rect x="0" y="30" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="15" y="50" text-anchor="middle" fill="#6b7280" font-size="11">3</text>
+        <rect x="30" y="30" width="30" height="30" fill="#f59e0b" opacity="0.3" stroke="#f59e0b"/>
+        <text x="45" y="50" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="700">9</text>
+        <rect x="60" y="30" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="75" y="50" text-anchor="middle" fill="#6b7280" font-size="11">7</text>
+        <rect x="90" y="30" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="105" y="50" text-anchor="middle" fill="#6b7280" font-size="11">2</text>
+        <rect x="120" y="30" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="135" y="50" text-anchor="middle" fill="#6b7280" font-size="11">5</text>
+        <rect x="150" y="30" width="30" height="30" fill="#f59e0b" opacity="0.3" stroke="#f59e0b"/>
+        <text x="165" y="50" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="700">8</text>
+
+        <rect x="0" y="60" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="15" y="80" text-anchor="middle" fill="#6b7280" font-size="11">1</text>
+        <rect x="30" y="60" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="45" y="80" text-anchor="middle" fill="#6b7280" font-size="11">4</text>
+        <rect x="60" y="60" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="75" y="80" text-anchor="middle" fill="#6b7280" font-size="11">2</text>
+        <rect x="90" y="60" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="105" y="80" text-anchor="middle" fill="#6b7280" font-size="11">6</text>
+        <rect x="120" y="60" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="135" y="80" text-anchor="middle" fill="#6b7280" font-size="11">3</text>
+        <rect x="150" y="60" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="165" y="80" text-anchor="middle" fill="#6b7280" font-size="11">5</text>
+      </g>
+
+      <!-- Arrow -->
+      <text x="300" y="115" text-anchor="middle" fill="#38bdf8" font-size="26">⟹</text>
+      <text x="300" y="135" text-anchor="middle" fill="#38bdf8" font-size="11">NMS</text>
+
+      <!-- After NMS -->
+      <text x="450" y="48" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="600">After NMS</text>
+      <g transform="translate(360,55)">
+        <rect x="0" y="0" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="15" y="20" text-anchor="middle" fill="#475569" font-size="11">0</text>
+        <rect x="30" y="0" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="45" y="20" text-anchor="middle" fill="#475569" font-size="11">0</text>
+        <rect x="60" y="0" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="75" y="20" text-anchor="middle" fill="#475569" font-size="11">0</text>
+        <rect x="90" y="0" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="105" y="20" text-anchor="middle" fill="#475569" font-size="11">0</text>
+        <rect x="120" y="0" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="135" y="20" text-anchor="middle" fill="#475569" font-size="11">0</text>
+        <rect x="150" y="0" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="165" y="20" text-anchor="middle" fill="#475569" font-size="11">0</text>
+
+        <rect x="0" y="30" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="15" y="50" text-anchor="middle" fill="#475569" font-size="11">0</text>
+        <rect x="30" y="30" width="30" height="30" fill="#f59e0b" opacity="0.4" stroke="#f59e0b" stroke-width="2"/>
+        <text x="45" y="50" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="700">9</text>
+        <rect x="60" y="30" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="75" y="50" text-anchor="middle" fill="#475569" font-size="11">0</text>
+        <rect x="90" y="30" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="105" y="50" text-anchor="middle" fill="#475569" font-size="11">0</text>
+        <rect x="120" y="30" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="135" y="50" text-anchor="middle" fill="#475569" font-size="11">0</text>
+        <rect x="150" y="30" width="30" height="30" fill="#f59e0b" opacity="0.4" stroke="#f59e0b" stroke-width="2"/>
+        <text x="165" y="50" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="700">8</text>
+
+        <rect x="0" y="60" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="15" y="80" text-anchor="middle" fill="#475569" font-size="11">0</text>
+        <rect x="30" y="60" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="45" y="80" text-anchor="middle" fill="#475569" font-size="11">0</text>
+        <rect x="60" y="60" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="75" y="80" text-anchor="middle" fill="#475569" font-size="11">0</text>
+        <rect x="90" y="60" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="105" y="80" text-anchor="middle" fill="#475569" font-size="11">0</text>
+        <rect x="120" y="60" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="135" y="80" text-anchor="middle" fill="#475569" font-size="11">0</text>
+        <rect x="150" y="60" width="30" height="30" fill="#374151" stroke="#475569"/>
+        <text x="165" y="80" text-anchor="middle" fill="#475569" font-size="11">0</text>
+      </g>
+    </svg>
+    <div class="caption">NMS keeps only local maxima (9 and 8 survive here). All non-maximum neighbors are suppressed to zero.</div>
+  </div>
+</div>
+
+<!-- SECTION 15 -->
+<div class="section" id="s15">
+  <h2>15. Invariance Properties of Harris</h2>
+  <p>A crucial question for any feature detector is: what transformations can the image undergo while still detecting the same keypoints? This is called <strong>invariance</strong>, and it determines how robust the detector is in real-world scenarios.</p>
+
+  <h3>Rotation Invariance ✅ YES</h3>
+  <p>If you rotate an image, the Harris detector will still find the same corners. Why? Because the eigenvalues of the second moment matrix don't change under rotation. Mathematically, rotating the image rotates the gradient distribution, but the ellipse fitted to that distribution simply rotates too — its axes lengths (the eigenvalues) stay the same. Since the Harris response \(R\) depends only on the eigenvalues (through determinant and trace), \(R\) is unchanged by rotation.</p>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 500 140" width="100%" style="max-width:500px">
+      <!-- Original -->
+      <text x="120" y="18" text-anchor="middle" fill="#94a3b8" font-size="12" font-weight="600">Original</text>
+      <rect x="60" y="25" width="120" height="80" rx="4" fill="#374151" stroke="#475569"/>
+      <!-- An L-corner -->
+      <polyline points="80,90 80,50 140,50" fill="none" stroke="#f59e0b" stroke-width="3"/>
+      <circle cx="80" cy="50" r="6" fill="#f59e0b" opacity="0.5"/>
+      <text x="80" y="42" text-anchor="middle" fill="#f59e0b" font-size="10">corner</text>
+
+      <!-- Arrow -->
+      <text x="215" y="70" fill="#38bdf8" font-size="14">rotate →</text>
+
+      <!-- Rotated -->
+      <text x="370" y="18" text-anchor="middle" fill="#94a3b8" font-size="12" font-weight="600">After 45° Rotation</text>
+      <rect x="310" y="25" width="120" height="80" rx="4" fill="#374151" stroke="#475569"/>
+      <!-- Rotated L -->
+      <polyline points="370,95 340,55 400,55" fill="none" stroke="#f59e0b" stroke-width="3" transform="rotate(45,370,70)"/>
+      <circle cx="355" cy="58" r="6" fill="#f59e0b" opacity="0.5"/>
+      <text x="355" y="50" text-anchor="middle" fill="#f59e0b" font-size="10">same corner!</text>
+    </svg>
+    <div class="caption">Harris corners survive rotation — the same corners are detected regardless of image orientation.</div>
+  </div>
+
+  <h3>Intensity Shift Invariance ✅ YES (Partial)</h3>
+  <p>If you add a constant brightness value to every pixel (like making the whole image brighter), the gradients don't change — because derivatives kill constants. So Harris remains invariant to intensity shifts: \(I \rightarrow I + b\) has no effect.</p>
+
+  <h3>Intensity Scaling ⚠️ PARTIAL</h3>
+  <p>If you multiply all pixel values by a constant (\(I \rightarrow aI\)), the gradients scale by \(a\), the matrix \(M\) scales by \(a^2\), and \(R\) scales by \(a^4\). So the threshold needs to be adapted. However, a simple fix is to use a relative threshold or normalize the response.</p>
+
+  <h3>Scale Invariance ❌ NO</h3>
+  <p>This is the big weakness of the Harris detector. If you zoom into or out of the image, corners can appear or disappear because the window size stays fixed while the image structures change scale. A corner detected at one scale might look like an edge or a flat region at a different scale.</p>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 600 180" width="100%" style="max-width:600px">
+      <text x="300" y="18" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="700">The Scale Problem</text>
+
+      <!-- Small scale -->
+      <rect x="30" y="35" width="160" height="120" rx="6" fill="#374151" stroke="#475569"/>
+      <text x="110" y="28" text-anchor="middle" fill="#94a3b8" font-size="11">Close up (large scale)</text>
+      <!-- Big corner shape -->
+      <polyline points="60,140 60,60 150,60" fill="none" stroke="#f59e0b" stroke-width="3"/>
+      <!-- Detection window -->
+      <rect x="45" y="45" width="40" height="40" fill="none" stroke="#f472b6" stroke-width="2" stroke-dasharray="4,3"/>
+      <text x="65" y="100" fill="#f472b6" font-size="10">window sees</text>
+      <text x="65" y="112" fill="#f472b6" font-size="10">only EDGE</text>
+
+      <!-- Arrow -->
+      <text x="230" y="105" fill="#94a3b8" font-size="12">zoom out →</text>
+
+      <!-- Large scale (zoomed out) -->
+      <rect x="300" y="35" width="160" height="120" rx="6" fill="#374151" stroke="#475569"/>
+      <text x="380" y="28" text-anchor="middle" fill="#94a3b8" font-size="11">Zoomed out (small scale)</text>
+      <!-- Small corner shape -->
+      <polyline points="350,130 350,80 400,80" fill="none" stroke="#f59e0b" stroke-width="2"/>
+      <!-- Detection window now captures it -->
+      <rect x="335" y="65" width="40" height="40" fill="none" stroke="#34d399" stroke-width="2" stroke-dasharray="4,3"/>
+      <text x="360" y="120" fill="#34d399" font-size="10">window sees</text>
+      <text x="360" y="132" fill="#34d399" font-size="10">CORNER ✓</text>
+
+      <!-- Summary -->
+      <rect x="490" y="55" width="100" height="80" rx="8" fill="#1e293b" stroke="#f472b6"/>
+      <text x="540" y="80" text-anchor="middle" fill="#f472b6" font-size="11" font-weight="600">Same point,</text>
+      <text x="540" y="95" text-anchor="middle" fill="#f472b6" font-size="11" font-weight="600">different scale</text>
+      <text x="540" y="112" text-anchor="middle" fill="#f472b6" font-size="11">= different</text>
+      <text x="540" y="125" text-anchor="middle" fill="#f472b6" font-size="11">classification!</text>
+    </svg>
+    <div class="caption">The same physical corner can be classified differently at different scales — Harris is NOT scale-invariant.</div>
+  </div>
+
+  <table>
+    <tr><th>Property</th><th>Invariant?</th><th>Why?</th></tr>
+    <tr><td>Rotation</td><td style="color:#34d399;font-weight:700">✅ Yes</td><td>Eigenvalues don't change under rotation</td></tr>
+    <tr><td>Intensity Shift (I → I+b)</td><td style="color:#34d399;font-weight:700">✅ Yes</td><td>Derivatives kill constants</td></tr>
+    <tr><td>Intensity Scale (I → aI)</td><td style="color:#f59e0b;font-weight:700">⚠️ Partial</td><td>Threshold needs adjustment</td></tr>
+    <tr><td>Scale (zoom)</td><td style="color:#ef4444;font-weight:700">❌ No</td><td>Fixed window can't adapt to zoom</td></tr>
+  </table>
+</div>
+
+<!-- SECTION 16 -->
+<div class="section" id="s16">
+  <h2>16. The Scale Problem and Multi-Scale Detection</h2>
+  <p>The lack of scale invariance is a serious limitation. In the real world, objects appear at many different sizes depending on their distance from the camera. A detector that only works at one scale would miss matches between a close-up photo and a far-away shot of the same scene.</p>
+
+  <p>The solution is <strong>multi-scale detection</strong>: instead of looking for features at just one window size, we search across many scales simultaneously. The key question becomes: at each location in the image, what is the "right" scale to examine it at?</p>
+
+  <p>The idea is to find a function of scale that gives a strong, distinctive response when the scale matches the structure size. If a sunflower in the image has petals that are about 10 pixels across, the "right" scale for detecting that sunflower should produce a peak response at σ ≈ 10.</p>
+
+  <div class="card highlight">
+    <div class="card-title">The Characteristic Scale</div>
+    For each interest point, there exists a <strong>characteristic scale</strong> — the scale at which the surrounding structure produces the strongest detector response. A truly scale-invariant detector finds both the location AND the characteristic scale of each keypoint.
+  </div>
+</div>
+
+<!-- SECTION 17 -->
+<div class="section" id="s17">
+  <h2>17. Laplacian of Gaussian (LoG) and Scale Space</h2>
+
+  <p>To achieve scale-invariant detection, we need a mathematical tool that responds strongly to structures of a specific size. That tool is the <strong>Laplacian of Gaussian (LoG)</strong>.</p>
+
+  <h3>What is the LoG?</h3>
+  <p>The Laplacian of Gaussian combines two operations: first smoothing the image with a Gaussian filter (to select a particular scale), then applying the Laplacian operator (which detects "blob-like" structures). The formula is:</p>
+
+  <div class="card formula">
+    $$\nabla^2 G(x,y) = \left(\frac{x^2 + y^2 - 2\sigma^2}{\sigma^4}\right) e^{-\frac{x^2+y^2}{2\sigma^2}}$$
+  </div>
+
+  <p>When you convolve the LoG filter with an image, it produces a strong response at locations where there's a blob (a bright or dark region) whose size matches the filter's scale parameter \(\sigma\). Small \(\sigma\) detects small blobs; large \(\sigma\) detects large blobs.</p>
+
+  <h3>Scale Space — A Family of Smoothed Images</h3>
+  <p>The concept of <strong>scale space</strong> (introduced by Witkin, 1983) represents an image as a one-parameter family of smoothed images. You take your original image and blur it with Gaussians of increasing \(\sigma\). Each blurred version represents the image at a different scale:</p>
+
+  <div class="card formula">
+    $$L(x, y, \sigma) = G(x, y, \sigma) \star f(x, y)$$
+  </div>
+
+  <p>where \(G(x,y,\sigma)\) is the Gaussian kernel with standard deviation \(\sigma\) and \(\star\) denotes convolution. As \(\sigma\) increases, fine details disappear and only large-scale structures survive.</p>
+
+  <h3>The Gaussian Pyramid — Octaves</h3>
+  <p>In practice, we organize scale space into <strong>octaves</strong>. Within each octave, we apply Gaussians with gradually increasing \(\sigma\) (multiplied by a factor \(k\) each time). When \(\sigma\) doubles, we've completed one octave — and we downsample the image by half to start the next octave. This means each octave covers a factor-of-2 range of scales but at half the resolution, making the computation efficient.</p>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 650 320" width="100%" style="max-width:650px">
+      <text x="325" y="22" text-anchor="middle" fill="#e2e8f0" font-size="15" font-weight="700">Gaussian Pyramid — Octaves and Scales</text>
+
+      <!-- Octave 1 (largest images) -->
+      <text x="100" y="55" text-anchor="middle" fill="#38bdf8" font-size="12" font-weight="600">Octave 1</text>
+      <!-- Stack of images -->
+      <rect x="50" y="65" width="100" height="65" rx="3" fill="#334155" stroke="#475569" stroke-width="1"/>
+      <text x="160" y="82" fill="#94a3b8" font-size="10">σ₁</text>
+      <rect x="50" y="60" width="100" height="65" rx="3" fill="#374151" stroke="#475569" stroke-width="1"/>
+      <text x="160" y="77" fill="#94a3b8" font-size="10">kσ₁</text>
+      <rect x="50" y="55" width="100" height="65" rx="3" fill="#3f4f63" stroke="#475569" stroke-width="1"/>
+      <text x="160" y="72" fill="#94a3b8" font-size="10">k²σ₁</text>
+      <rect x="50" y="50" width="100" height="65" rx="3" fill="#4a5568" stroke="#475569" stroke-width="1"/>
+      <text x="160" y="67" fill="#94a3b8" font-size="10">k³σ₁</text>
+      <rect x="50" y="45" width="100" height="65" rx="3" fill="#556577" stroke="#38bdf8" stroke-width="1.5"/>
+      <text x="160" y="62" fill="#94a3b8" font-size="10">k⁴σ₁</text>
+
+      <line x1="100" y1="140" x2="100" y2="155" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3,2"/>
+      <text x="100" y="168" text-anchor="middle" fill="#94a3b8" font-size="10">↑ Scale</text>
+
+      <!-- Octave 2 (smaller images) -->
+      <text x="300" y="55" text-anchor="middle" fill="#818cf8" font-size="12" font-weight="600">Octave 2</text>
+      <rect x="260" y="70" width="80" height="52" rx="3" fill="#334155" stroke="#475569" stroke-width="1"/>
+      <text x="348" y="84" fill="#94a3b8" font-size="10">σ₂ = 2σ₁</text>
+      <rect x="260" y="66" width="80" height="52" rx="3" fill="#374151" stroke="#475569" stroke-width="1"/>
+      <rect x="260" y="62" width="80" height="52" rx="3" fill="#3f4f63" stroke="#475569" stroke-width="1"/>
+      <rect x="260" y="58" width="80" height="52" rx="3" fill="#4a5568" stroke="#475569" stroke-width="1"/>
+      <rect x="260" y="54" width="80" height="52" rx="3" fill="#556577" stroke="#818cf8" stroke-width="1.5"/>
+
+      <!-- Arrow between octaves -->
+      <path d="M175,90 Q220,85 255,85" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowGray)"/>
+      <text x="215" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">downsample</text>
+      <text x="215" y="90" text-anchor="middle" fill="#94a3b8" font-size="9">by 2×</text>
+
+      <!-- Octave 3 (even smaller) -->
+      <text x="480" y="55" text-anchor="middle" fill="#f472b6" font-size="12" font-weight="600">Octave 3</text>
+      <rect x="450" y="78" width="60" height="38" rx="3" fill="#334155" stroke="#475569" stroke-width="1"/>
+      <text x="518" y="90" fill="#94a3b8" font-size="10">σ₃ = 4σ₁</text>
+      <rect x="450" y="74" width="60" height="38" rx="3" fill="#374151" stroke="#475569" stroke-width="1"/>
+      <rect x="450" y="70" width="60" height="38" rx="3" fill="#3f4f63" stroke="#475569" stroke-width="1"/>
+      <rect x="450" y="66" width="60" height="38" rx="3" fill="#4a5568" stroke="#475569" stroke-width="1"/>
+      <rect x="450" y="62" width="60" height="38" rx="3" fill="#556577" stroke="#f472b6" stroke-width="1.5"/>
+
+      <path d="M345,90 Q395,88 445,88" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrowGray)"/>
+      <text x="395" y="80" text-anchor="middle" fill="#94a3b8" font-size="9">downsample</text>
+
+      <!-- Scale values table -->
+      <rect x="60" y="200" width="530" height="100" rx="8" fill="#1e293b" stroke="#334155"/>
+      <text x="325" y="222" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">Example: σ₁ = √2/2 ≈ 0.707, k = √2 ≈ 1.414</text>
+      <text x="325" y="248" text-anchor="middle" fill="#94a3b8" font-size="12">Octave 1 scales: 0.707 → 1.000 → 1.414 → 2.000 → 2.828</text>
+      <text x="325" y="268" text-anchor="middle" fill="#94a3b8" font-size="12">Octave 2 scales: 1.414 → 2.000 → 2.828 → 4.000 → 5.657</text>
+      <text x="325" y="288" text-anchor="middle" fill="#94a3b8" font-size="12">Octave 3 scales: 2.828 → 4.000 → 5.657 → 8.000 → 11.314</text>
+    </svg>
+    <div class="caption">The Gaussian pyramid organizes scale space into octaves. Each octave has images smoothed at increasing σ, and the next octave downsamples by 2×.</div>
+  </div>
+
+  <h3>LoG at Different Scales — The Sunflower Example</h3>
+  <p>The lecture demonstrates this beautifully with a sunflower field image. When you apply LoG filters at different scales (σ = 2.1, 4.2, 6.0, 9.8, 15.5, 17.0), each scale responds to structures of a different size. At small σ (like 2.1), the filter detects tiny details — the texture of individual petals. As σ increases, it responds to progressively larger features. At σ ≈ 9.8, the filter matches the size of a single sunflower head, producing a strong, concentrated peak response over each flower.</p>
+
+  <p>The response at the wrong scale (too small or too large for the structure) is weaker and more diffuse. But at the "right" scale — the characteristic scale — the response peaks sharply. This is the key to scale-invariant detection.</p>
+</div>
+
+<!-- SECTION 18 -->
+<div class="section" id="s18">
+  <h2>18. Finding the Optimal Scale — Cross-Scale Maximum</h2>
+  <p>The final piece of the puzzle is how to actually find the characteristic scale for each interest point. The answer is the <strong>cross-scale maximum</strong>.</p>
+
+  <p>Here's the procedure: at each location \((x,y)\) in the image, you have a LoG response at every scale \(\sigma\). You compare these responses across scales. If the response at a particular scale is larger than the responses at the scales immediately above and below it (a local maximum across scales), then that scale is the characteristic scale for that location.</p>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 500 300" width="100%" style="max-width:500px">
+      <text x="250" y="22" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="700">Cross-Scale Maximum Detection</text>
+
+      <!-- Three scale levels -->
+      <rect x="170" y="45" width="160" height="60" rx="8" fill="#374151" stroke="#475569"/>
+      <text x="250" y="70" text-anchor="middle" fill="#94a3b8" font-size="13">Scale σ = 4.2</text>
+      <text x="250" y="86" text-anchor="middle" fill="#94a3b8" font-size="11">local max here</text>
+      <circle cx="340" cy="68" r="12" fill="#f59e0b" opacity="0.3" stroke="#f59e0b" stroke-width="2"/>
+
+      <rect x="170" y="125" width="160" height="60" rx="8" fill="#374151" stroke="#f59e0b" stroke-width="2"/>
+      <text x="250" y="148" text-anchor="middle" fill="#f59e0b" font-size="14" font-weight="700">Scale σ = 6.0</text>
+      <text x="250" y="166" text-anchor="middle" fill="#f59e0b" font-size="12" font-weight="600">★ PEAK! ★</text>
+      <circle cx="340" cy="148" r="16" fill="#f59e0b" opacity="0.5" stroke="#f59e0b" stroke-width="3"/>
+
+      <rect x="170" y="205" width="160" height="60" rx="8" fill="#374151" stroke="#475569"/>
+      <text x="250" y="228" text-anchor="middle" fill="#94a3b8" font-size="13">Scale σ = 9.8</text>
+      <text x="250" y="244" text-anchor="middle" fill="#94a3b8" font-size="11">local max here</text>
+      <circle cx="340" cy="228" r="12" fill="#f59e0b" opacity="0.3" stroke="#f59e0b" stroke-width="2"/>
+
+      <!-- Vertical arrows showing comparison -->
+      <line x1="120" y1="75" x2="120" y2="140" stroke="#f59e0b" stroke-width="3" marker-end="url(#arrowAmber)"/>
+      <line x1="120" y1="195" x2="120" y2="170" stroke="#f59e0b" stroke-width="3" marker-end="url(#arrowAmber)"/>
+
+      <text x="85" y="115" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="600">cross</text>
+      <text x="85" y="128" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="600">scale</text>
+      <text x="85" y="163" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="600">max</text>
+
+      <!-- Label -->
+      <rect x="365" y="132" width="120" height="36" rx="6" fill="#f59e0b" opacity="0.15" stroke="#f59e0b"/>
+      <text x="425" y="148" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="600">Characteristic</text>
+      <text x="425" y="162" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="600">Scale Found!</text>
+    </svg>
+    <div class="caption">The characteristic scale is where the LoG response reaches a cross-scale maximum — higher than at the scales above and below.</div>
+  </div>
+
+  <p>The sunflower example from the lecture makes this concrete. For a particular sunflower in the full-size image, the LoG response peaks at σ ≈ 9.8. If you shrink the image to 3/4 size, the same sunflower is now smaller in pixels, so its peak shifts to a smaller σ (around 6.0). But the key point is: in both cases, the detector finds a clear peak, and the ratio of peak scales matches the ratio of image sizes. This means you can find the <em>same</em> sunflower in both images by comparing their characteristic scales — and that's scale-invariant detection.</p>
+
+  <div class="card highlight">
+    <div class="card-title">Why This Matters</div>
+    <p>The cross-scale maximum gives each keypoint not just a location (x, y) but also a <strong>scale</strong> (σ). This triplet (x, y, σ) is the basis for scale-invariant feature detectors like SIFT (Scale-Invariant Feature Transform), which builds on Harris + LoG ideas to achieve robust matching across dramatically different image scales.</p>
+  </div>
+
+  <div class="card warning">
+    <div class="card-title">Summary: From Harris to Scale-Invariant Detection</div>
+    <p>The Harris corner detector gives us a powerful way to find corners using the second moment matrix and eigenvalue analysis, but it fails when the image is scaled. The LoG operator and scale space give us a way to detect features at multiple scales and find the characteristic scale of each feature point. Together, these ideas form the foundation of modern feature detectors like SIFT, SURF, and ORB — the workhorses of computer vision.</p>
+  </div>
+</div>
+
+</div><!-- end container -->
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    renderMathInElement(document.body, {
+      delimiters: [
+        {left: "$$", right: "$$", display: true},
+        {left: "\\(", right: "\\)", display: false}
+      ],
+      throwOnError: false
+    });
+  });
+</script>
+</body>
+</html>
