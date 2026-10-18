@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Module 08 · 2D Transformations</title>
+<script>
+  window.MathJax = { tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] }, svg: { fontCache: 'global' } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+:root{
+  --bg:#f7f8fb; --card:#ffffff; --ink:#1c2230; --muted:#5b6475; --line:#d9dee8;
+  --accent:#2f6fec; --accent-soft:#e7efff; --orange:#e8742c; --green:#1f9d6b; --red:#d6455d; --purple:#7a4fd6;
+  --code:#f1f3f8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11141b; --card:#1a1f2a; --ink:#e6e9f0; --muted:#9aa3b5; --line:#2c3444;
+    --accent:#6b9bff; --accent-soft:#1e2a44; --orange:#ff9a5a; --green:#3ccf94; --red:#ff6b81; --purple:#a98bff;
+    --code:#222938;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11141b; --card:#1a1f2a; --ink:#e6e9f0; --muted:#9aa3b5; --line:#2c3444;
+  --accent:#6b9bff; --accent-soft:#1e2a44; --orange:#ff9a5a; --green:#3ccf94; --red:#ff6b81; --purple:#a98bff;
+  --code:#222938;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header.top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+header.top .in{max-width:980px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+header.top a{color:var(--accent);text-decoration:none;font-weight:600}
+main{max-width:980px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:1.9rem;margin:.2em 0 .1em}
+.sub{color:var(--muted);margin:0 0 1.2em}
+h2{font-size:1.4rem;margin:2.2em 0 .6em;padding-bottom:.3em;border-bottom:2px solid var(--line)}
+h2 .num{color:var(--accent);margin-right:.35em}
+h3{font-size:1.12rem;margin:1.6em 0 .4em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.def{border-left:4px solid var(--accent);background:var(--accent-soft)}
+.def b.tag,.ex b.tag,.warn b.tag,.tip b.tag{display:inline-block;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.def b.tag{color:var(--accent)}
+.ex{border-left:4px solid var(--green)} .ex b.tag{color:var(--green)}
+.warn{border-left:4px solid var(--red)} .warn b.tag{color:var(--red)}
+.tip{border-left:4px solid var(--orange)} .tip b.tag{color:var(--orange)}
+.math{overflow-x:auto;overflow-y:hidden;padding:2px 0}
+figure{margin:16px 0;text-align:center}
+figure svg{max-width:100%;height:auto}
+figcaption{color:var(--muted);font-size:.9rem;margin-top:6px}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:.95rem}
+.tw{overflow-x:auto}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft)}
+code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+code{background:var(--code);padding:1px 5px;border-radius:5px;font-size:.92em}
+pre{background:var(--code);padding:14px;border-radius:10px;overflow-x:auto;font-size:.88rem;line-height:1.5}
+ul,ol{padding-left:1.3em}
+li{margin:.25em 0}
+nav.toc ol{columns:2;column-gap:28px}
+@media (max-width:640px){nav.toc ol{columns:1} h1{font-size:1.55rem}}
+nav.toc a{color:var(--ink);text-decoration:none}
+nav.toc a:hover{color:var(--accent)}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}
+summary{cursor:pointer;font-weight:600}
+.pill{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:1px 10px;font-size:.8rem;font-weight:600}
+footer{max-width:980px;margin:0 auto;padding:20px 16px 40px;color:var(--muted);font-size:.85rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+footer a{color:var(--accent);text-decoration:none}
+/* svg tokens */
+svg text{fill:var(--ink);font-family:system-ui,sans-serif}
+svg .mut{fill:var(--muted)}
+svg .ax{stroke:var(--muted);stroke-width:1.5;fill:none}
+svg .grid{stroke:var(--line);stroke-width:1}
+svg .o{fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:5 4}
+svg .s1{fill:var(--accent);fill-opacity:.25;stroke:var(--accent);stroke-width:2}
+svg .s2{fill:var(--orange);fill-opacity:.25;stroke:var(--orange);stroke-width:2}
+svg .s3{fill:var(--green);fill-opacity:.25;stroke:var(--green);stroke-width:2}
+svg .s4{fill:var(--purple);fill-opacity:.25;stroke:var(--purple);stroke-width:2}
+svg .ln{stroke:var(--ink);stroke-width:1.6;fill:none}
+svg .lnA{stroke:var(--accent);stroke-width:2;fill:none}
+svg .lnO{stroke:var(--orange);stroke-width:2;fill:none}
+svg .lnG{stroke:var(--green);stroke-width:2;fill:none}
+svg .lnR{stroke:var(--red);stroke-width:2;fill:none}
+svg .dotA{fill:var(--accent)} svg .dotO{fill:var(--orange)} svg .dotG{fill:var(--green)} svg .dotR{fill:var(--red)} svg .dotK{fill:var(--ink)}
+svg .plane{fill:var(--orange);fill-opacity:.18;stroke:var(--orange);stroke-width:1.5}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="in">
+  <a href="index.html">← All modules</a>
+  <span class="pill">Module 08 · Lecture 7</span>
+</div></header>
+
+<main>
+<h1>2D Transformations (a.k.a. Warping)</h1>
+<p class="sub">16-385 Computer Vision · Lecture 7 · how pixels move, how to write every move as a matrix, and how to recover an unknown move from matched points.</p>
+
+<div class="card">
+<b>Lecture roadmap</b>
+<ol>
+<li>Reminder: image transformations (filtering vs warping)</li>
+<li>2D transformations (scale, shear, rotation, translation)</li>
+<li>Projective geometry 101 (homogeneous coordinates)</li>
+<li>Transformations in projective geometry (3×3 matrices, composition)</li>
+<li>Classification of 2D transformations (translation → projective, DOF)</li>
+<li>Determining unknown 2D transformations (least squares)</li>
+<li>Determining unknown image warps</li>
+</ol>
+</div>
+
+<nav class="toc card"><b>Contents</b>
+<ol>
+<li><a href="#s1">What is an image?</a></li>
+<li><a href="#s2">Filtering vs warping</a></li>
+<li><a href="#s3">Warping example: feature matching</a></li>
+<li><a href="#s4">Types of 2D transformations</a></li>
+<li><a href="#s5">Scaling</a></li>
+<li><a href="#s6">Shearing</a></li>
+<li><a href="#s7">Rotation (with derivation)</a></li>
+<li><a href="#s8">Linear transformations table</a></li>
+<li><a href="#s9">Translation: the problem</a></li>
+<li><a href="#s10">Homogeneous coordinates</a></li>
+<li><a href="#s11">Translation using homogeneous coords</a></li>
+<li><a href="#s12">Projective geometry picture</a></li>
+<li><a href="#s13">All transforms as 3×3 matrices</a></li>
+<li><a href="#s14">Matrix composition</a></li>
+<li><a href="#s15">Classification &amp; DOF</a></li>
+<li><a href="#s16">Affine transformations</a></li>
+<li><a href="#s17">Projective transformations (homographies)</a></li>
+<li><a href="#s18">Determining unknown transformations</a></li>
+<li><a href="#s19">Least squares error</a></li>
+<li><a href="#s20">Linear least squares for affine</a></li>
+<li><a href="#s21">Solving the linear system</a></li>
+<li><a href="#s22">Worked example + Python</a></li>
+<li><a href="#s23">Limitations</a></li>
+<li><a href="#s24">Cheat sheet &amp; self-test</a></li>
+</ol>
+</nav>
+
+<!-- ============ 1 ============ -->
+<h2 id="s1"><span class="num">1</span>What is an image?</h2>
+<div class="card def"><b class="tag">Definition</b><br>
+A <b>(grayscale) image is a 2D function</b> \(f(\mathbf{x})\). Its <b>domain</b> is the set of pixel positions \(\mathbf{x} = \begin{bmatrix} x \\ y \end{bmatrix}\), and its <b>range</b> is the brightness value at each position.</div>
+
+<figure>
+<svg viewBox="0 0 640 220" role="img" aria-label="Pixel grid mapped to intensity heights">
+  <g transform="translate(30,30)">
+    <rect x="0" y="0" width="40" height="40" fill="#222"/><rect x="40" y="0" width="40" height="40" fill="#666"/><rect x="80" y="0" width="40" height="40" fill="#aaa"/><rect x="120" y="0" width="40" height="40" fill="#eee"/>
+    <rect x="0" y="40" width="40" height="40" fill="#555"/><rect x="40" y="40" width="40" height="40" fill="#999"/><rect x="80" y="40" width="40" height="40" fill="#ddd"/><rect x="120" y="40" width="40" height="40" fill="#bbb"/>
+    <rect x="0" y="80" width="40" height="40" fill="#888"/><rect x="40" y="80" width="40" height="40" fill="#ccc"/><rect x="80" y="80" width="40" height="40" fill="#999"/><rect x="120" y="80" width="40" height="40" fill="#555"/>
+    <rect x="0" y="120" width="40" height="40" fill="#bbb"/><rect x="40" y="120" width="40" height="40" fill="#888"/><rect x="80" y="120" width="40" height="40" fill="#444"/><rect x="120" y="120" width="40" height="40" fill="#111"/>
+    <text x="80" y="182" text-anchor="middle" font-size="13">grayscale image (domain = x, y)</text>
+  </g>
+  <path d="M215 110 h70" class="lnA" marker-end="url(#arA)"/>
+  <text x="250" y="100" text-anchor="middle" font-size="13">f(x, y)</text>
+  <g transform="translate(320,20)">
+    <line x1="0" y1="160" x2="290" y2="160" class="ax"/><line x1="0" y1="160" x2="0" y2="0" class="ax"/>
+    <text x="-6" y="12" font-size="12" text-anchor="end">255</text><text x="-6" y="164" font-size="12" text-anchor="end">0</text>
+    <g fill-opacity=".85">
+      <rect x="15" y="150" width="22" height="10" class="s1"/><rect x="45" y="120" width="22" height="40" class="s1"/><rect x="75" y="80" width="22" height="80" class="s1"/><rect x="105" y="20" width="22" height="140" class="s1"/>
+      <rect x="150" y="110" width="22" height="50" class="s2"/><rect x="180" y="60" width="22" height="100" class="s2"/><rect x="210" y="30" width="22" height="130" class="s2"/><rect x="240" y="70" width="22" height="90" class="s2"/>
+    </g>
+    <text x="140" y="182" text-anchor="middle" font-size="13">range = intensity (height of the surface)</text>
+  </g>
+  <defs><marker id="arA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker>
+  <marker id="arK" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker>
+  <marker id="arO" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--orange)"/></marker>
+  <marker id="arG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--green)"/></marker>
+  <marker id="arR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--red)"/></marker></defs>
+</svg>
+<figcaption>Plotting brightness as height turns the image into a 3D surface: the slide's coloured "terrain" picture of the boy.</figcaption>
+</figure>
+
+<div class="card tip"><b class="tag">Slide question</b><br>
+<b>What is the range of the image function \(f\)?</b> The set of possible intensity values: \([0, 255]\) for an 8-bit image, or \([0, 1]\) if normalized. So \(f : \mathbb{R}^2 \rightarrow \mathbb{R}\) (in practice \(\{0,\dots,W\}\times\{0,\dots,H\} \rightarrow [0,255]\)). A colour image maps to \(\mathbb{R}^3\) (R, G, B).</div>
+
+<!-- ============ 2 ============ -->
+<h2 id="s2"><span class="num">2</span>Filtering vs warping</h2>
+<p>There are two fundamentally different ways to transform an image \(F\) into a new image \(G\):</p>
+
+<div class="tw"><table>
+<tr><th></th><th>Filtering</th><th>Warping</th></tr>
+<tr><td>Formula</td><td>\(G(\mathbf{x}) = h\{F(\mathbf{x})\}\)</td><td>\(G(\mathbf{x}) = F(h\{\mathbf{x}\})\)</td></tr>
+<tr><td>Where \(h\) acts</td><td>on the <b>output value</b> of \(F\)</td><td>on the <b>input coordinates</b> of \(F\)</td></tr>
+<tr><td>What changes</td><td>pixel <b>values</b>, i.e. the <b>range</b> of the image function</td><td>pixel <b>locations</b>, i.e. the <b>domain</b> of the image function</td></tr>
+<tr><td>Example</td><td>colour inversion, blur, sharpening</td><td>rotation, scaling, perspective change</td></tr>
+</table></div>
+
+<figure>
+<svg viewBox="0 0 640 230" role="img" aria-label="Filtering changes values, warping changes locations">
+  <g transform="translate(40,20)">
+    <text x="110" y="0" text-anchor="middle" font-size="14" font-weight="600">Filtering</text>
+    <rect x="0" y="15" width="90" height="90" fill="#f2f2f2" stroke="var(--muted)"/>
+    <path d="M28 30 v60 M28 30 h38 M28 58 h28" stroke="#222" stroke-width="9" fill="none"/>
+    <path d="M100 60 h30" class="ln" marker-end="url(#arK)"/>
+    <rect x="140" y="15" width="90" height="90" fill="#1b1b1b" stroke="var(--muted)"/>
+    <path d="M168 30 v60 M168 30 h38 M168 58 h28" stroke="#eee" stroke-width="9" fill="none"/>
+    <text x="115" y="135" text-anchor="middle" font-size="13">same positions, new values</text>
+    <text x="115" y="155" text-anchor="middle" font-size="13" class="mut">G(x) = h{F(x)} → range changes</text>
+  </g>
+  <g transform="translate(360,20)">
+    <text x="115" y="0" text-anchor="middle" font-size="14" font-weight="600">Warping</text>
+    <rect x="0" y="15" width="90" height="90" fill="#f2f2f2" stroke="var(--muted)"/>
+    <path d="M28 30 v60 M28 30 h38 M28 58 h28" stroke="#222" stroke-width="9" fill="none"/>
+    <path d="M100 60 h30" class="ln" marker-end="url(#arK)"/>
+    <g transform="translate(190,60) rotate(-20) translate(-45,-45)">
+      <rect x="0" y="0" width="90" height="90" fill="#f2f2f2" stroke="var(--muted)"/>
+      <path d="M28 15 v60 M28 15 h38 M28 43 h28" stroke="#222" stroke-width="9" fill="none"/>
+    </g>
+    <text x="115" y="135" text-anchor="middle" font-size="13">same values, new positions</text>
+    <text x="115" y="155" text-anchor="middle" font-size="13" class="mut">G(x) = F(h{x}) → domain changes</text>
+  </g>
+</svg>
+<figcaption>The slide uses a photo of a boy: inverted colours for filtering, a rotated copy for warping.</figcaption>
+</figure>
+
+<div class="card tip"><b class="tag">Memory trick</b><br>Filtering = <b>what colour</b> is each pixel. Warping = <b>where</b> does each pixel go. This lecture is entirely about <b>warping</b>.</div>
+
+<!-- ============ 3 ============ -->
+<h2 id="s3"><span class="num">3</span>Warping example: feature matching</h2>
+<p>The same object (a cereal box in the slides) is photographed twice, once straight and once smaller and tilted. Distinctive points (corners of the logo, letters) are found in both images and <b>matched</b>.</p>
+<figure>
+<svg viewBox="0 0 640 230" role="img" aria-label="Matched feature points between two views of a box">
+  <rect x="60" y="20" width="140" height="190" rx="4" class="s1"/>
+  <g transform="translate(470,120) rotate(12) scale(.75) translate(-70,-95)"><rect x="0" y="0" width="140" height="190" rx="4" class="s2"/></g>
+  <g>
+    <circle cx="170" cy="45" r="8" class="lnG"/><circle cx="80" cy="80" r="8" class="lnG"/><circle cx="85" cy="140" r="8" class="lnG"/><circle cx="150" cy="170" r="8" class="lnG"/>
+    <circle cx="510" cy="76" r="8" class="lnG"/><circle cx="440" cy="85" r="8" class="lnG"/><circle cx="437" cy="130" r="8" class="lnG"/><circle cx="480" cy="160" r="8" class="lnG"/>
+    <line x1="178" y1="45" x2="502" y2="76" stroke="#e4c21b" stroke-width="3"/>
+    <line x1="88" y1="80" x2="432" y2="85" stroke="#e4c21b" stroke-width="3"/>
+    <line x1="93" y1="140" x2="429" y2="130" stroke="#e4c21b" stroke-width="3"/>
+    <line x1="158" y1="170" x2="472" y2="160" stroke="#e4c21b" stroke-width="3"/>
+  </g>
+  <text x="130" y="225" text-anchor="middle" font-size="13">image 1: points xᵢ′</text>
+  <text x="470" y="225" text-anchor="middle" font-size="13">image 2: points xᵢ</text>
+</svg>
+<figcaption>Each yellow line is one correspondence \(\{\mathbf{x}_i, \mathbf{x}'_i\}\).</figcaption>
+</figure>
+
+<div class="card def"><b class="tag">The general problem</b><br>
+Given a set of matched feature points \(\{\mathbf{x}_i, \mathbf{x}'_i\}\) (a point in one image, and its partner in the other image)<br>
+and a transformation \(\mathbf{x}' = \mathbf{f}(\mathbf{x}; \mathbf{p})\), where \(\mathbf{f}\) is the <b>transformation function</b> and \(\mathbf{p}\) its <b>parameters</b>,<br>
+<b>find the best estimate of the parameters \(\mathbf{p}\).</b></div>
+
+<p><b>Why this matters</b> (applications listed on the slide):</p>
+<ul>
+<li><b>Object recognition</b>: if a valid transform maps a model onto the scene, the object is there.</li>
+<li><b>3D reconstruction</b>: correspondences between views reveal geometry.</li>
+<li><b>Augmented reality</b>: knowing how a surface moved lets you draw virtual content on it.</li>
+<li><b>Image stitching</b>: panoramas are built by warping photos into one frame.</li>
+</ul>
+<p>Two questions follow: <b>how do you compute the transformation?</b> (Sections 18–22) and <b>what kinds of transformation functions \(\mathbf{f}\) exist?</b> (next).</p>
+
+<!-- ============ 4 ============ -->
+<h2 id="s4"><span class="num">4</span>Types of 2D transformations</h2>
+<figure>
+<svg viewBox="0 0 640 300" role="img" aria-label="Six transformation types applied to a square">
+  <g font-size="13" text-anchor="middle">
+    <g transform="translate(20,20)"><rect x="10" y="30" width="70" height="60" class="o"/><rect x="60" y="10" width="70" height="60" class="s1"/><text x="80" y="120">translation</text></g>
+    <g transform="translate(230,20)"><rect x="35" y="30" width="70" height="60" class="o"/><rect x="35" y="30" width="70" height="60" class="s1" transform="rotate(-15 70 60)"/><text x="70" y="120">rotation</text></g>
+    <g transform="translate(440,20)"><rect x="35" y="30" width="70" height="60" class="o"/><rect x="20" y="42" width="110" height="36" class="s1"/><text x="75" y="120">aspect</text></g>
+    <g transform="translate(20,160)"><rect x="35" y="30" width="70" height="60" class="o"/><polygon points="30,90 95,90 120,30 55,30" class="s2"/><text x="75" y="120">affine</text></g>
+    <g transform="translate(230,160)"><rect x="35" y="30" width="70" height="60" class="o"/><polygon points="25,90 115,90 95,35 45,35" class="s2"/><text x="70" y="120">perspective</text></g>
+    <g transform="translate(440,160)"><rect x="35" y="30" width="70" height="60" class="o"/><path d="M30 30 Q75 15 120 30 L120 90 Q75 105 30 90 Z" class="s4"/><text x="75" y="120">cylindrical</text></g>
+  </g>
+</svg>
+<figcaption>Dashed = original, filled = warped. The slide shows each one applied to a photo of a house.</figcaption>
+</figure>
+<div class="tw"><table>
+<tr><th>Type</th><th>What it does</th></tr>
+<tr><td>Translation</td><td>shifts the whole image</td></tr>
+<tr><td>Rotation</td><td>turns it about a point</td></tr>
+<tr><td>Aspect</td><td>stretches x and y by different amounts (non-uniform scale)</td></tr>
+<tr><td>Affine</td><td>parallelogram-style skew; parallel lines stay parallel</td></tr>
+<tr><td>Perspective</td><td>"looking at it from an angle"; parallel lines can converge</td></tr>
+<tr><td>Cylindrical</td><td>wraps onto a cylinder; straight lines bend (non-linear, used in panoramas)</td></tr>
+</table></div>
+<p>The rest of the lecture builds these up one by one, starting with <b>2D planar transformations</b> of a single shape (a purple square on x–y axes in the slides).</p>
+
+<!-- ============ 5 ============ -->
+<h2 id="s5"><span class="num">5</span>Scaling</h2>
+<div class="card def"><b class="tag">Definition</b><br>
+<b>Scaling:</b> each component is multiplied by a scalar.<br>
+<b>Uniform scaling</b> uses the <b>same scalar for each component</b>; non-uniform scaling uses different ones.</div>
+<div class="math">\[ x' = a\,x \qquad y' = b\,y \qquad\Longleftrightarrow\qquad \begin{bmatrix} x' \\ y' \end{bmatrix} = \underbrace{\begin{bmatrix} a & 0 \\ 0 & b \end{bmatrix}}_{\text{scaling matrix } S} \begin{bmatrix} x \\ y \end{bmatrix} \]</div>
+<figure>
+<svg viewBox="0 0 640 220" role="img" aria-label="Square scaled by a in x and b in y">
+  <g transform="translate(40,190)">
+    <line x1="0" y1="0" x2="560" y2="0" class="ax" marker-end="url(#arK)"/><line x1="0" y1="0" x2="0" y2="-180" class="ax" marker-end="url(#arK)"/>
+    <text x="565" y="16" font-size="13">x</text><text x="-14" y="-170" font-size="13">y</text>
+    <rect x="30" y="-60" width="60" height="60" class="o"/><text x="60" y="-26" text-anchor="middle" font-size="12">1×1</text>
+    <rect x="160" y="-120" width="120" height="120" class="s1"/><text x="220" y="-55" text-anchor="middle" font-size="12">uniform a=b=2</text>
+    <rect x="340" y="-60" width="180" height="60" class="s2"/><text x="430" y="-25" text-anchor="middle" font-size="12">a=3, b=1 (aspect change)</text>
+  </g>
+</svg>
+</figure>
+<div class="card tip"><b class="tag">Slide question</b><br>
+<b>What's the effect of using different scale factors?</b>
+<ul>
+<li>\(a = b\): uniform scaling, so the shape is preserved (bigger or smaller).</li>
+<li>\(a \ne b\): the <b>aspect ratio changes</b> (the "aspect" warp in Section 4).</li>
+<li>\(0 < a < 1\) shrinks; \(a > 1\) enlarges.</li>
+<li>A negative factor flips the image, e.g. \(a = -1\) mirrors across the y-axis.</li>
+</ul></div>
+<div class="card ex"><b class="tag">Example</b><br>
+Point \((2, 3)\), with \(a = 2,\ b = 0.5\): \(\;x' = 2\cdot 2 = 4,\; y' = 0.5 \cdot 3 = 1.5\;\Rightarrow (4, 1.5)\).</div>
+
+<!-- ============ 6 ============ -->
+<h2 id="s6"><span class="num">6</span>Shearing</h2>
+<div class="card def"><b class="tag">Definition</b><br><b>Shear</b> slides one coordinate by an amount proportional to the other. A square becomes a parallelogram.</div>
+<div class="math">\[ x' = x + a\cdot y \qquad y' = b\cdot x + y \qquad\Longleftrightarrow\qquad \begin{bmatrix} x' \\ y' \end{bmatrix} = \begin{bmatrix} 1 & a \\ b & 1 \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} \]</div>
+<figure>
+<svg viewBox="0 0 640 200" role="img" aria-label="Square sheared into parallelogram">
+  <g transform="translate(60,170)">
+    <line x1="0" y1="0" x2="520" y2="0" class="ax" marker-end="url(#arK)"/><line x1="0" y1="0" x2="0" y2="-160" class="ax" marker-end="url(#arK)"/>
+    <rect x="40" y="-120" width="120" height="120" class="o"/>
+    <polygon points="280,0 400,0 460,-120 340,-120" class="s1"/>
+    <path d="M175 -60 h80" class="ln" marker-end="url(#arK)"/>
+    <text x="215" y="-70" text-anchor="middle" font-size="12">a = 0.5, b = 0</text>
+    <text x="370" y="20" text-anchor="middle" font-size="12">top edge moved right by a·y</text>
+  </g>
+</svg>
+<figcaption>With \(b = 0\), points higher up (larger \(y\)) slide further right; the bottom edge (\(y = 0\)) stays put.</figcaption>
+</figure>
+<div class="card ex"><b class="tag">Example</b><br>
+Point \((2, 3)\), with \(a = 0.5,\ b = 0\): \(x' = 2 + 0.5\cdot3 = 3.5,\ y' = 0 + 3 = 3 \Rightarrow (3.5, 3)\).</div>
+
+<!-- ============ 7 ============ -->
+<h2 id="s7"><span class="num">7</span>Rotation (around the origin)</h2>
+<figure>
+<svg viewBox="0 0 640 260" role="img" aria-label="Rotation of a point by angle theta">
+  <g transform="translate(120,230)">
+    <line x1="0" y1="0" x2="420" y2="0" class="ax" marker-end="url(#arK)"/><line x1="0" y1="0" x2="0" y2="-215" class="ax" marker-end="url(#arK)"/>
+    <text x="425" y="16" font-size="13">x</text><text x="-14" y="-205" font-size="13">y</text>
+    <line x1="0" y1="0" x2="250" y2="-80" class="lnA" stroke-dasharray="5 4"/><circle cx="250" cy="-80" r="6" class="dotA"/>
+    <text x="262" y="-80" font-size="13">x = (x, y)</text>
+    <line x1="0" y1="0" x2="110" y2="-237" class="lnO" stroke-dasharray="5 4" transform="scale(.82)"/><circle cx="90" cy="-194" r="6" class="dotO"/>
+    <text x="102" y="-196" font-size="13">x′ = (x′, y′)</text>
+    <path d="M70 0 A70 70 0 0 0 66.7 -21.3" class="lnG"/><text x="80" y="-6" font-size="13">φ</text>
+    <path d="M150 -48 A158 158 0 0 0 66 -143" class="lnR" marker-end="url(#arR)"/><text x="128" y="-110" font-size="14">θ</text>
+    <text x="140" y="-30" font-size="13" class="mut">r</text><text x="36" y="-110" font-size="13" class="mut">r</text>
+  </g>
+</svg>
+<figcaption>Rotation keeps the length \(r\) and adds \(\theta\) to the angle \(\varphi\).</figcaption>
+</figure>
+
+<h3>Derivation (why the formula looks like this)</h3>
+<ol>
+<li><b>Polar coordinates.</b> Write the point using its length \(r\) and angle \(\varphi\):
+<div class="math">\[ x = r\cos\varphi,\quad y = r\sin\varphi \qquad x' = r\cos(\varphi+\theta),\quad y' = r\sin(\varphi+\theta) \]</div></li>
+<li><b>Trigonometric identity</b> (angle-sum):
+<div class="math">\[ x' = r\cos\varphi\cos\theta - r\sin\varphi\sin\theta \qquad y' = r\sin\varphi\cos\theta + r\cos\varphi\sin\theta \]</div></li>
+<li><b>Substitute</b> \(x = r\cos\varphi,\ y = r\sin\varphi\):
+<div class="math">\[ x' = x\cos\theta - y\sin\theta \qquad y' = x\sin\theta + y\cos\theta \]</div></li>
+</ol>
+<div class="math">\[ \begin{bmatrix} x' \\ y' \end{bmatrix} = \begin{bmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} \]</div>
+<div class="card ex"><b class="tag">Example</b><br>
+Rotate \((2, 1)\) by \(\theta = 90^\circ\) (\(\cos = 0, \sin = 1\)): \(x' = 2\cdot0 - 1\cdot1 = -1,\ y' = 2\cdot1 + 1\cdot0 = 2 \Rightarrow (-1, 2)\). Positive \(\theta\) is counter-clockwise.</div>
+
+<!-- ============ 8 ============ -->
+<h2 id="s8"><span class="num">8</span>2D planar and linear transformations</h2>
+<p>Scale, shear and rotation all share one form: a <b>2×2 matrix times the point</b>.</p>
+<div class="math">\[ \mathbf{x}' = \mathbf{f}(\mathbf{x}; \mathbf{p}) \quad\Longrightarrow\quad \mathbf{x}' = \mathbf{M}\,\mathbf{x}, \qquad \mathbf{x} = \begin{bmatrix} x\\y \end{bmatrix} \text{ (point)},\ \ \mathbf{M} \text{ built from parameters } \mathbf{p} \]</div>
+<div class="tw"><table>
+<tr><th>Transform</th><th>\(\mathbf{M}\)</th><th>Transform</th><th>\(\mathbf{M}\)</th></tr>
+<tr><td>Scale</td><td>\(\begin{bmatrix} s_x & 0 \\ 0 & s_y \end{bmatrix}\)</td><td>Flip across y-axis</td><td>\(\begin{bmatrix} -1 & 0 \\ 0 & 1 \end{bmatrix}\)</td></tr>
+<tr><td>Rotate</td><td>\(\begin{bmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{bmatrix}\)</td><td>Flip across origin</td><td>\(\begin{bmatrix} -1 & 0 \\ 0 & -1 \end{bmatrix}\)</td></tr>
+<tr><td>Shear</td><td>\(\begin{bmatrix} 1 & s_x \\ s_y & 1 \end{bmatrix}\)</td><td>Identity</td><td>\(\begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix}\)</td></tr>
+</table></div>
+<div class="card tip"><b class="tag">Note</b><br>
+Flip across the y-axis is a scale with \(s_x = -1\). Flip across the origin is the same as a 180° rotation. Identity changes nothing.</div>
+
+<!-- ============ 9 ============ -->
+<h2 id="s9"><span class="num">9</span>2D translation: the problem</h2>
+<div class="math">\[ x' = x + t_x \qquad y' = y + t_y \]</div>
+<p class="mut" style="color:var(--muted);font-size:.9rem">(The slide writes \(y' = y + t_x\); that's a typo, it should be \(t_y\).)</p>
+<figure>
+<svg viewBox="0 0 640 200" role="img" aria-label="Square translated by t">
+  <g transform="translate(60,180)">
+    <line x1="0" y1="0" x2="520" y2="0" class="ax" marker-end="url(#arK)"/><line x1="0" y1="0" x2="0" y2="-170" class="ax" marker-end="url(#arK)"/>
+    <rect x="40" y="-80" width="70" height="70" class="o"/><rect x="230" y="-160" width="70" height="70" class="s1"/>
+    <path d="M115 -55 L225 -110" class="lnA" marker-end="url(#arA)"/><text x="170" y="-95" font-size="13">t = (tₓ, t_y)</text>
+  </g>
+</svg>
+</figure>
+<div class="card warn"><b class="tag">Slide question: matrix representation?</b><br>
+<b>Not possible with a 2×2 matrix.</b><br>
+Reason: any 2×2 matrix sends the origin to the origin, since \(\mathbf{M}\begin{bmatrix}0\\0\end{bmatrix} = \begin{bmatrix}0\\0\end{bmatrix}\). Translation moves the origin to \((t_x, t_y)\). Translation is <b>not linear</b> (it's an "add a constant", not "multiply by a matrix").<br>
+<b>Fix:</b> move to homogeneous coordinates (next section).</div>
+
+<!-- ============ 10 ============ -->
+<h2 id="s10"><span class="num">10</span>Projective geometry 101: homogeneous coordinates</h2>
+<div class="card def"><b class="tag">Definition</b><br>
+Represent a 2D point with a <b>3D vector</b> by adding a 1:
+<div class="math">\[ \underbrace{\begin{bmatrix} x \\ y \end{bmatrix}}_{\text{heterogeneous}} \;\Rightarrow\; \underbrace{\begin{bmatrix} x \\ y \\ 1 \end{bmatrix}}_{\text{homogeneous}} \;\stackrel{\text{def}}{=}\; \begin{bmatrix} a x \\ a y \\ a \end{bmatrix} \]</div>
+3D homogeneous vectors are <b>only defined up to scale</b>: multiplying by any non-zero \(a\) gives the <i>same</i> 2D point.</div>
+
+<h3>Conversion rules</h3>
+<div class="tw"><table>
+<tr><th>Operation</th><th>Rule</th><th>Example</th></tr>
+<tr><td>heterogeneous → homogeneous</td><td>\(\begin{bmatrix}x\\y\end{bmatrix} \Rightarrow \begin{bmatrix}x\\y\\1\end{bmatrix}\)</td><td>\((3,4) \to [3,4,1]\)</td></tr>
+<tr><td>homogeneous → heterogeneous</td><td>\(\begin{bmatrix}x\\y\\w\end{bmatrix} \Rightarrow \begin{bmatrix}x/w\\y/w\end{bmatrix}\)</td><td>\([6,8,2] \to (3,4)\)</td></tr>
+<tr><td>scale invariance</td><td>\([x\ y\ w]^\top = \lambda\,[x\ y\ w]^\top\)</td><td>\([3,4,1] = [6,8,2] = [-3,-4,-1]\)</td></tr>
+</table></div>
+
+<h3>Special points</h3>
+<ul>
+<li><b>Point at infinity</b>: \([x\ \ y\ \ 0]\). Dividing by \(w = 0\) sends the point infinitely far away in the direction \((x, y)\). This is how parallel lines "meet" in projective geometry.</li>
+<li><b>Undefined</b>: \([0\ \ 0\ \ 0]\). It represents no point at all.</li>
+</ul>
+
+<!-- ============ 11 ============ -->
+<h2 id="s11"><span class="num">11</span>2D translation using homogeneous coordinates</h2>
+<p>With the extra coordinate, translation <b>is</b> a matrix multiplication:</p>
+<div class="math">\[ \begin{bmatrix} x' \\ y' \\ 1 \end{bmatrix} = \underbrace{\begin{bmatrix} 1 & 0 & t_x \\ 0 & 1 & t_y \\ 0 & 0 & 1 \end{bmatrix}}_{\mathbf{M}} \begin{bmatrix} x \\ y \\ 1 \end{bmatrix} = \begin{bmatrix} x + t_x \\ y + t_y \\ 1 \end{bmatrix} \]</div>
+<p>The trailing 1 multiplies the third column, so \(t_x, t_y\) get <i>added</i>. The extra dimension turns addition into multiplication.</p>
+<figure>
+<svg viewBox="0 0 640 220" role="img" aria-label="House translated by tx=2, ty=1">
+  <g transform="translate(30,200)">
+    <line x1="0" y1="0" x2="270" y2="0" class="ax"/><line x1="0" y1="0" x2="0" y2="-190" class="ax"/>
+    <g class="grid"><line x1="30" y1="0" x2="30" y2="-190"/><line x1="60" y1="0" x2="60" y2="-190"/><line x1="90" y1="0" x2="90" y2="-190"/><line x1="120" y1="0" x2="120" y2="-190"/><line x1="150" y1="0" x2="150" y2="-190"/><line x1="180" y1="0" x2="180" y2="-190"/><line x1="210" y1="0" x2="210" y2="-190"/><line x1="240" y1="0" x2="240" y2="-190"/>
+    <line x1="0" y1="-30" x2="270" y2="-30"/><line x1="0" y1="-60" x2="270" y2="-60"/><line x1="0" y1="-90" x2="270" y2="-90"/><line x1="0" y1="-120" x2="270" y2="-120"/><line x1="0" y1="-150" x2="270" y2="-150"/><line x1="0" y1="-180" x2="270" y2="-180"/></g>
+    <rect x="30" y="-90" width="120" height="60" class="s2"/><polygon points="20,-90 160,-90 90,-150" class="s4"/><rect x="100" y="-75" width="25" height="45" fill="var(--muted)"/>
+    <circle cx="30" cy="-30" r="5" class="dotK"/><text x="34" y="-14" font-size="12">(1,1)</text>
+  </g>
+  <path d="M305 110 h40" class="ln" marker-end="url(#arK)"/><text x="325" y="98" text-anchor="middle" font-size="12">tₓ=2, t_y=1</text>
+  <g transform="translate(355,200)">
+    <line x1="0" y1="0" x2="270" y2="0" class="ax"/><line x1="0" y1="0" x2="0" y2="-190" class="ax"/>
+    <g class="grid"><line x1="30" y1="0" x2="30" y2="-190"/><line x1="60" y1="0" x2="60" y2="-190"/><line x1="90" y1="0" x2="90" y2="-190"/><line x1="120" y1="0" x2="120" y2="-190"/><line x1="150" y1="0" x2="150" y2="-190"/><line x1="180" y1="0" x2="180" y2="-190"/><line x1="210" y1="0" x2="210" y2="-190"/><line x1="240" y1="0" x2="240" y2="-190"/>
+    <line x1="0" y1="-30" x2="270" y2="-30"/><line x1="0" y1="-60" x2="270" y2="-60"/><line x1="0" y1="-90" x2="270" y2="-90"/><line x1="0" y1="-120" x2="270" y2="-120"/><line x1="0" y1="-150" x2="270" y2="-150"/><line x1="0" y1="-180" x2="270" y2="-180"/></g>
+    <rect x="90" y="-120" width="120" height="60" class="s2"/><polygon points="80,-120 220,-120 150,-180" class="s4"/><rect x="160" y="-105" width="25" height="45" fill="var(--muted)"/>
+    <circle cx="90" cy="-60" r="5" class="dotK"/><text x="94" y="-44" font-size="12">(3,2)</text>
+  </g>
+</svg>
+</figure>
+<div class="card ex"><b class="tag">Example</b><br>
+House corner \((1,1)\) with \(t_x = 2,\ t_y = 1\):
+\(\begin{bmatrix}1&0&2\\0&1&1\\0&0&1\end{bmatrix}\begin{bmatrix}1\\1\\1\end{bmatrix} = \begin{bmatrix}3\\2\\1\end{bmatrix} \Rightarrow (3,2)\). Every point of the house moves 2 right and 1 up.</div>
+
+<!-- ============ 12 ============ -->
+<h2 id="s12"><span class="num">12</span>The projective geometry picture</h2>
+<figure>
+<svg viewBox="0 0 640 280" role="img" aria-label="Image plane at z equals 1 with ray through point P">
+  <line x1="120" y1="180" x2="610" y2="180" class="ax" marker-end="url(#arK)"/><text x="615" y="196" font-size="13">z</text>
+  <line x1="200" y1="180" x2="200" y2="30" class="ax" marker-end="url(#arK)"/><text x="186" y="34" font-size="13">y</text>
+  <line x1="200" y1="180" x2="110" y2="250" class="ax" marker-end="url(#arK)"/><text x="98" y="262" font-size="13">x</text>
+  <polygon points="330,250 330,110 410,50 410,190" class="plane"/>
+  <text x="372" y="40" text-anchor="middle" font-size="13">image plane z = 1</text>
+  <line x1="200" y1="180" x2="560" y2="90" class="lnA"/>
+  <circle cx="370" cy="137.5" r="6" class="dotA"/><text x="378" y="128" font-size="13" font-weight="700">X = [x, y, 1]</text>
+  <circle cx="560" cy="90" r="6" class="dotK"/><text x="568" y="88" font-size="13" font-weight="700">P</text>
+  <circle cx="470" cy="112.5" r="4" class="dotO"/><text x="470" y="140" text-anchor="middle" font-size="12">[2x, 2y, 2]: same ray</text>
+  <circle cx="200" cy="180" r="4" class="dotK"/><text x="196" y="200" font-size="12" text-anchor="end">origin</text>
+</svg>
+<figcaption>Every point on the blue ray is the <b>same</b> homogeneous point. Where the ray crosses \(z = 1\) gives the pixel \((x, y)\).</figcaption>
+</figure>
+<ul>
+<li><b>Image point in pixel coordinates:</b> \(\mathbf{x} = \begin{bmatrix}x\\y\end{bmatrix}\)</li>
+<li><b>Image point in homogeneous coordinates:</b> \(\mathbf{X} = \begin{bmatrix}x\\y\\1\end{bmatrix}\)</li>
+<li>\(\mathbf{X}\) is the <b>projection of a 3D point \(\mathbf{P}\)</b> onto the image plane. "Defined up to scale" makes sense now: a homogeneous vector really names a <b>ray</b> through the origin, and dividing by \(w\) means "slide along the ray until \(z = 1\)".</li>
+</ul>
+<div class="card tip"><b class="tag">Why this matters later</b><br>This is exactly how a pinhole camera works (Lectures 9–10). Keep this picture in mind.</div>
+
+<!-- ============ 13 ============ -->
+<h2 id="s13"><span class="num">13</span>All 2D transformations as 3×3 matrices</h2>
+<p>Each 2×2 matrix goes in the top-left block; translation goes in the third column; the last row is \([0\ 0\ 1]\). (The slide title says "heterogeneous", but these are <b>homogeneous</b> forms.)</p>
+<div class="tw"><table>
+<tr><th>Translation</th><th>Scaling</th></tr>
+<tr><td><div class="math">\[ \begin{bmatrix} x' \\ y' \\ 1 \end{bmatrix} = \begin{bmatrix} 1 & 0 & t_x \\ 0 & 1 & t_y \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} x \\ y \\ 1 \end{bmatrix} \]</div></td>
+<td><div class="math">\[ \begin{bmatrix} x' \\ y' \\ 1 \end{bmatrix} = \begin{bmatrix} s_x & 0 & 0 \\ 0 & s_y & 0 \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} x \\ y \\ 1 \end{bmatrix} \]</div></td></tr>
+<tr><th>Rotation</th><th>Shearing</th></tr>
+<tr><td><div class="math">\[ \begin{bmatrix} x' \\ y' \\ 1 \end{bmatrix} = \begin{bmatrix} \cos\Theta & -\sin\Theta & 0 \\ \sin\Theta & \cos\Theta & 0 \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} x \\ y \\ 1 \end{bmatrix} \]</div></td>
+<td><div class="math">\[ \begin{bmatrix} x' \\ y' \\ 1 \end{bmatrix} = \begin{bmatrix} 1 & \beta_x & 0 \\ \beta_y & 1 & 0 \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} x \\ y \\ 1 \end{bmatrix} \]</div></td></tr>
+</table></div>
+
+<!-- ============ 14 ============ -->
+<h2 id="s14"><span class="num">14</span>Matrix composition</h2>
+<p>Since everything is now a 3×3 matrix, transformations can be <b>combined by matrix multiplication</b>:</p>
+<div class="math">\[ \begin{bmatrix} x' \\ y' \\ w' \end{bmatrix} = \left( \underbrace{\begin{bmatrix} 1 & 0 & t_x \\ 0 & 1 & t_y \\ 0 & 0 & 1 \end{bmatrix}}_{\text{translation}(t_x,t_y)} \underbrace{\begin{bmatrix} \cos\Theta & -\sin\Theta & 0 \\ \sin\Theta & \cos\Theta & 0 \\ 0 & 0 & 1 \end{bmatrix}}_{\text{rotation}(\theta)} \underbrace{\begin{bmatrix} s_x & 0 & 0 \\ 0 & s_y & 0 \\ 0 & 0 & 1 \end{bmatrix}}_{\text{scale}(s,s)} \right) \begin{bmatrix} x \\ y \\ w \end{bmatrix} \]</div>
+<p>\(\mathbf{p}' = T\,R\,S\,\mathbf{p}\). These act <b>right to left</b>: first scale, then rotate, then translate. You can pre-multiply \(T R S\) into one matrix and apply it to every pixel.</p>
+
+<div class="card tip"><b class="tag">Slide question</b><br><b>Does the multiplication order matter?</b> <b>Yes.</b> Matrix multiplication is not commutative (\(AB \ne BA\) in general).</div>
+<figure>
+<svg viewBox="0 0 640 250" role="img" aria-label="Rotate-then-translate versus translate-then-rotate">
+  <g transform="translate(40,210)">
+    <line x1="0" y1="0" x2="250" y2="0" class="ax"/><line x1="0" y1="0" x2="0" y2="-190" class="ax"/>
+    <circle cx="40" cy="0" r="6" class="dotK"/><text x="40" y="18" text-anchor="middle" font-size="12">p=(1,0)</text>
+    <circle cx="0" cy="-40" r="5" class="dotO"/><path d="M40 -6 Q35 -35 6 -40" class="lnO" marker-end="url(#arO)"/>
+    <circle cx="120" cy="-40" r="7" class="dotA"/><path d="M6 -40 H112" class="lnA" marker-end="url(#arA)"/>
+    <text x="128" y="-46" font-size="12">(3,1)</text>
+    <text x="125" y="-160" text-anchor="middle" font-size="13" font-weight="600">T·R·p: rotate 90°, then +3 in x</text>
+  </g>
+  <g transform="translate(350,210)">
+    <line x1="0" y1="0" x2="250" y2="0" class="ax"/><line x1="0" y1="0" x2="0" y2="-190" class="ax"/>
+    <circle cx="40" cy="0" r="6" class="dotK"/><text x="40" y="18" text-anchor="middle" font-size="12">p=(1,0)</text>
+    <circle cx="160" cy="0" r="5" class="dotO"/><path d="M46 -8 H152" class="lnO" marker-end="url(#arO)"/>
+    <path d="M160 -8 A160 160 0 0 1 8 -158" class="lnA" marker-end="url(#arA)"/>
+    <circle cx="0" cy="-160" r="7" class="dotA"/><text x="10" y="-166" font-size="12">(0,4)</text>
+    <text x="150" y="-160" text-anchor="middle" font-size="13" font-weight="600">R·T·p: +3 in x, then rotate 90°</text>
+  </g>
+</svg>
+<figcaption>Same two operations, different order, different result.</figcaption>
+</figure>
+<div class="card ex"><b class="tag">Worked numbers</b><br>
+\(\mathbf{p} = (1,0)\), \(R = 90^\circ\), \(T = (3,0)\).<br>
+\(T R \mathbf{p}\): \(R\mathbf{p} = (0,1)\), then \(+ (3,0) \Rightarrow (3,1)\).<br>
+\(R T \mathbf{p}\): \(T\mathbf{p} = (4,0)\), then rotate \(\Rightarrow (0,4)\).<br>
+Usually you want scale → rotate → translate (\(TRS\)), so the object scales and rotates about its own origin before being moved.</div>
+
+<!-- ============ 15 ============ -->
+<h2 id="s15"><span class="num">15</span>Classification of 2D transformations</h2>
+<figure>
+<svg viewBox="0 0 640 270" role="img" aria-label="Hierarchy of transformations">
+  <rect x="10" y="10" width="620" height="250" rx="14" class="s4"/><text x="25" y="34" font-size="14" font-weight="700">projective (8 DOF)</text>
+  <rect x="30" y="45" width="440" height="200" rx="12" class="s2"/><text x="45" y="68" font-size="14" font-weight="700">affine (6)</text>
+  <rect x="50" y="80" width="320" height="150" rx="10" class="s3"/><text x="65" y="102" font-size="14" font-weight="700">similarity (4)</text>
+  <rect x="70" y="115" width="220" height="100" rx="8" class="s1"/><text x="85" y="137" font-size="14" font-weight="700">Euclidean / rigid (3)</text>
+  <rect x="90" y="150" width="130" height="50" rx="6" fill="var(--card)" stroke="var(--ink)"/><text x="155" y="180" text-anchor="middle" font-size="13" font-weight="700">translation (2)</text>
+  <g font-size="12" class="mut">
+    <text x="490" y="120">+ projective warp</text><text x="490" y="138">(g, h ≠ 0)</text>
+    <text x="380" y="160">+ shear,</text><text x="380" y="176">non-uniform scale</text>
+    <text x="300" y="170">+ uniform</text><text x="300" y="186">scale</text>
+    <text x="232" y="185">+ rotation</text>
+  </g>
+</svg>
+<figcaption>Each class contains all the ones inside it. Moving outward adds freedom and preserves fewer properties.</figcaption>
+</figure>
+
+<div class="tw"><table>
+<tr><th>Name</th><th>Matrix</th><th># DOF</th><th>Parameters</th><th>Preserves</th></tr>
+<tr><td>translation</td><td>\([\,I \mid t\,]\)</td><td><b>2</b></td><td>\(t_x, t_y\)</td><td>orientation, + all below</td></tr>
+<tr><td>rigid (Euclidean)</td><td>\([\,R \mid t\,]\)</td><td><b>3</b></td><td>\(\theta, t_x, t_y\)</td><td>lengths, + all below</td></tr>
+<tr><td>similarity</td><td>\([\,sR \mid t\,]\)</td><td><b>4</b></td><td>\(s, \theta, t_x, t_y\)</td><td>angles, + all below</td></tr>
+<tr><td>affine</td><td>\([\,A\,]\)</td><td><b>6</b></td><td>\(a_1 \dots a_6\)</td><td>parallelism, ratios, + all below</td></tr>
+<tr><td>projective</td><td>\([\,\tilde{H}\,]\)</td><td><b>8</b></td><td>9 entries − 1 scale</td><td>straight lines</td></tr>
+</table></div>
+<p>\([I\mid t]\) means the 2×3 matrix with the identity on the left and \(t\) as the last column (the bottom row \([0\ 0\ 1]\) is implied).</p>
+
+<h3>Translation (2 DOF)</h3>
+<div class="math">\[ \begin{bmatrix} 1 & 0 & t_1 \\ 0 & 1 & t_2 \\ 0 & 0 & 1 \end{bmatrix} \]</div>
+<p>Only \(t_1, t_2\) are free, so <b>2 DOF</b>.</p>
+
+<h3>Euclidean / rigid: rotation + translation (3 DOF)</h3>
+<div class="math">\[ \begin{bmatrix} r_1 & r_2 & r_3 \\ r_4 & r_5 & r_6 \\ 0 & 0 & 1 \end{bmatrix} = \begin{bmatrix} \cos\theta & -\sin\theta & r_3 \\ \sin\theta & \cos\theta & r_6 \\ 0 & 0 & 1 \end{bmatrix} \]</div>
+<ul>
+<li><b>Are any values related?</b> Yes. \(r_1 = r_5 = \cos\theta\) and \(r_2 = -r_4 = -\sin\theta\). All four come from one angle \(\theta\).</li>
+<li><b>DOF:</b> \(\theta,\ r_3,\ r_6\), so <b>3</b>.</li>
+<li><b>Which other values change if \(\cos\theta\) increases?</b> All of \(r_2, r_4, r_5\), since they all depend on \(\theta\) (and \(\sin^2\theta + \cos^2\theta = 1\) must hold).</li>
+<li><b>What happens to the image if \(\cos\theta\) increases?</b> \(\theta\) moves toward 0, so the image rotates <b>less</b> (at \(\cos\theta = 1\) there's no rotation).</li>
+<li><b>What happens if \(r_3\) increases?</b> The image <b>shifts right</b> along x. \(r_3 = t_x\) and \(r_6 = t_y\).</li>
+<li>Rigid motions keep lengths and angles. They're how a physical object moves without deforming.</li>
+</ul>
+
+<h3>Similarity: uniform scaling + rotation + translation (4 DOF)</h3>
+<div class="math">\[ \begin{bmatrix} r_1 & r_2 & r_3 \\ r_4 & r_5 & r_6 \\ 0 & 0 & 1 \end{bmatrix} = \begin{bmatrix} s\cos\theta & -s\sin\theta & r_3 \\ s\sin\theta & s\cos\theta & r_6 \\ 0 & 0 & 1 \end{bmatrix} \]</div>
+<ul>
+<li><b>Related values?</b> Yes. Multiply the four rotation entries by the scale \(s\), so they still satisfy \(r_1 = r_5,\ r_2 = -r_4\).</li>
+<li><b>DOF:</b> \(s, \theta, t_x, t_y\), so <b>4</b>.</li>
+<li><b>What happens if \(r_1\) increases?</b> \(r_1 = s\cos\theta\), so with the constraint kept (\(r_5\) changes too) the image <b>gets bigger and/or rotates less</b>. If you changed \(r_1\) <i>alone</i>, the image would stretch only in x, which is no longer a similarity (it becomes affine).</li>
+<li>Similarity keeps <b>shape</b> (angles, ratios of lengths) but not size.</li>
+</ul>
+
+<h3>Affine: scaling + shearing + rotation + translation (6 DOF)</h3>
+<div class="math">\[ \begin{bmatrix} a_1 & a_2 & a_3 \\ a_4 & a_5 & a_6 \\ 0 & 0 & 1 \end{bmatrix} \]</div>
+<p><b>Are any values related?</b> No. Multiply a similarity block by a shear:</p>
+<div class="math">\[ \underbrace{\begin{bmatrix} s r_1 & s r_2 \\ s r_3 & s r_4 \end{bmatrix}}_{\text{similarity}} \underbrace{\begin{bmatrix} 1 & h_1 \\ h_2 & 1 \end{bmatrix}}_{\text{shear}} = \begin{bmatrix} s r_1 + h_2 s r_2 & s r_2 + h_1 s r_1 \\ s r_3 + h_2 s r_4 & s r_4 + h_1 s r_3 \end{bmatrix} \]</div>
+<p>With \(s, \theta, h_1, h_2\) free (and non-uniform scale allowed), the four entries can take <b>any</b> values independently. So the 2×2 block has 4 DOF, plus 2 for translation: <b>6 DOF</b>.</p>
+
+<!-- ============ 16 ============ -->
+<h2 id="s16"><span class="num">16</span>Affine transformations</h2>
+<div class="math">\[ \begin{bmatrix} x' \\ y' \\ w' \end{bmatrix} = \begin{bmatrix} a & b & c \\ d & e & f \\ 0 & 0 & 1 \end{bmatrix} \begin{bmatrix} x \\ y \\ w \end{bmatrix} \]</div>
+<div class="card def"><b class="tag">Definition</b><br>Affine transformations are combinations of
+<ul><li>arbitrary (4-DOF) <b>linear transformations</b>; and</li><li><b>translations</b>.</li></ul></div>
+<p><b>Properties of affine transformations:</b></p>
+<ul>
+<li><b style="color:var(--red)">origin does not necessarily map to origin</b> (because of translation)</li>
+<li>lines map to lines</li>
+<li><b>parallel lines map to parallel lines</b></li>
+<li>ratios are preserved (e.g. the midpoint of a segment stays the midpoint)</li>
+<li>compositions of affine transforms are also affine transforms</li>
+</ul>
+<div class="card tip"><b class="tag">Slide question</b><br>
+<b>Does the last coordinate \(w\) ever change?</b> <b>No.</b> The bottom row is \([0\ 0\ 1]\), so \(w' = 0\cdot x + 0\cdot y + 1\cdot w = w\).<br>
+<b>What does that mean?</b> In the projective picture (Section 12), a point that starts on the plane \(z = 1\) <b>stays on that plane</b>. An affine transform just moves, stretches, and skews points <i>within</i> the image plane. It never tilts the plane, which is why parallel lines stay parallel.</div>
+
+<!-- ============ 17 ============ -->
+<h2 id="s17"><span class="num">17</span>Projective transformations (aka homographies)</h2>
+<div class="math">\[ \begin{bmatrix} x' \\ y' \\ w' \end{bmatrix} = \begin{bmatrix} a & b & c \\ d & e & f \\ g & h & i \end{bmatrix} \begin{bmatrix} x \\ y \\ w \end{bmatrix} \qquad\text{then}\qquad (x_{\text{pix}}, y_{\text{pix}}) = \left(\frac{x'}{w'}, \frac{y'}{w'}\right) \]</div>
+<div class="card def"><b class="tag">Definition</b><br>Projective transformations (homographies) are combinations of
+<ul><li><b>affine transformations</b>; and</li><li><b>projective warps</b> (the bottom-row entries \(g, h\)).</li></ul></div>
+<p><b>Properties of projective transformations:</b></p>
+<ul>
+<li><b style="color:var(--red)">origin does not necessarily map to origin</b></li>
+<li>lines map to lines</li>
+<li><b style="color:var(--red)">parallel lines do not necessarily map to parallel lines</b></li>
+<li><b style="color:var(--red)">ratios are not necessarily preserved</b></li>
+<li>compositions of projective transforms are also projective transforms</li>
+</ul>
+<div class="card tip"><b class="tag">Slide question: how many DOF?</b><br>
+<b>8 DOF.</b> There are 9 entries, but homogeneous vectors (and therefore the matrices) are defined only <b>up to scale</b>: \(H\) and \(2H\) give the same warp. One degree is lost, so 9 − 1 = 8. A common convention fixes \(i = 1\).</div>
+
+<figure>
+<svg viewBox="0 0 640 210" role="img" aria-label="Affine keeps parallel lines, projective does not">
+  <g transform="translate(20,20)">
+    <rect x="0" y="40" width="110" height="110" class="o"/>
+    <path d="M120 95 h40" class="ln" marker-end="url(#arK)"/>
+    <polygon points="175,150 270,150 300,40 205,40" class="s1"/>
+    <text x="150" y="185" text-anchor="middle" font-size="13">affine: opposite sides still parallel</text>
+  </g>
+  <g transform="translate(340,20)">
+    <rect x="0" y="40" width="110" height="110" class="o"/>
+    <path d="M120 95 h40" class="ln" marker-end="url(#arK)"/>
+    <polygon points="170,150 290,150 260,60 200,60" class="s2"/>
+    <line x1="200" y1="60" x2="230" y2="-30" class="lnR" stroke-dasharray="4 4" opacity=".7"/>
+    <line x1="260" y1="60" x2="230" y2="-30" class="lnR" stroke-dasharray="4 4" opacity=".7"/>
+    <text x="150" y="185" text-anchor="middle" font-size="13">projective: sides converge</text>
+  </g>
+</svg>
+<figcaption>The red dashed lines meet at a vanishing point: a point at infinity mapped to a finite point.</figcaption>
+</figure>
+
+<h3>How to interpret projective transformations</h3>
+<figure>
+<svg viewBox="0 0 640 250" role="img" aria-label="Projective transform takes point off plane, then projects back">
+  <line x1="100" y1="200" x2="610" y2="200" class="ax" marker-end="url(#arK)"/><text x="612" y="218" font-size="13">z (= w)</text>
+  <circle cx="140" cy="200" r="4" class="dotK"/><text x="136" y="222" font-size="12" text-anchor="middle">origin</text>
+  <polygon points="300,240 300,70 360,30 360,200" class="plane"/><text x="330" y="22" text-anchor="middle" font-size="12">z = 1</text>
+  <circle cx="330" cy="150" r="6" class="dotA"/><text x="300" y="168" font-size="12" text-anchor="end">X on plane</text>
+  <circle cx="520" cy="60" r="6" class="dotR"/><text x="528" y="56" font-size="12">HX: w′ ≠ 1 (off plane)</text>
+  <path d="M338 146 Q430 80 512 62" class="lnR" stroke-dasharray="5 4" marker-end="url(#arR)"/>
+  <line x1="140" y1="200" x2="520" y2="60" class="lnG"/>
+  <circle cx="335" cy="128" r="6" class="dotG"/><text x="372" y="122" font-size="12">divide by w′: back on plane</text>
+</svg>
+<figcaption>Affine: \(w\) stays 1, so the point stays on the plane. Projective: \(w'\) changes, so the point leaves the plane and must be projected back along its ray.</figcaption>
+</figure>
+<p>Dividing by \(w'\) is a re-projection through the origin. Physically, a homography is what happens when you <b>look at a flat plane from a different viewpoint</b>: photographing a poster from an angle, or rotating the camera. That is why it's the "perspective" warp.</p>
+<div class="card ex"><b class="tag">Example: ratios break</b><br>
+\(H = \begin{bmatrix}1&0&0\\0&1&0\\0.5&0&1\end{bmatrix}\).
+<ul>
+<li>\((0,2)\): \([0,2,1] \to [0,2,1] \to (0,2)\)</li>
+<li>\((2,2)\): \([2,2,1] \to [2,2,\,0.5\cdot2+1] = [2,2,2] \to (1,1)\)</li>
+<li>\((4,2)\): \([4,2,3] \to (1.33, 0.67)\)</li>
+</ul>
+The input points are evenly spaced along \(y = 2\). The outputs still lie on one straight line but are <b>no longer evenly spaced</b>, and the horizontal line has tilted. Lines are kept; ratios and directions are not.</div>
+<div class="card warn"><b class="tag">Important</b><br>Homographies are estimated with a <b>different procedure</b> than the least squares below (because of the division by \(w'\)). That comes in a later lecture.</div>
+
+<!-- ============ 18 ============ -->
+<h2 id="s18"><span class="num">18</span>Determining unknown (affine) 2D transformations</h2>
+<p>Suppose we have two triangles, <b>ABC</b> and <b>DEF</b>.</p>
+<figure>
+<svg viewBox="0 0 640 230" role="img" aria-label="Triangle ABC mapped to triangle DEF">
+  <polygon points="70,200 80,30 210,140" class="s1"/>
+  <g font-size="14" font-weight="700"><text x="50" y="210">A</text><text x="64" y="26">B</text><text x="218" y="146">C</text></g>
+  <path d="M270 115 h90" class="ln" marker-end="url(#arK)"/><text x="315" y="102" text-anchor="middle" font-size="13">M = ?</text>
+  <polygon points="430,110 560,25 540,210" class="s2"/>
+  <g font-size="14" font-weight="700"><text x="408" y="112">D</text><text x="566" y="24">E</text><text x="548" y="222">F</text></g>
+</svg>
+</figure>
+<ul>
+<li><b>What type of transformation maps A→D, B→E, C→F?</b> An <b>affine</b> transform. Any triangle can be mapped to any other triangle by an affine map (affine = uniform scaling + shearing + rotation + translation).</li>
+<li><b>How many DOF?</b> <b>6</b> (\(a_1 \dots a_6\)).</li>
+<li><b>How many equations does one point correspondence give?</b> <b>2</b> (one for \(x'\), one for \(y'\)).</li>
+<li><b>How many correspondences are needed?</b> \(6 / 2 = \) <b>3</b>. Exactly the three triangle corners. They must not be collinear.</li>
+</ul>
+<div class="math">\[ \mathbf{x}' = \mathbf{M}\,\mathbf{x} \qquad \mathbf{M} = \text{unknowns},\quad \mathbf{x}, \mathbf{x}' = \text{point correspondences} \]</div>
+<p><b>How do we solve this for \(\mathbf{M}\)?</b> With 3 points it's an exact linear system. In practice there are many noisy matches, so we use <b>least squares</b>.</p>
+<div class="tw"><table><tr><th>Transform</th><th>DOF</th><th>Min. correspondences</th></tr>
+<tr><td>translation</td><td>2</td><td>1</td></tr><tr><td>Euclidean</td><td>3</td><td>2</td></tr><tr><td>similarity</td><td>4</td><td>2</td></tr><tr><td>affine</td><td>6</td><td>3</td></tr><tr><td>projective</td><td>8</td><td>4</td></tr></table></div>
+
+<!-- ============ 19 ============ -->
+<h2 id="s19"><span class="num">19</span>Least squares error</h2>
+<figure>
+<svg viewBox="0 0 640 230" role="img" aria-label="Predicted versus measured points with residuals">
+  <rect x="20" y="20" width="250" height="180" rx="8" fill="var(--card)" stroke="var(--line)"/>
+  <rect x="370" y="20" width="250" height="180" rx="8" fill="var(--card)" stroke="var(--line)"/>
+  <circle cx="80" cy="150" r="6" class="dotA"/><text x="62" y="174" font-size="13">x₁</text>
+  <circle cx="120" cy="90" r="6" class="dotO"/><text x="100" y="80" font-size="13">x₂</text>
+  <circle cx="180" cy="150" r="6" class="dotR"/><text x="186" y="174" font-size="13">x₃</text>
+  <path d="M150 85 Q260 10 400 70" class="lnG" marker-end="url(#arG)"/><text x="275" y="35" text-anchor="middle" font-size="13">f(xᵢ; p)</text>
+  <circle cx="450" cy="120" r="6" class="dotA"/><circle cx="463" cy="108" r="5" fill="none" stroke="var(--accent)" stroke-width="2"/><line x1="450" y1="120" x2="463" y2="108" class="ln"/>
+  <circle cx="500" cy="60" r="6" class="dotO"/><circle cx="490" cy="72" r="5" fill="none" stroke="var(--orange)" stroke-width="2"/><line x1="500" y1="60" x2="490" y2="72" class="ln"/>
+  <circle cx="560" cy="115" r="6" class="dotR"/><circle cx="572" cy="125" r="5" fill="none" stroke="var(--red)" stroke-width="2"/><line x1="560" y1="115" x2="572" y2="125" class="ln"/>
+  <text x="495" y="185" text-anchor="middle" font-size="12">● measured xᵢ′   ○ predicted f(xᵢ;p)</text>
+  <text x="495" y="200" text-anchor="middle" font-size="12" class="mut">black segment = residual</text>
+</svg>
+</figure>
+<div class="math">\[ E_{\text{LS}} = \sum_i \big\| \underbrace{\mathbf{f}(\mathbf{x}_i; \mathbf{p})}_{\text{predicted location}} - \underbrace{\mathbf{x}'_i}_{\text{measured location}} \big\|^2 \]</div>
+<ul>
+<li>\(\mathbf{f}(\mathbf{x}_i;\mathbf{p})\): the <b>predicted location</b>, where the current parameters send point \(i\).</li>
+<li>\(\mathbf{x}'_i\): the <b>measured location</b>, where the point was actually observed.</li>
+<li>\(\|\cdot\|\): the <b>Euclidean (L2) norm</b>, \(\|\mathbf{x}\| = \sqrt{x_1^2 + x_2^2 + \dots + x_n^2}\). Here it is <b>squared</b>, which removes the square root and makes the maths easy.</li>
+<li>\(\mathbf{f}(\mathbf{x}_i;\mathbf{p}) - \mathbf{x}'_i\): the <b>residual</b> (projection error) for point \(i\).</li>
+</ul>
+<p><b>What do we want to optimize?</b> Find the parameters that minimize the squared error:</p>
+<div class="math">\[ \hat{\mathbf{p}} = \arg\min_{\mathbf{p}} \sum_i \big\| \mathbf{f}(\mathbf{x}_i;\mathbf{p}) - \mathbf{x}'_i \big\|^2 \]</div>
+
+<!-- ============ 20 ============ -->
+<h2 id="s20"><span class="num">20</span>Linear least squares for an affine transform</h2>
+<div class="card def"><b class="tag">General form of linear least squares</b><br>
+<b>Warning: change of notation.</b> From here on, \(\mathbf{x}\) is the <b>vector of parameters</b> (not a point).
+<div class="math">\[ E_{\text{LLS}} = \sum_i \left| \mathbf{a}_i \mathbf{x} - \mathbf{b}_i \right|^2 = \| \mathbf{A}\mathbf{x} - \mathbf{b} \|^2 \quad\text{(matrix form)} \]</div></div>
+
+<h3>Step 1: write the affine transform (drop the last row)</h3>
+<div class="math">\[ \begin{bmatrix} x' \\ y' \end{bmatrix} = \begin{bmatrix} p_1 & p_2 & p_3 \\ p_4 & p_5 & p_6 \end{bmatrix} \begin{bmatrix} x \\ y \\ 1 \end{bmatrix} \]</div>
+<div class="card tip"><b class="tag">Slide question</b><br><b>Why can we drop the last line?</b> For an affine map, the bottom row \([0\ 0\ 1]\) only says \(1 = 1\). It's always true and holds no unknowns, so it adds no information.</div>
+
+<h3>Step 2: vectorize the parameters</h3>
+<p>Rewrite so that the <b>unknowns</b> form one column vector and the known coordinates go into the matrix:</p>
+<div class="math">\[ \begin{bmatrix} x' \\ y' \end{bmatrix} = \begin{bmatrix} x & y & 1 & 0 & 0 & 0 \\ 0 & 0 & 0 & x & y & 1 \end{bmatrix} \begin{bmatrix} p_1 \\ p_2 \\ p_3 \\ p_4 \\ p_5 \\ p_6 \end{bmatrix} \]</div>
+<p>Check: row 1 gives \(x' = p_1 x + p_2 y + p_3\) and row 2 gives \(y' = p_4 x + p_5 y + p_6\). ✔</p>
+
+<h3>Step 3: stack equations from all N correspondences</h3>
+<div class="math">\[ \underbrace{\begin{bmatrix} x'_1 \\ y'_1 \\ x'_2 \\ y'_2 \\ \vdots \\ x'_N \\ y'_N \end{bmatrix}}_{\mathbf{b}\ (2N\times1)} = \underbrace{\begin{bmatrix} x_1 & y_1 & 1 & 0 & 0 & 0 \\ 0 & 0 & 0 & x_1 & y_1 & 1 \\ x_2 & y_2 & 1 & 0 & 0 & 0 \\ 0 & 0 & 0 & x_2 & y_2 & 1 \\ & & \vdots & & & \\ x_N & y_N & 1 & 0 & 0 & 0 \\ 0 & 0 & 0 & x_N & y_N & 1 \end{bmatrix}}_{\mathbf{A}\ (2N\times6)} \underbrace{\begin{bmatrix} p_1 \\ p_2 \\ p_3 \\ p_4 \\ p_5 \\ p_6 \end{bmatrix}}_{\mathbf{x}\ (6\times1)} \]</div>
+<p>Notation in system form: \(\mathbf{b} = \mathbf{A}\mathbf{x}\). With \(N > 3\), there are more equations than unknowns (overdetermined), so no exact solution exists when the data is noisy. We minimize \(\|\mathbf{A}\mathbf{x} - \mathbf{b}\|^2\) instead.</p>
+
+<!-- ============ 21 ============ -->
+<h2 id="s21"><span class="num">21</span>Solving the linear system</h2>
+<p><b>Slide question: this function is quadratic, so how do you find its minimum (the "root" of its derivative)?</b> Take the derivative and set it to zero.</p>
+<ol>
+<li><b>Convert to a linear least-squares problem:</b> \(E_{\text{LLS}} = \|\mathbf{A}\mathbf{x} - \mathbf{b}\|^2\)</li>
+<li><b>Expand the error:</b>
+<div class="math">\[ E_{\text{LLS}} = (\mathbf{A}\mathbf{x}-\mathbf{b})^\top(\mathbf{A}\mathbf{x}-\mathbf{b}) = \mathbf{x}^\top(\mathbf{A}^\top\mathbf{A})\mathbf{x} - 2\mathbf{x}^\top(\mathbf{A}^\top\mathbf{b}) + \|\mathbf{b}\|^2 \]</div>
+It's quadratic in \(\mathbf{x}\), a bowl shape with one minimum.</li>
+<li><b>Minimize: set the derivative to 0.</b>
+<div class="math">\[ \frac{\partial E}{\partial \mathbf{x}} = 2\mathbf{A}^\top\mathbf{A}\mathbf{x} - 2\mathbf{A}^\top\mathbf{b} = 0 \;\Longrightarrow\; (\mathbf{A}^\top\mathbf{A})\,\mathbf{x} = \mathbf{A}^\top\mathbf{b} \quad\text{(normal equations)} \]</div></li>
+<li><b>Solve for \(\mathbf{x}\):</b>
+<div class="math">\[ \mathbf{x} = (\mathbf{A}^\top\mathbf{A})^{-1}\mathbf{A}^\top\mathbf{b} \]</div></li>
+</ol>
+<div class="card warn"><b class="tag">Note from the slide</b><br>You almost <b>never</b> want to compute the inverse of a matrix explicitly. It's slower and numerically unstable. Use a solver instead.</div>
+<pre><code># From the slide (works when A is square, i.e. exactly 3 points → 6×6)
+x = numpy.linalg.solve(A, b)
+
+# For N &gt; 3 points (A is 2N×6, not square) use one of:
+x = numpy.linalg.solve(A.T @ A, A.T @ b)          # normal equations
+x, *_ = numpy.linalg.lstsq(A, b, rcond=None)      # best: QR/SVD based</code></pre>
+
+<!-- ============ 22 ============ -->
+<h2 id="s22"><span class="num">22</span>Worked example + full Python</h2>
+<div class="card ex"><b class="tag">Solve by hand (3 points → exact)</b><br>
+A\((0,0)\)→D\((1,3)\), B\((1,0)\)→E\((3,3)\), C\((0,1)\)→F\((2,5)\).
+<ul>
+<li><b>A</b>: \(x' = p_3 = 1,\ y' = p_6 = 3\)</li>
+<li><b>B</b>: \(p_1 + p_3 = 3 \Rightarrow p_1 = 2;\quad p_4 + p_6 = 3 \Rightarrow p_4 = 0\)</li>
+<li><b>C</b>: \(p_2 + p_3 = 2 \Rightarrow p_2 = 1;\quad p_5 + p_6 = 5 \Rightarrow p_5 = 2\)</li>
+</ul>
+<div class="math">\[ \mathbf{M} = \begin{bmatrix} 2 & 1 & 1 \\ 0 & 2 & 3 \\ 0 & 0 & 1 \end{bmatrix} \]</div>
+Interpretation: scale ×2, shear (\(x\) gets \(+y\)), then translate by \((1,3)\). Check C: \(2\cdot0 + 1\cdot1 + 1 = 2\), \(0 + 2\cdot1 + 3 = 5\). ✔</div>
+
+<pre><code>import numpy as np
+
+def fit_affine(src, dst):
+    """src, dst: lists of (x, y) correspondences, N &gt;= 3. Returns 3x3 affine matrix."""
+    N = len(src)
+    A = np.zeros((2 * N, 6))
+    b = np.zeros(2 * N)
+    for i, ((x, y), (xp, yp)) in enumerate(zip(src, dst)):
+        A[2 * i]     = [x, y, 1, 0, 0, 0]
+        A[2 * i + 1] = [0, 0, 0, x, y, 1]
+        b[2 * i], b[2 * i + 1] = xp, yp
+    p, *_ = np.linalg.lstsq(A, b, rcond=None)
+    return np.vstack([p.reshape(2, 3), [0, 0, 1]])
+
+src = [(0, 0), (1, 0), (0, 1)]
+dst = [(1, 3), (3, 3), (2, 5)]
+print(fit_affine(src, dst))
+# [[2. 1. 1.]
+#  [0. 2. 3.]
+#  [0. 0. 1.]]</code></pre>
+
+<!-- ============ 23 ============ -->
+<h2 id="s23"><span class="num">23</span>Limitations</h2>
+<div class="card warn"><b class="tag">Slide question</b><br>
+<b>Linear least squares estimation only works when the transform function is…?</b> <b>Linear!</b>
+<ul>
+<li>It works for translation and affine, where \(\mathbf{x}'\) is linear in the parameters, so \(\mathbf{A}\mathbf{x} = \mathbf{b}\).</li>
+<li>It doesn't directly work for a homography, where \(x' = \frac{ax + by + c}{gx + hy + i}\) involves division by unknowns. That needs a different method.</li>
+<li>It doesn't directly work for Euclidean/similarity if you insist on the \(\cos\theta, \sin\theta\) constraints, which are non-linear in \(\theta\).</li>
+</ul>
+<b>It also doesn't deal well with outliers.</b> The error is <i>squared</i>, so one wrong match far away contributes a huge error and drags the whole solution toward it. (The usual fix, RANSAC, comes later.)</div>
+<figure>
+<svg viewBox="0 0 640 200" role="img" aria-label="One outlier pulls the least squares fit">
+  <g transform="translate(40,180)">
+    <line x1="0" y1="0" x2="560" y2="0" class="ax"/><line x1="0" y1="0" x2="0" y2="-170" class="ax"/>
+    <g class="dotA"><circle cx="40" cy="-30" r="5"/><circle cx="100" cy="-45" r="5"/><circle cx="160" cy="-58" r="5"/><circle cx="220" cy="-75" r="5"/><circle cx="280" cy="-88" r="5"/><circle cx="340" cy="-104" r="5"/><circle cx="400" cy="-118" r="5"/></g>
+    <circle cx="470" cy="-20" r="7" class="dotR"/><text x="480" y="-28" font-size="12">outlier (bad match)</text>
+    <line x1="20" y1="-26" x2="520" y2="-145" class="lnG" stroke-dasharray="6 4"/>
+    <line x1="20" y1="-40" x2="520" y2="-100" class="lnR"/>
+    <text x="410" y="-150" font-size="12">true fit</text><text x="420" y="-75" font-size="12">LS fit, pulled by outlier</text>
+  </g>
+</svg>
+</figure>
+
+<!-- ============ 24 ============ -->
+<h2 id="s24"><span class="num">24</span>Cheat sheet &amp; self-test</h2>
+<div class="card">
+<ul>
+<li><b>Filtering</b> \(G = h\{F(\mathbf{x})\}\) changes the range; <b>warping</b> \(G = F(h\{\mathbf{x}\})\) changes the domain.</li>
+<li>Scale \(\begin{bmatrix}a&0\\0&b\end{bmatrix}\), shear \(\begin{bmatrix}1&a\\b&1\end{bmatrix}\), rotation \(\begin{bmatrix}\cos&-\sin\\\sin&\cos\end{bmatrix}\): all linear, so 2×2.</li>
+<li>Translation isn't linear (moves the origin) → needs <b>homogeneous coordinates</b> \([x, y, 1]\), defined up to scale.</li>
+<li>\([x,y,w] \to (x/w, y/w)\); \([x,y,0]\) = point at infinity; \([0,0,0]\) undefined.</li>
+<li>Compose by multiplying matrices; <b>order matters</b>; applied right to left.</li>
+<li>DOF: translation 2 · rigid 3 · similarity 4 · affine 6 · projective 8.</li>
+<li>Affine: last row \([0,0,1]\), \(w\) unchanged, parallel lines and ratios kept.</li>
+<li>Projective: full 3×3, \(w\) changes, divide; only straight lines kept; 9 − 1 = 8 DOF.</li>
+<li>Each correspondence gives 2 equations → affine needs 3, homography 4.</li>
+<li>LS: \(\min\|\mathbf{A}\mathbf{x}-\mathbf{b}\|^2\) → \(\mathbf{A}^\top\mathbf{A}\mathbf{x} = \mathbf{A}^\top\mathbf{b}\); never invert explicitly; only for linear models; sensitive to outliers.</li>
+</ul></div>
+
+<details><summary>Q1. Why can't translation be written as a 2×2 matrix?</summary>Any 2×2 matrix maps (0,0) to (0,0); translation moves the origin. It's affine, not linear.</details>
+<details><summary>Q2. Convert [10, 4, 2] to pixel coordinates.</summary>(10/2, 4/2) = (5, 2).</details>
+<details><summary>Q3. Why does a homography have 8 DOF and not 9?</summary>It's defined up to scale: H and λH give the same mapping, so one of the 9 entries is redundant.</details>
+<details><summary>Q4. Rigid vs similarity: what extra freedom, and what is lost?</summary>Similarity adds uniform scale s (3 → 4 DOF). Lengths are no longer preserved, only angles/shape.</details>
+<details><summary>Q5. Minimum correspondences for an affine fit, and why?</summary>3. There are 6 unknowns and each point gives 2 equations. They must be non-collinear.</details>
+<details><summary>Q6. Which property separates affine from projective?</summary>Affine preserves parallel lines (and ratios); projective doesn't. Equivalently, affine keeps w = 1, projective changes w.</details>
+<details><summary>Q7. Rotate (0, 2) by 90° then translate by (1, 1). Result?</summary>Rotate: (−2, 0). Translate: (−1, 1).</details>
+<details><summary>Q8. Derive the normal equations.</summary>E = xᵀAᵀAx − 2xᵀAᵀb + ‖b‖². ∂E/∂x = 2AᵀAx − 2Aᵀb = 0 ⇒ AᵀA x = Aᵀb.</details>
+<details><summary>Q9. Two weaknesses of linear least squares here?</summary>(1) Only works when the transform is linear in its parameters. (2) Squared error makes it very sensitive to outliers.</details>
+
+</main>
+<footer>
+  <a href="index.html">← Back to index</a>
+  <span>Source: 16-385 CMU, Spring 2024, Lecture 7 (slides adapted from Kris Kitani, 16-385 Spring 2017)</span>
+</footer>
+</body>
+</html>
