@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Module 09 · Geometric Camera Models</title>
+<script>
+  window.MathJax = { tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] }, svg: { fontCache: 'global' } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+:root{
+  --bg:#f7f8fb; --card:#ffffff; --ink:#1c2230; --muted:#5b6475; --line:#d9dee8;
+  --accent:#2f6fec; --accent-soft:#e7efff; --orange:#e8742c; --green:#1f9d6b; --red:#d6455d; --purple:#7a4fd6;
+  --code:#f1f3f8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11141b; --card:#1a1f2a; --ink:#e6e9f0; --muted:#9aa3b5; --line:#2c3444;
+    --accent:#6b9bff; --accent-soft:#1e2a44; --orange:#ff9a5a; --green:#3ccf94; --red:#ff6b81; --purple:#a98bff;
+    --code:#222938;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11141b; --card:#1a1f2a; --ink:#e6e9f0; --muted:#9aa3b5; --line:#2c3444;
+  --accent:#6b9bff; --accent-soft:#1e2a44; --orange:#ff9a5a; --green:#3ccf94; --red:#ff6b81; --purple:#a98bff;
+  --code:#222938;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header.top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+header.top .in{max-width:980px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+header.top a{color:var(--accent);text-decoration:none;font-weight:600}
+main{max-width:980px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:1.9rem;margin:.2em 0 .1em}
+.sub{color:var(--muted);margin:0 0 1.2em}
+h2{font-size:1.4rem;margin:2.2em 0 .6em;padding-bottom:.3em;border-bottom:2px solid var(--line)}
+h2 .num{color:var(--accent);margin-right:.35em}
+h3{font-size:1.12rem;margin:1.6em 0 .4em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.def{border-left:4px solid var(--accent);background:var(--accent-soft)}
+.def b.tag,.ex b.tag,.warn b.tag,.tip b.tag{display:inline-block;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.def b.tag{color:var(--accent)}
+.ex{border-left:4px solid var(--green)} .ex b.tag{color:var(--green)}
+.warn{border-left:4px solid var(--red)} .warn b.tag{color:var(--red)}
+.tip{border-left:4px solid var(--orange)} .tip b.tag{color:var(--orange)}
+.math{overflow-x:auto;overflow-y:hidden;padding:2px 0}
+figure{margin:16px 0;text-align:center}
+figure svg{max-width:100%;height:auto}
+figcaption{color:var(--muted);font-size:.9rem;margin-top:6px}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:.95rem}
+.tw{overflow-x:auto}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft)}
+code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+code{background:var(--code);padding:1px 5px;border-radius:5px;font-size:.92em}
+pre{background:var(--code);padding:14px;border-radius:10px;overflow-x:auto;font-size:.88rem;line-height:1.5}
+ul,ol{padding-left:1.3em}
+li{margin:.25em 0}
+nav.toc ol{columns:2;column-gap:28px}
+@media (max-width:640px){nav.toc ol{columns:1} h1{font-size:1.55rem}}
+nav.toc a{color:var(--ink);text-decoration:none}
+nav.toc a:hover{color:var(--accent)}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}
+summary{cursor:pointer;font-weight:600}
+.pill{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:1px 10px;font-size:.8rem;font-weight:600}
+footer{max-width:980px;margin:0 auto;padding:20px 16px 40px;color:var(--muted);font-size:.85rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+footer a{color:var(--accent);text-decoration:none}
+/* svg tokens */
+svg text{fill:var(--ink);font-family:system-ui,sans-serif}
+svg .mut{fill:var(--muted)}
+svg .ax{stroke:var(--muted);stroke-width:1.5;fill:none}
+svg .grid{stroke:var(--line);stroke-width:1}
+svg .o{fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:5 4}
+svg .s1{fill:var(--accent);fill-opacity:.25;stroke:var(--accent);stroke-width:2}
+svg .s2{fill:var(--orange);fill-opacity:.25;stroke:var(--orange);stroke-width:2}
+svg .s3{fill:var(--green);fill-opacity:.25;stroke:var(--green);stroke-width:2}
+svg .s4{fill:var(--purple);fill-opacity:.25;stroke:var(--purple);stroke-width:2}
+svg .ln{stroke:var(--ink);stroke-width:1.6;fill:none}
+svg .lnA{stroke:var(--accent);stroke-width:2;fill:none}
+svg .lnO{stroke:var(--orange);stroke-width:2;fill:none}
+svg .lnG{stroke:var(--green);stroke-width:2;fill:none}
+svg .lnR{stroke:var(--red);stroke-width:2;fill:none}
+svg .dotA{fill:var(--accent)} svg .dotO{fill:var(--orange)} svg .dotG{fill:var(--green)} svg .dotR{fill:var(--red)} svg .dotK{fill:var(--ink)}
+svg .plane{fill:var(--orange);fill-opacity:.18;stroke:var(--orange);stroke-width:1.5}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="in">
+  <a href="index.html">← All modules</a>
+  <span class="pill">Module 09 · Lecture 9</span>
+</div></header>
+
+<main>
+<h1>Geometric Camera Models</h1>
+<p class="sub">16-385 Computer Vision · Lecture 9 · how a camera turns the 3D world into a 2D image, and how to write that whole process as one matrix <b>P = K[R | t]</b>.</p>
+
+<div class="card">
+<b>Lecture roadmap</b>
+<ol>
+<li>Some motivational imaging experiments (bare sensor vs pinhole)</li>
+<li>Pinhole camera (terms, focal length, pinhole size, light efficiency, lens vs pinhole)</li>
+<li>Accidental pinholes</li>
+<li>Camera matrix (perspective projection → intrinsics K → extrinsics R, t → general cameras)</li>
+</ol>
+<p style="margin:.4em 0 0;color:var(--muted);font-size:.9rem">Builds on Module 08: homogeneous coordinates, 3×3 transforms and DOF counting are used throughout.</p>
+</div>
+
+<nav class="toc card"><b>Contents</b>
+<ol>
+<li><a href="#s1">Bare-sensor imaging</a></li>
+<li><a href="#s2">Pinhole imaging</a></li>
+<li><a href="#s3">Camera obscura (history)</a></li>
+<li><a href="#s4">Pinhole camera terms</a></li>
+<li><a href="#s5">Focal length</a></li>
+<li><a href="#s6">Pinhole size</a></li>
+<li><a href="#s7">Light efficiency</a></li>
+<li><a href="#s8">Lens camera vs pinhole camera</a></li>
+<li><a href="#s9">Focal length: lens vs pinhole</a></li>
+<li><a href="#s10">Accidental pinholes</a></li>
+<li><a href="#s11">Camera as a coordinate transform</a></li>
+<li><a href="#s12">Rearranged pinhole camera</a></li>
+<li><a href="#s13">Similar triangles → X/Z, Y/Z</a></li>
+<li><a href="#s14">Perspective projection matrix [I | 0]</a></li>
+<li><a href="#s15">Arbitrary focal length f</a></li>
+<li><a href="#s16">Origin shift (pₓ, p_y)</a></li>
+<li><a href="#s17">Decomposition P = K[I | 0]</a></li>
+<li><a href="#s18">Three coordinate systems</a></li>
+<li><a href="#s19">World → camera transform</a></li>
+<li><a href="#s20">Putting it all together</a></li>
+<li><a href="#s21">P = K[R | t]</a></li>
+<li><a href="#s22">Recap &amp; quiz</a></li>
+<li><a href="#s23">More general cameras (DOF)</a></li>
+<li><a href="#s24">Worked example + Python</a></li>
+<li><a href="#s25">Cheat sheet &amp; self-test</a></li>
+</ol>
+</nav>
+
+<!-- ================= PART A: IMAGING EXPERIMENTS ================= -->
+
+<h2 id="s1"><span class="num">1</span>Bare-sensor imaging</h2>
+<p><b>Setup:</b> we have a <b>digital sensor (CCD or CMOS)</b>, a grid of light-measuring pixels, and a <b>real-world object</b> (a tree) we want to photograph. We hold the bare sensor in front of the tree with nothing in between. <b>What would the image look like?</b></p>
+
+<figure>
+<svg viewBox="0 0 640 260" role="img" aria-label="Bare sensor: every scene point sends rays to every pixel">
+  <defs>
+  <marker id="arK" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker>
+  <marker id="arA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker>
+  <marker id="arR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--red)"/></marker>
+  <marker id="arG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--green)"/></marker>
+  <g id="tree"><rect x="-5" y="40" width="10" height="70" fill="#7a5230"/><circle cx="0" cy="20" r="34" fill="#3f8f4a"/><circle cx="-22" cy="40" r="20" fill="#4fa35a"/><circle cx="22" cy="38" r="20" fill="#4fa35a"/></g>
+  <g id="sensor"><rect x="0" y="0" width="10" height="200" fill="#9aa0a8" stroke="var(--ink)" stroke-width="1"/>
+    <g stroke="var(--ink)" stroke-width=".6"><line x1="0" y1="20" x2="10" y2="20"/><line x1="0" y1="40" x2="10" y2="40"/><line x1="0" y1="60" x2="10" y2="60"/><line x1="0" y1="80" x2="10" y2="80"/><line x1="0" y1="100" x2="10" y2="100"/><line x1="0" y1="120" x2="10" y2="120"/><line x1="0" y1="140" x2="10" y2="140"/><line x1="0" y1="160" x2="10" y2="160"/><line x1="0" y1="180" x2="10" y2="180"/></g></g>
+  </defs>
+  <use href="#tree" transform="translate(110,40) scale(1.6)"/>
+  <use href="#sensor" x="540" y="30"/>
+  <g stroke="#3f8f4a" stroke-width="1.6" opacity=".85">
+    <line x1="110" y1="35" x2="540" y2="40"/><line x1="110" y1="35" x2="540" y2="80"/><line x1="110" y1="35" x2="540" y2="120"/><line x1="110" y1="35" x2="540" y2="160"/><line x1="110" y1="35" x2="540" y2="200"/><line x1="110" y1="35" x2="540" y2="225"/>
+  </g>
+  <g stroke="#a0522d" stroke-width="1.6" opacity=".85">
+    <line x1="110" y1="200" x2="540" y2="40"/><line x1="110" y1="200" x2="540" y2="80"/><line x1="110" y1="200" x2="540" y2="120"/><line x1="110" y1="200" x2="540" y2="160"/><line x1="110" y1="200" x2="540" y2="200"/><line x1="110" y1="200" x2="540" y2="225"/>
+  </g>
+  <circle cx="110" cy="35" r="5" fill="#2e7d32"/><circle cx="110" cy="200" r="5" fill="#a0522d"/>
+  <text x="110" y="250" text-anchor="middle" font-size="13">real-world object</text>
+  <text x="545" y="250" text-anchor="middle" font-size="13">digital sensor (CCD/CMOS)</text>
+</svg>
+<figcaption>The treetop (green) and the trunk (brown) each send light to <b>every</b> pixel.</figcaption>
+</figure>
+
+<div class="card warn"><b class="tag">Result</b><br>
+<b>All scene points contribute to all sensor pixels.</b> Each pixel records a mix of light from the whole tree, so the image is a <b>uniform greenish blur</b>. No structure, no tree.<br>
+The problem: nothing decides <i>which</i> scene point should land on <i>which</i> pixel.</div>
+
+<h2 id="s2"><span class="num">2</span>Pinhole imaging</h2>
+<p><b>Fix:</b> add a <b>barrier (diaphragm)</b> between the tree and the sensor, with a tiny hole called the <b>pinhole (aperture)</b>.</p>
+
+<figure>
+<svg viewBox="0 0 640 260" role="img" aria-label="Pinhole lets one ray per scene point through, forming an inverted image">
+  <use href="#tree" transform="translate(110,40) scale(1.6)"/>
+  <rect x="340" y="30" width="8" height="92" fill="var(--ink)"/><rect x="340" y="134" width="8" height="96" fill="var(--ink)"/>
+  <use href="#sensor" x="540" y="30"/>
+  <g stroke="#3f8f4a" stroke-width="1.2" opacity=".18"><line x1="110" y1="35" x2="340" y2="40"/><line x1="110" y1="35" x2="340" y2="80"/><line x1="110" y1="35" x2="340" y2="200"/></g>
+  <g stroke="#a0522d" stroke-width="1.2" opacity=".18"><line x1="110" y1="200" x2="340" y2="60"/><line x1="110" y1="200" x2="340" y2="170"/><line x1="110" y1="200" x2="340" y2="220"/></g>
+  <line x1="110" y1="35" x2="540" y2="222" stroke="#2e7d32" stroke-width="2.4"/>
+  <line x1="110" y1="200" x2="540" y2="58" stroke="#a0522d" stroke-width="2.4"/>
+  <circle cx="110" cy="35" r="5" fill="#2e7d32"/><circle cx="110" cy="200" r="5" fill="#a0522d"/>
+  <use href="#tree" transform="translate(598,148) scale(1,-1) scale(0.95)"/>
+  <text x="344" y="22" text-anchor="middle" font-size="13">barrier (diaphragm)</text>
+  <text x="372" y="132" font-size="12">pinhole</text>
+  <text x="430" y="250" text-anchor="middle" font-size="12" class="mut">most rays blocked, one makes it through</text>
+  <text x="590" y="250" text-anchor="middle" font-size="12">inverted copy</text>
+</svg>
+</figure>
+
+<div class="card def"><b class="tag">Key idea</b><br>
+<ul style="margin:.2em 0">
+<li><b>Most rays are blocked</b> by the barrier. From each scene point, only <b>one ray makes it through</b> the pinhole.</li>
+<li>So <b>each scene point contributes to only one sensor pixel</b>. This is a clean one-to-one mapping.</li>
+<li>The image is a <b>copy of the real-world object, inverted and scaled</b>. It's upside down because rays cross at the pinhole: the treetop lands at the bottom and the trunk at the top.</li>
+</ul></div>
+
+<h2 id="s3"><span class="num">3</span>Pinhole camera, a.k.a. camera obscura</h2>
+<p>"Camera obscura" is Latin for "dark room": a closed box or room with a small hole in one wall. Light through the hole projects an inverted image on the opposite wall.</p>
+<div class="tw"><table>
+<tr><th></th><th>Who</th><th>When</th></tr>
+<tr><td><b>First mention</b></td><td>Chinese philosopher <b>Mozi</b></td><td>470–390 BC</td></tr>
+<tr><td><b>First camera</b></td><td>Greek philosopher <b>Aristotle</b></td><td>384–322 BC</td></tr>
+</table></div>
+<p style="color:var(--muted);font-size:.92rem">The slide's illustration is a 1544 woodcut ("Solis deliquium, Anno Christi 1544") showing a camera obscura used to watch a solar eclipse safely.</p>
+
+<h2 id="s4"><span class="num">4</span>Pinhole camera terms</h2>
+<figure>
+<svg viewBox="0 0 640 250" role="img" aria-label="Labelled pinhole camera">
+  <use href="#tree" transform="translate(90,40) scale(1.4)"/>
+  <rect x="330" y="40" width="8" height="78" fill="var(--ink)"/><rect x="330" y="132" width="8" height="78" fill="var(--ink)"/>
+  <use href="#sensor" x="540" y="25"/>
+  <circle cx="334" cy="125" r="4" class="dotR"/>
+  <text x="334" y="30" text-anchor="middle" font-size="13" font-weight="600">barrier (diaphragm)</text>
+  <path d="M400 95 L344 122" class="ln" marker-end="url(#arK)"/><text x="404" y="92" font-size="13" font-weight="600">pinhole (aperture)</text>
+  <path d="M410 160 L344 130" class="lnR" marker-end="url(#arR)"/><text x="414" y="166" font-size="13" font-weight="600" style="fill:var(--red)">camera center</text><text x="414" y="182" font-size="12" class="mut">(center of projection)</text>
+  <text x="545" y="18" text-anchor="middle" font-size="13" font-weight="600">image plane</text>
+  <text x="545" y="242" text-anchor="middle" font-size="12">digital sensor (CCD/CMOS)</text>
+  <line x1="338" y1="222" x2="538" y2="222" class="ln" marker-end="url(#arK)" marker-start="url(#arK)"/>
+  <text x="438" y="238" text-anchor="middle" font-size="13" font-style="italic">focal length f</text>
+  <text x="90" y="242" text-anchor="middle" font-size="12">real-world object</text>
+</svg>
+</figure>
+<div class="tw"><table>
+<tr><th>Term</th><th>Definition</th></tr>
+<tr><td><b>Barrier (diaphragm)</b></td><td>Opaque wall that blocks all light except what passes through the hole.</td></tr>
+<tr><td><b>Pinhole (aperture)</b></td><td>The small opening in the barrier that lets light through.</td></tr>
+<tr><td><b>Camera center</b> (center of projection)</td><td>The single point that every imaging ray passes through: the pinhole itself, treated as a point.</td></tr>
+<tr><td><b>Image plane</b></td><td>The plane where the image forms; the sensor sits on it.</td></tr>
+<tr><td><b>Digital sensor</b></td><td>CCD or CMOS pixel array that measures the light arriving at each pixel.</td></tr>
+<tr><td><b>Focal length f</b></td><td>For a pinhole camera: the <b>distance between the aperture and the sensor</b> (image plane).</td></tr>
+</table></div>
+
+<h2 id="s5"><span class="num">5</span>Focal length</h2>
+<p><b>Slide question: what happens as we change the focal length?</b> Move the sensor from \(f\) to \(0.5f\), closer to the pinhole.</p>
+<figure>
+<svg viewBox="0 0 640 250" role="img" aria-label="Halving the focal length halves the image size">
+  <use href="#tree" transform="translate(90,40) scale(1.4)"/>
+  <rect x="300" y="30" width="8" height="92" fill="var(--ink)"/><rect x="300" y="132" width="8" height="92" fill="var(--ink)"/>
+  <line x1="90" y1="38" x2="580" y2="232" stroke="#2e7d32" stroke-width="2"/>
+  <line x1="90" y1="190" x2="580" y2="34" stroke="#a0522d" stroke-width="2"/>
+  <rect x="575" y="20" width="10" height="220" fill="#9aa0a8" opacity=".35" stroke="var(--muted)"/>
+  <rect x="438" y="20" width="10" height="220" fill="#9aa0a8" stroke="var(--ink)"/>
+  <line x1="443" y1="80" x2="443" y2="176" stroke="var(--accent)" stroke-width="5"/>
+  <line x1="580" y1="34" x2="580" y2="232" stroke="var(--orange)" stroke-width="5" opacity=".6"/>
+  <text x="372" y="245" text-anchor="middle" font-size="12">0.5 f</text>
+  <text x="515" y="245" text-anchor="middle" font-size="12" class="mut">f</text>
+  <text x="430" y="14" text-anchor="end" font-size="12" style="fill:var(--accent)">image at 0.5f: half size</text>
+  <text x="600" y="14" text-anchor="end" font-size="12" style="fill:var(--orange)">image at f</text>
+</svg>
+</figure>
+<div class="card def"><b class="tag">Rule</b><br>
+<b>Image size ∝ focal length.</b> Halving \(f\) gives an object projection <b>half the size</b>. Doubling \(f\) doubles it (zooming in, narrower field of view).<br>
+Why: the rays are straight lines through the pinhole, so the image height grows linearly with distance from it (similar triangles, formalized in Section 13).</div>
+
+<h2 id="s6"><span class="num">6</span>Pinhole size</h2>
+<p><b>The ideal pinhole has an infinitesimally small size.</b> In practice that's impossible. <b>What happens as we change the pinhole diameter?</b></p>
+<figure>
+<svg viewBox="0 0 640 230" role="img" aria-label="Large pinhole lets multiple rays per point through, causing blur">
+  <g transform="translate(0,0)">
+    <text x="150" y="18" text-anchor="middle" font-size="13" font-weight="600">small pinhole: sharp</text>
+    <circle cx="30" cy="60" r="5" fill="#2e7d32"/>
+    <rect x="150" y="30" width="6" height="88" fill="var(--ink)"/><rect x="150" y="124" width="6" height="90" fill="var(--ink)"/>
+    <line x1="30" y1="60" x2="280" y2="183" stroke="#2e7d32" stroke-width="2"/>
+    <rect x="280" y="30" width="8" height="184" fill="#9aa0a8"/>
+    <circle cx="284" cy="183" r="3.5" fill="#2e7d32"/>
+    <text x="215" y="226" text-anchor="middle" font-size="12">1 point → 1 small spot</text>
+  </g>
+  <g transform="translate(330,0)">
+    <text x="150" y="18" text-anchor="middle" font-size="13" font-weight="600">large pinhole: blurry</text>
+    <circle cx="30" cy="60" r="5" fill="#2e7d32"/>
+    <rect x="150" y="30" width="6" height="70" fill="var(--ink)"/><rect x="150" y="142" width="6" height="72" fill="var(--ink)"/>
+    <line x1="30" y1="60" x2="280" y2="155" stroke="#2e7d32" stroke-width="1.6"/>
+    <line x1="30" y1="60" x2="280" y2="183" stroke="#2e7d32" stroke-width="1.6"/>
+    <line x1="30" y1="60" x2="280" y2="210" stroke="#2e7d32" stroke-width="1.6"/>
+    <rect x="280" y="30" width="8" height="184" fill="#9aa0a8"/>
+    <rect x="279" y="153" width="10" height="59" fill="#2e7d32" opacity=".55"/>
+    <text x="215" y="226" text-anchor="middle" font-size="12">1 point → a smeared patch</text>
+  </g>
+</svg>
+</figure>
+<div class="card warn"><b class="tag">Result</b><br>
+With a <b>larger diameter</b>, several rays from the same scene point get through, and they land on <b>several neighbouring pixels</b>. Neighbouring scene points also overlap on the same pixels, so the <b>object projection becomes blurrier</b>.</div>
+<div class="card tip"><b class="tag">Trade-off</b><br>Small pinhole = sharp but very little light. Big pinhole = bright but blurry. That conflict is why real cameras use <b>lenses</b> (Section 8).<br>
+<span style="color:var(--muted);font-size:.9rem">(Beyond the slides: a pinhole that's too small also blurs, because of diffraction.)</span></div>
+
+<h2 id="s7"><span class="num">7</span>What about light efficiency?</h2>
+<div class="tw"><table>
+<tr><th>Change</th><th>Effect on light</th><th>Why</th></tr>
+<tr><td><b>2× pinhole diameter</b></td><td><b>4× light</b></td><td>Light collected ∝ hole <b>area</b> = π(d/2)². Doubling d gives 2² = 4× area.</td></tr>
+<tr><td><b>2× focal length</b></td><td><b>¼× light</b> (per unit sensor area)</td><td>The same light now spreads over an image that's 2× taller and 2× wider, so 4× the area and ¼ the brightness (inverse square).</td></tr>
+</table></div>
+<div class="card ex"><b class="tag">Combined</b><br>
+Brightness ∝ \(\left(\dfrac{d}{f}\right)^2\). Doubling <b>both</b> d and f leaves brightness unchanged. This ratio is the idea behind the "f-number" (f/d) on real cameras.</div>
+
+<h2 id="s8"><span class="num">8</span>The lens camera vs the pinhole camera</h2>
+<figure>
+<svg viewBox="0 0 640 250" role="img" aria-label="Lens focuses a bundle of rays; pinhole passes only the central ray">
+  <g>
+    <text x="160" y="18" text-anchor="middle" font-size="13" font-weight="600">lens camera</text>
+    <circle cx="20" cy="50" r="5" fill="#2e7d32"/>
+    <ellipse cx="160" cy="125" rx="10" ry="80" fill="#9cc3f0" stroke="var(--accent)"/>
+    <g stroke="#2e7d32" stroke-width="1.5">
+      <line x1="20" y1="50" x2="160" y2="55"/><line x1="160" y1="55" x2="300" y2="200"/>
+      <line x1="20" y1="50" x2="160" y2="125"/><line x1="160" y1="125" x2="300" y2="200"/>
+      <line x1="20" y1="50" x2="160" y2="195"/><line x1="160" y1="195" x2="300" y2="200"/>
+    </g>
+    <line x1="20" y1="50" x2="300" y2="200" stroke="#2e7d32" stroke-width="3" opacity=".9"/>
+    <rect x="300" y="40" width="8" height="180" fill="#9aa0a8"/>
+    <circle cx="304" cy="200" r="4" fill="#2e7d32"/>
+    <text x="160" y="240" text-anchor="middle" font-size="12">a whole bundle → one point (bright + sharp)</text>
+  </g>
+  <g transform="translate(330,0)">
+    <text x="160" y="18" text-anchor="middle" font-size="13" font-weight="600">pinhole camera</text>
+    <circle cx="20" cy="50" r="5" fill="#2e7d32"/>
+    <rect x="156" y="40" width="8" height="80" fill="var(--ink)"/><rect x="156" y="130" width="8" height="80" fill="var(--ink)"/>
+    <g stroke="#2e7d32" stroke-width="1.2" opacity=".2"><line x1="20" y1="50" x2="156" y2="60"/><line x1="20" y1="50" x2="156" y2="190"/></g>
+    <line x1="20" y1="50" x2="300" y2="200" stroke="#2e7d32" stroke-width="3"/>
+    <rect x="300" y="40" width="8" height="180" fill="#9aa0a8"/>
+    <circle cx="304" cy="200" r="4" fill="#2e7d32"/>
+    <text x="160" y="240" text-anchor="middle" font-size="12">only the central ray (sharp but dim)</text>
+  </g>
+</svg>
+<figcaption>The thick line is the <b>central ray</b>, which goes straight through the center. It travels the same way in both cameras.</figcaption>
+</figure>
+<ul>
+<li><b>Lenses map "bundles" of rays</b> from each point in the scene onto one point on the sensor. You get a lot of light <i>and</i> a sharp image.</li>
+<li><b>Central rays propagate in the same way for both models!</b> The ray through the center of the lens is not bent, just like the ray through a pinhole.</li>
+</ul>
+<div class="card def"><b class="tag">Describing both cameras with one model</b><br>
+We can derive properties that hold for <b>both</b> camera models if:
+<ol style="margin:.3em 0">
+<li>We use <b>only central rays</b>.</li>
+<li>We assume the lens camera is <b>in focus</b>.</li>
+<li>We assume the <b>focus distance</b> of the lens camera equals the <b>focal length</b> of the pinhole camera.</li>
+</ol>
+Under these assumptions, all the pinhole maths in this lecture also describes a real lens camera.</div>
+
+<h2 id="s9"><span class="num">9</span>Important difference: focal length</h2>
+<figure>
+<svg viewBox="0 0 640 230" role="img" aria-label="Lens focal length is where parallel rays meet; focus distance is to the sensor">
+  <circle cx="40" cy="60" r="5" fill="#2e7d32"/>
+  <ellipse cx="240" cy="120" rx="10" ry="80" fill="#9cc3f0" stroke="var(--accent)"/>
+  <line x1="40" y1="60" x2="240" y2="60" stroke="#2e7d32" stroke-width="2"/>
+  <line x1="240" y1="60" x2="520" y2="190" stroke="#2e7d32" stroke-width="2"/>
+  <line x1="40" y1="180" x2="240" y2="180" stroke="#a0522d" stroke-width="2"/>
+  <line x1="240" y1="180" x2="520" y2="50" stroke="#a0522d" stroke-width="2"/>
+  <line x1="370" y1="35" x2="370" y2="205" stroke="var(--ink)" stroke-dasharray="5 4"/>
+  <circle cx="370" cy="120" r="4" class="dotK"/>
+  <rect x="520" y="35" width="8" height="170" fill="#9aa0a8"/>
+  <line x1="40" y1="212" x2="236" y2="212" class="ln" marker-end="url(#arK)" marker-start="url(#arK)"/><text x="138" y="228" text-anchor="middle" font-size="12">object distance D</text>
+  <line x1="244" y1="212" x2="368" y2="212" class="lnA" marker-end="url(#arA)" marker-start="url(#arA)"/><text x="306" y="228" text-anchor="middle" font-size="12" style="fill:var(--accent)">focal length f</text>
+  <line x1="244" y1="22" x2="518" y2="22" class="lnR" marker-end="url(#arR)" marker-start="url(#arR)"/><text x="380" y="16" text-anchor="middle" font-size="12" style="fill:var(--red)">focus distance D′</text>
+</svg>
+</figure>
+<div class="tw"><table>
+<tr><th>Camera</th><th>"Focal length" means…</th></tr>
+<tr><td><b>Pinhole camera</b></td><td>The distance between the <b>aperture and the sensor</b>.</td></tr>
+<tr><td><b>Lens camera</b></td><td>The distance at which <b>parallel rays intersect</b> after the lens (a property of the lens itself). The lens-to-sensor distance is the <b>focus distance D′</b>, and the lens-to-object distance is <b>D</b>.</td></tr>
+</table></div>
+<div class="card warn"><b class="tag">Remember</b><br>
+<i>Focal length</i> \(f\) means different things for lens and pinhole cameras. <b>In this lecture, \(f\) always means the aperture–sensor distance</b>, as in the pinhole case.<br>
+<span style="color:var(--muted);font-size:.9rem">(Beyond the slides: for a thin lens, \(\tfrac{1}{D} + \tfrac{1}{D'} = \tfrac{1}{f}\).)</span></div>
+
+<!-- ================= PART B: ACCIDENTAL PINHOLES ================= -->
+
+<h2 id="s10"><span class="num">10</span>Accidental pinholes</h2>
+<p>Pinhole cameras happen naturally whenever light passes through a small opening into a darker space.</p>
+<ul>
+<li><b>Darkened rooms as cameras.</b> The slides show photographs of rooms (a hotel room, a living room) whose walls are covered by an <b>upside-down projection of the city or park outside</b>, made by covering a window except for a small hole.</li>
+<li><b>"What does this image say about the world outside?"</b> An ordinary-looking bedroom wall with soft light patterns on it is actually a faint, blurry, inverted image of the courtyard outside.</li>
+</ul>
+
+<figure>
+<svg viewBox="0 0 640 230" role="img" aria-label="Window acts as aperture projecting outside scene upside down on room wall">
+  <rect x="20" y="30" width="230" height="170" fill="#e8f3e8" stroke="var(--muted)"/>
+  <text x="135" y="22" text-anchor="middle" font-size="13" font-weight="600">outside (bright courtyard)</text>
+  <rect x="50" y="90" width="40" height="80" fill="#8a6a4a"/><path d="M150 170 v-60 a25 25 0 0 1 50 0 v60z" fill="#555"/>
+  <rect x="250" y="30" width="10" height="70" fill="var(--ink)"/><rect x="250" y="120" width="10" height="80" fill="var(--ink)"/>
+  <text x="290" y="114" font-size="12">window gap = aperture</text>
+  <rect x="260" y="30" width="360" height="170" fill="#2a2e36" opacity=".12" stroke="var(--muted)"/>
+  <text x="440" y="22" text-anchor="middle" font-size="13" font-weight="600">inside (dark room)</text>
+  <line x1="70" y1="90" x2="600" y2="170" stroke="var(--red)" stroke-width="2.5" marker-end="url(#arR)"/>
+  <line x1="175" y1="170" x2="600" y2="60" stroke="var(--red)" stroke-width="2.5" marker-end="url(#arR)"/>
+  <rect x="600" y="30" width="10" height="170" fill="#ddd" stroke="var(--muted)"/>
+  <text x="560" y="218" text-anchor="middle" font-size="12">wall shows outside, upside down</text>
+</svg>
+<figcaption>From Torralba &amp; Freeman (MIT CSAIL), "Accidental pinhole cameras".</figcaption>
+</figure>
+
+<div class="tw"><table>
+<tr><th>Observation in the slides</th><th>What it shows</th></tr>
+<tr><td>Window is an aperture</td><td>A partly open window acts as a (big) pinhole.</td></tr>
+<tr><td>Projected pattern on the wall</td><td>The wall is the image plane; you see soft blobs of light.</td></tr>
+<tr><td>Rotated upside down</td><td>Flip the wall photo and the outside scene appears: an inverted image.</td></tr>
+<tr><td>Window with a smaller gap</td><td><b>Sharper</b> image (smaller aperture, less blur, as in Section 6).</td></tr>
+<tr><td>View outside the window</td><td>Matches the projection: the white wall, windows and arched gate.</td></tr>
+</table></div>
+
+<div class="card ex"><b class="tag">Slide question: "What are we imaging here?"</b><br>
+Many little <b>crescent-shaped</b> light spots on a pavement under a tree. The gaps between leaves act as <b>many tiny pinholes</b>, and each one projects an image of the <b>sun during a partial solar eclipse</b>. Each spot is a crescent because the sun itself was a crescent at that moment.</div>
+
+<!-- ================= PART C: CAMERA MATRIX ================= -->
+
+<h2 id="s11"><span class="num">11</span>The camera as a coordinate transformation</h2>
+<div class="card def"><b class="tag">Definition</b><br>A <b>camera</b> is a mapping from the <b>3D world</b> to a <b>2D image</b>.</div>
+<figure>
+<svg viewBox="0 0 640 200" role="img" aria-label="3D to 2D camera transform, then 2D to 2D warp">
+  <g transform="translate(60,40)"><polygon points="0,20 40,0 80,20 40,40" fill="var(--accent)" opacity=".75"/><polygon points="0,20 40,40 40,90 0,70" fill="var(--accent)"/><polygon points="40,40 80,20 80,70 40,90" fill="var(--accent)" opacity=".55"/></g>
+  <text x="100" y="155" text-anchor="middle" font-size="13">3D object</text>
+  <path d="M160 85 h90" class="lnA" marker-end="url(#arA)"/><text x="205" y="70" text-anchor="middle" font-size="12" style="fill:var(--accent)">3D → 2D</text><text x="205" y="105" text-anchor="middle" font-size="12">camera (P)</text>
+  <rect x="270" y="40" width="100" height="100" fill="var(--card)" stroke="var(--muted)"/><rect x="300" y="70" width="40" height="40" fill="var(--accent)" opacity=".7"/>
+  <text x="320" y="160" text-anchor="middle" font-size="13">2D image</text>
+  <path d="M390 85 h90" class="lnO" marker-end="url(#arR)"/><text x="435" y="70" text-anchor="middle" font-size="12" style="fill:var(--orange)">2D → 2D</text><text x="435" y="105" text-anchor="middle" font-size="12">warping (Mod 08)</text>
+  <g transform="translate(550,90) rotate(-8) translate(-50,-50)"><rect width="100" height="100" fill="var(--card)" stroke="var(--muted)"/><rect x="30" y="30" width="40" height="40" fill="var(--accent)" opacity=".7"/></g>
+  <text x="550" y="160" text-anchor="middle" font-size="13">2D image</text>
+</svg>
+<figcaption>Module 08 covered 2D→2D transforms. This lecture covers the 3D→2D step.</figcaption>
+</figure>
+
+<div class="math">\[ \underbrace{\mathbf{x}}_{\text{2D image point}} = \underbrace{\mathbf{P}}_{\text{camera matrix}}\ \underbrace{\mathbf{X}}_{\text{3D world point}} \qquad\text{(both points in homogeneous coordinates)} \]</div>
+
+<p><b>Slide question: what are the dimensions of each variable?</b></p>
+<div class="math">\[ \underbrace{\begin{bmatrix} x \\ y \\ z \end{bmatrix}}_{\substack{\text{homogeneous image}\\ \text{coords } 3\times1}} = \underbrace{\begin{bmatrix} p_1 & p_2 & p_3 & p_4 \\ p_5 & p_6 & p_7 & p_8 \\ p_9 & p_{10} & p_{11} & p_{12} \end{bmatrix}}_{\text{camera matrix } 3\times4} \underbrace{\begin{bmatrix} X \\ Y \\ Z \\ 1 \end{bmatrix}}_{\substack{\text{homogeneous world}\\ \text{coords } 4\times1}} \]</div>
+<ul>
+<li>3D point \((X,Y,Z)\) → homogeneous \([X,Y,Z,1]\): <b>4×1</b></li>
+<li>2D point \((u,v)\) → homogeneous \([x,y,z]\) with \(u = x/z,\ v = y/z\): <b>3×1</b></li>
+<li>So P must be <b>3×4</b> (12 entries).</li>
+</ul>
+<div class="card tip"><b class="tag">Note</b><br>The slide labels the left vector \([X\ Y\ Z]\) in one place and \([x\ y\ z]\) in another. They mean the same thing: the <b>homogeneous image point</b>. Divide by the third entry to get pixels.</div>
+
+<h2 id="s12"><span class="num">12</span>The (rearranged) pinhole camera</h2>
+<p>Start with the simplest case, <b>focal length \(f = 1\)</b>. A real pinhole forms an <b>upside-down</b> image behind the pinhole. Mathematically, we can instead put a <b>virtual image plane in front of the camera center</b> at the same distance. It gives the same geometry, but the image is <b>upright</b>, which makes the maths cleaner.</p>
+<figure>
+<svg viewBox="0 0 640 220" role="img" aria-label="Real image plane behind pinhole versus virtual image plane in front">
+  <use href="#tree" transform="translate(70,50) scale(1.2)"/>
+  <rect x="380" y="30" width="7" height="72" fill="var(--ink)"/><rect x="380" y="114" width="7" height="72" fill="var(--ink)"/>
+  <circle cx="383" cy="108" r="4" class="dotR"/>
+  <line x1="70" y1="40" x2="540" y2="160" stroke="#2e7d32" stroke-width="1.8"/>
+  <line x1="70" y1="180" x2="540" y2="60" stroke="#a0522d" stroke-width="1.8"/>
+  <rect x="225" y="25" width="8" height="170" fill="#9aa0a8" stroke="var(--accent)" stroke-width="2"/>
+  <rect x="536" y="25" width="8" height="170" fill="#9aa0a8" opacity=".35"/>
+  <text x="229" y="18" text-anchor="middle" font-size="12" style="fill:var(--accent)" font-weight="600">virtual image plane (upright)</text>
+  <text x="540" y="212" text-anchor="middle" font-size="12" class="mut">real image plane (inverted)</text>
+  <line x1="233" y1="205" x2="380" y2="205" class="lnA" marker-end="url(#arA)" marker-start="url(#arA)"/><text x="306" y="200" text-anchor="middle" font-size="12">f = 1</text>
+  <text x="400" y="124" font-size="12" style="fill:var(--red)">camera center</text>
+</svg>
+</figure>
+
+<figure>
+<svg viewBox="0 0 640 260" role="img" aria-label="3D view: camera center at origin, image plane at z=1, ray to X">
+  <line x1="120" y1="170" x2="610" y2="170" class="ax" marker-end="url(#arK)"/><text x="612" y="188" font-size="13" font-style="italic">z</text>
+  <text x="540" y="190" font-size="12">principal axis</text>
+  <line x1="120" y1="170" x2="120" y2="30" class="ax" marker-end="url(#arK)"/><text x="108" y="34" font-size="13" font-style="italic">y</text>
+  <line x1="120" y1="170" x2="250" y2="100" class="ax" marker-end="url(#arK)"/><text x="254" y="98" font-size="13" font-style="italic">x</text>
+  <line x1="120" y1="170" x2="40" y2="230" class="ax"/>
+  <polygon points="300,240 300,110 400,50 400,180" class="plane"/>
+  <text x="330" y="232" font-size="13" font-style="italic">z = 1</text>
+  <text x="365" y="40" text-anchor="middle" font-size="13">image plane</text>
+  <circle cx="350" cy="170" r="4" class="dotK"/>
+  <line x1="120" y1="170" x2="580" y2="70" class="lnA"/>
+  <circle cx="335" cy="123.3" r="6" class="dotA"/><text x="320" y="116" font-size="14" font-weight="700" style="fill:var(--accent)">x</text>
+  <circle cx="580" cy="70" r="6" class="dotK"/><text x="590" y="66" font-size="15" font-weight="700">X</text>
+  <circle cx="120" cy="170" r="5" class="dotR"/><text x="120" y="200" text-anchor="middle" font-size="12">camera center (origin)</text>
+</svg>
+<figcaption>The camera center is the origin, the camera looks along +z (the <b>principal axis</b>), and the image plane is \(z = 1\). The image point <b>x</b> is where the ray from the center to the 3D point <b>X</b> crosses that plane. This is the Module 08 projective picture, now in 3D.</figcaption>
+</figure>
+<p><b>Slide question: what is the equation for image coordinate x in terms of X?</b></p>
+
+<h2 id="s13"><span class="num">13</span>Similar triangles: the 2D view</h2>
+<figure>
+<svg viewBox="0 0 640 260" role="img" aria-label="Side view similar triangles giving y equals Y over Z">
+  <line x1="60" y1="200" x2="610" y2="200" class="ax" marker-end="url(#arK)"/><text x="612" y="218" font-size="13" font-style="italic">z</text>
+  <line x1="60" y1="240" x2="60" y2="20" class="ax" marker-end="url(#arK)"/><text x="46" y="26" font-size="13" font-style="italic">y</text>
+  <line x1="300" y1="30" x2="300" y2="240" stroke="var(--orange)" stroke-width="4"/><text x="300" y="22" text-anchor="middle" font-size="12">image plane</text>
+  <line x1="60" y1="200" x2="500" y2="80" class="ln"/>
+  <circle cx="500" cy="80" r="6" class="dotK"/><text x="512" y="78" font-size="15" font-weight="700">X</text>
+  <line x1="500" y1="80" x2="500" y2="200" class="ln" stroke-dasharray="4 4"/><text x="510" y="145" font-size="14" font-style="italic">Y</text>
+  <line x1="300" y1="134.5" x2="300" y2="200" stroke="var(--accent)" stroke-width="4"/>
+  <circle cx="300" cy="134.5" r="5" class="dotA"/><text x="312" y="160" font-size="14" style="fill:var(--accent)" font-weight="700">y = ?</text>
+  <line x1="62" y1="222" x2="298" y2="222" class="lnA" marker-end="url(#arA)" marker-start="url(#arA)"/><text x="180" y="238" text-anchor="middle" font-size="13">f = 1</text>
+  <line x1="62" y1="250" x2="498" y2="250" class="ln" marker-end="url(#arK)" marker-start="url(#arK)"/><text x="400" y="246" font-size="13" font-style="italic">Z</text>
+</svg>
+</figure>
+<p>The small triangle (camera → image plane) and the big triangle (camera → point) share the same angle at the camera center, so they are <b>similar</b>:</p>
+<div class="math">\[ \frac{y}{1} = \frac{Y}{Z} \;\Rightarrow\; y = \frac{Y}{Z}, \qquad\text{and in the same way}\qquad x = \frac{X}{Z} \]</div>
+<div class="math">\[ \boxed{\;[X\ \ Y\ \ Z]^\top \;\rightarrow\; [X/Z\ \ \ Y/Z]\;} \]</div>
+<div class="card def"><b class="tag">Perspective projection</b><br>
+Divide by depth \(Z\). <b>Farther objects (bigger Z) look smaller</b>. This one division is what makes images "perspective".</div>
+<div class="card ex"><b class="tag">Example</b><br>
+Point \(X = (2, 1, 4)\): image point \(= (2/4,\ 1/4) = (0.5,\ 0.25)\).<br>
+Same point twice as far away, \((2,1,8)\): image point \(= (0.25, 0.125)\), half the size.</div>
+
+<h2 id="s14"><span class="num">14</span>The pinhole camera matrix: perspective projection</h2>
+<p><b>Slide question: what does P look like for a pinhole camera?</b> We want a 3×4 matrix such that, after the homogeneous divide, we get \((X/Z,\ Y/Z)\).</p>
+<div class="math">\[ \mathbf{P} = \begin{bmatrix} 1 & 0 & 0 & 0 \\ 0 & 1 & 0 & 0 \\ 0 & 0 & 1 & 0 \end{bmatrix} = [\,\mathbf{I} \mid \mathbf{0}\,] \qquad\text{(the perspective projection matrix)} \]</div>
+<p><b>Check:</b></p>
+<div class="math">\[ \begin{bmatrix} 1&0&0&0\\0&1&0&0\\0&0&1&0 \end{bmatrix}\begin{bmatrix}X\\Y\\Z\\1\end{bmatrix} = \begin{bmatrix}X\\Y\\Z\end{bmatrix} \;\xrightarrow{\ \div Z\ }\; \left(\frac{X}{Z},\ \frac{Y}{Z}\right)\ ✔ \]</div>
+<ul>
+<li>\([\mathbf{I} \mid \mathbf{0}]\) is the <b>3×3 identity</b> followed by a <b>3×1 zero column</b>. It's just another way to write the same matrix.</li>
+<li>The matrix itself does no dividing. The <b>homogeneous → pixel conversion</b> (divide by the 3rd coordinate) does the perspective divide. That's why we need homogeneous coordinates: division isn't linear, but "defined up to scale" handles it.</li>
+</ul>
+
+<h2 id="s15"><span class="num">15</span>More general case: arbitrary focal length</h2>
+<p>Now move the image plane to \(z = f\). Same similar triangles, with \(f\) in place of 1:</p>
+<div class="math">\[ \frac{y}{f} = \frac{Y}{Z} \;\Rightarrow\; [X\ \ Y\ \ Z]^\top \mapsto [\,fX/Z\ \ \ fY/Z\,]^\top \]</div>
+<div class="math">\[ \mathbf{P} = \begin{bmatrix} f & 0 & 0 & 0 \\ 0 & f & 0 & 0 \\ 0 & 0 & 1 & 0 \end{bmatrix} \qquad \mathbf{P}\mathbf{X} = \begin{bmatrix} fX \\ fY \\ Z \end{bmatrix} \xrightarrow{\div Z} \left(\frac{fX}{Z},\ \frac{fY}{Z}\right) \]</div>
+<p>Note the bottom-right entry stays <b>1</b> (not \(f\)): we want to divide by \(Z\), not \(fZ\).</p>
+<div class="card ex"><b class="tag">Example</b><br>\(f = 2\), \(X = (2,1,4)\): \(\ (2\cdot2/4,\ 2\cdot1/4) = (1,\ 0.5)\). That's double the \(f=1\) result, matching Section 5 (image size ∝ f).</div>
+
+<h2 id="s16"><span class="num">16</span>Generalizing: origin shift (principal point)</h2>
+<p><b>In general, the camera and the image have <i>different</i> coordinate systems.</b> In particular, the camera origin and the image origin may be different:</p>
+<figure>
+<svg viewBox="0 0 640 230" role="img" aria-label="Image coordinate origin at corner, camera origin at center, offset p">
+  <rect x="170" y="20" width="300" height="190" fill="#f4d23a" fill-opacity=".55" stroke="var(--muted)"/>
+  <text x="185" y="42" font-size="13">image plane</text>
+  <line x1="320" y1="115" x2="420" y2="115" class="ln" marker-end="url(#arK)"/><line x1="320" y1="115" x2="320" y2="45" class="ln" marker-end="url(#arK)"/>
+  <circle cx="320" cy="115" r="5" class="dotK"/><text x="330" y="134" font-size="12">camera coordinate system (principal axis hits here)</text>
+  <line x1="172" y1="208" x2="270" y2="208" class="lnA" marker-end="url(#arA)"/><line x1="172" y1="208" x2="172" y2="150" class="lnA" marker-end="url(#arA)"/>
+  <circle cx="172" cy="208" r="5" class="dotA"/><text x="180" y="226" font-size="12" style="fill:var(--accent)">image coordinate system (pixel (0,0) at the corner)</text>
+  <line x1="316" y1="118" x2="178" y2="204" class="lnR" stroke-dasharray="5 4" marker-end="url(#arR)"/>
+  <text x="232" y="150" font-size="15" font-weight="700" style="fill:var(--red)">p</text>
+</svg>
+</figure>
+<p>Pixel coordinates usually start at a <b>corner</b> of the image. The <b>principal point</b> \(\mathbf{p} = (p_x, p_y)\), where the principal axis hits the image plane, sits near the <b>center</b>. So every projected point must be shifted by \(\mathbf{p}\):</p>
+<div class="math">\[ (X, Y, Z) \mapsto \left(\frac{fX}{Z} + p_x,\ \ \frac{fY}{Z} + p_y\right) \]</div>
+<div class="math">\[ \mathbf{P} = \begin{bmatrix} f & 0 & p_x & 0 \\ 0 & f & p_y & 0 \\ 0 & 0 & 1 & 0 \end{bmatrix} \quad\text{← } p_x, p_y = \text{shift vector transforming camera origin to image origin} \]</div>
+<p><b>Why does the shift go in the 3rd column?</b> \(\ \mathbf{P}\mathbf{X} = [\,fX + p_xZ,\ \ fY + p_yZ,\ \ Z\,]\). Dividing by \(Z\) gives \(fX/Z + p_x\) ✔. The shift is multiplied by \(Z\) so that it survives the divide unchanged.</p>
+
+<h2 id="s17"><span class="num">17</span>Camera matrix decomposition: P = K[I | 0]</h2>
+<div class="math">\[ \mathbf{P} = \underbrace{\begin{bmatrix} f & 0 & p_x \\ 0 & f & p_y \\ 0 & 0 & 1 \end{bmatrix}}_{\mathbf{K}} \underbrace{\begin{bmatrix} 1 & 0 & 0 & 0 \\ 0 & 1 & 0 & 0 \\ 0 & 0 & 1 & 0 \end{bmatrix}}_{[\mathbf{I}\mid\mathbf{0}]} \]</div>
+<p><b>Slide question: what does each part of the matrix represent?</b></p>
+<div class="tw"><table>
+<tr><th>Part</th><th>Size</th><th>Meaning</th></tr>
+<tr><td>\(\mathbf{K}\)</td><td>3×3</td><td>(Homogeneous) <b>transformation from 2D to 2D</b>, accounting for a focal length that isn't 1 and for the origin shift. This is the <b>intrinsic matrix</b>.</td></tr>
+<tr><td>\([\mathbf{I} \mid \mathbf{0}]\)</td><td>3×4</td><td>(Homogeneous) <b>perspective projection from 3D to 2D</b>, assuming the image plane is at \(z = 1\) and the camera and image share an origin.</td></tr>
+</table></div>
+<div class="card tip"><b class="tag">Link to Module 08</b><br>\(\mathbf{K}\) has bottom row \([0\ 0\ 1]\), so it's an <b>affine 2D transform</b> (scale by \(f\) + translate by \(p\)). The camera is: project to a normalized plane, then warp that 2D image into pixel coordinates.</div>
+
+<h2 id="s18"><span class="num">18</span>Three coordinate systems</h2>
+<p><b>In general, there are <i>three</i>, generally different, coordinate systems.</b> We need to know the transformations between them.</p>
+<figure>
+<svg viewBox="0 0 640 230" role="img" aria-label="Camera, image and world coordinate systems">
+  <line x1="60" y1="190" x2="560" y2="190" stroke="#e5484d" stroke-width="2.5" marker-end="url(#arR)"/><line x1="60" y1="190" x2="60" y2="90" stroke="#e5484d" stroke-width="2.5" marker-end="url(#arR)"/>
+  <circle cx="60" cy="190" r="6" fill="#e5484d"/><text x="68" y="208" font-size="13">O<tspan font-size="10" dy="3">camera</tspan></text>
+  <line x1="180" y1="200" x2="180" y2="40" class="ln"/>
+  <line x1="180" y1="110" x2="235" y2="110" stroke="#22a35a" stroke-width="2.5" marker-end="url(#arG)"/><line x1="180" y1="110" x2="180" y2="62" stroke="#22a35a" stroke-width="2.5" marker-end="url(#arG)"/>
+  <circle cx="180" cy="110" r="5" fill="#22a35a"/><text x="186" y="104" font-size="13">O<tspan font-size="10" dy="3">image</tspan></text>
+  <circle cx="180" cy="150" r="4" class="dotK"/><text x="188" y="155" font-size="14" font-weight="700">x</text><text x="200" y="170" font-size="11">image point</text>
+  <line x1="300" y1="150" x2="410" y2="150" stroke="#3366e0" stroke-width="2.5" marker-end="url(#arA)"/><line x1="300" y1="150" x2="300" y2="50" stroke="#3366e0" stroke-width="2.5" marker-end="url(#arA)"/>
+  <circle cx="300" cy="150" r="6" fill="#3366e0"/><text x="308" y="140" font-size="13">O<tspan font-size="10" dy="3">world</tspan></text>
+  <circle cx="500" cy="60" r="5" class="dotK"/><text x="510" y="64" font-size="15" font-weight="700">X</text><text x="528" y="64" font-size="11">world point</text>
+</svg>
+</figure>
+<div class="tw"><table>
+<tr><th>System</th><th>Origin</th><th>Transform we need</th></tr>
+<tr><td><b style="color:#3366e0">World</b></td><td>wherever the scene is defined (a room corner, a calibration board)</td><td rowspan="1">world → camera: <b>R, t</b> (extrinsics)</td></tr>
+<tr><td><b style="color:#e5484d">Camera</b></td><td>camera center, z along the principal axis</td><td>camera → image plane: <b>[I | 0]</b> (projection)</td></tr>
+<tr><td><b style="color:#22a35a">Image</b></td><td>pixel (0,0), at the image corner</td><td>image plane → pixels: <b>K</b> (intrinsics)</td></tr>
+</table></div>
+
+<h2 id="s19"><span class="num">19</span>World-to-camera coordinate system transformation</h2>
+<figure>
+<svg viewBox="0 0 640 260" role="img" aria-label="Translate by minus C then rotate by R to align world with camera">
+  <g transform="translate(70,70)">
+    <line x1="0" y1="100" x2="0" y2="20" class="ln" marker-end="url(#arK)"/><line x1="0" y1="100" x2="60" y2="70" class="ln" marker-end="url(#arK)"/><line x1="0" y1="100" x2="-40" y2="130" class="ln"/>
+    <line x1="0" y1="100" x2="150" y2="100" class="ln" marker-end="url(#arK)"/>
+    <polygon points="90,140 90,70 125,50 125,120" class="plane"/>
+    <text x="-6" y="16" font-size="12">y<tspan font-size="9" dy="3">c</tspan></text><text x="64" y="68" font-size="12">x<tspan font-size="9" dy="3">c</tspan></text><text x="152" y="96" font-size="12">z<tspan font-size="9" dy="3">c</tspan></text>
+    <circle cx="0" cy="100" r="5" class="dotR"/><text x="-10" y="124" text-anchor="end" font-size="15" font-weight="700" style="fill:var(--red)">C̃</text>
+    <text x="-20" y="150" font-size="11" class="mut">camera center in world coords</text>
+  </g>
+  <g transform="translate(430,80)">
+    <line x1="0" y1="110" x2="0" y2="20" stroke="#3366e0" stroke-width="2" marker-end="url(#arA)"/><line x1="0" y1="110" x2="80" y2="70" stroke="#3366e0" stroke-width="2" marker-end="url(#arA)"/><line x1="0" y1="110" x2="110" y2="110" stroke="#3366e0" stroke-width="2" marker-end="url(#arA)"/><line x1="0" y1="110" x2="-50" y2="140" stroke="#3366e0" stroke-width="2"/>
+    <text x="-8" y="16" font-size="12">y<tspan font-size="9" dy="3">w</tspan></text><text x="84" y="68" font-size="12">x<tspan font-size="9" dy="3">w</tspan></text><text x="112" y="106" font-size="12">z<tspan font-size="9" dy="3">w</tspan></text>
+    <text x="10" y="135" font-size="11" style="fill:#3366e0">world coordinate system</text>
+    <line x1="0" y1="110" x2="120" y2="-40" stroke="#3366e0" stroke-dasharray="4 4"/>
+    <circle cx="120" cy="-40" r="5" class="dotK"/><text x="104" y="-48" font-size="15" font-weight="700">X̃<tspan font-size="11" dy="3">w</tspan></text>
+  </g>
+  <path d="M428 190 Q250 250 74 175" class="lnR" marker-end="url(#arR)" stroke-dasharray="6 4"/>
+  <text x="250" y="244" text-anchor="middle" font-size="13" style="fill:var(--red)">① translate: subtract C̃</text>
+  <path d="M230 100 q20 -30 0 -55" class="lnO" marker-end="url(#arR)"/><text x="245" y="66" font-size="13" style="fill:var(--orange)">② rotate by R</text>
+</svg>
+</figure>
+<p><b>Tilde (~) means heterogeneous</b> (ordinary 3-vector) coordinates. \(\tilde{\mathbf{X}}_w\) is the point in world coordinates, and \(\tilde{\mathbf{C}}\) is the camera center in world coordinates.</p>
+<ol>
+<li><b>Translate:</b> \(\tilde{\mathbf{X}}_w - \tilde{\mathbf{C}}\). This moves the origin to the camera center.<br>
+<i>Slide question: "Why aren't the points aligned?"</i> Because the camera's axes are still <b>rotated</b> relative to the world axes. The origins match, but "forward" in the world is not "forward" for the camera.</li>
+<li><b>Rotate:</b> \(\mathbf{R}\cdot(\tilde{\mathbf{X}}_w - \tilde{\mathbf{C}})\). Now the axes line up, and the points coincide.</li>
+</ol>
+<h3>Modeling the coordinate system transformation</h3>
+<p>In heterogeneous coordinates:</p>
+<div class="math">\[ \tilde{\mathbf{X}}_c = \mathbf{R}\cdot\left(\tilde{\mathbf{X}}_w - \tilde{\mathbf{C}}\right) = \mathbf{R}\tilde{\mathbf{X}}_w - \mathbf{R}\tilde{\mathbf{C}} \]</div>
+<p><b>Slide question: how do we write this in homogeneous coordinates?</b> Use the Module 08 trick: put the "add a constant" part in an extra column.</p>
+<div class="math">\[ \begin{bmatrix} X_c \\ Y_c \\ Z_c \\ 1 \end{bmatrix} = \begin{bmatrix} \mathbf{R} & -\mathbf{R}\tilde{\mathbf{C}} \\ \mathbf{0} & 1 \end{bmatrix} \begin{bmatrix} X_w \\ Y_w \\ Z_w \\ 1 \end{bmatrix} \qquad\text{or}\qquad \mathbf{X}_c = \begin{bmatrix} \mathbf{R} & -\mathbf{R}\tilde{\mathbf{C}} \\ \mathbf{0} & 1 \end{bmatrix}\mathbf{X}_w \]</div>
+<p>This is a <b>4×4 rigid (Euclidean) transform in 3D</b>: rotation \(\mathbf{R}\) (3×3), translation \(-\mathbf{R}\tilde{\mathbf{C}}\) (3×1), bottom row \([0\ 0\ 0\ 1]\). It's the 3D version of Module 08's \([R \mid t]\).</p>
+
+<h2 id="s20"><span class="num">20</span>Incorporating the transform: putting it all together</h2>
+<p>The earlier camera matrix works on 3D points that are <b>already in the camera coordinate system</b>: \(\mathbf{x} = \mathbf{P}\mathbf{X}_c = \mathbf{K}[\mathbf{I}\mid\mathbf{0}]\mathbf{X}_c\). Substitute \(\mathbf{X}_c\) from Section 19:</p>
+<div class="math">\[ \mathbf{x} = \mathbf{P}\mathbf{X}_w, \qquad \mathbf{P} = \underbrace{\begin{bmatrix} f & 0 & p_x \\ 0 & f & p_y \\ 0 & 0 & 1 \end{bmatrix}}_{\substack{\text{intrinsic}\\ 3\times3}} \underbrace{[\,\mathbf{I} \mid \mathbf{0}\,]}_{\substack{\text{perspective}\\ \text{projection } 3\times4}} \underbrace{\begin{bmatrix} \mathbf{R} & -\mathbf{R}\tilde{\mathbf{C}} \\ \mathbf{0} & 1 \end{bmatrix}}_{\substack{\text{extrinsic}\\ 4\times4}} \]</div>
+
+<figure>
+<svg viewBox="0 0 640 150" role="img" aria-label="Pipeline world to camera to image plane to pixels">
+  <g font-size="13" text-anchor="middle">
+    <rect x="10" y="45" width="110" height="50" rx="8" fill="#3366e0" fill-opacity=".15" stroke="#3366e0"/><text x="65" y="68">world point</text><text x="65" y="86" font-size="11">X_w (4×1)</text>
+    <path d="M122 70 h48" class="ln" marker-end="url(#arK)"/><text x="146" y="40" font-size="12" font-weight="700">[R | −RC̃]</text><text x="146" y="115" font-size="11" class="mut">extrinsic</text>
+    <rect x="172" y="45" width="110" height="50" rx="8" fill="#e5484d" fill-opacity=".15" stroke="#e5484d"/><text x="227" y="68">camera coords</text><text x="227" y="86" font-size="11">X_c</text>
+    <path d="M284 70 h48" class="ln" marker-end="url(#arK)"/><text x="308" y="40" font-size="12" font-weight="700">[I | 0]</text><text x="308" y="115" font-size="11" class="mut">projection</text>
+    <rect x="334" y="45" width="120" height="50" rx="8" fill="var(--orange)" fill-opacity=".18" stroke="var(--orange)"/><text x="394" y="68">image plane</text><text x="394" y="86" font-size="11">normalized, z = 1</text>
+    <path d="M456 70 h48" class="ln" marker-end="url(#arK)"/><text x="480" y="40" font-size="12" font-weight="700">K</text><text x="480" y="115" font-size="11" class="mut">intrinsic</text>
+    <rect x="506" y="45" width="124" height="50" rx="8" fill="#22a35a" fill-opacity=".15" stroke="#22a35a"/><text x="568" y="68">pixel coords</text><text x="568" y="86" font-size="11">x (3×1) → ÷ z</text>
+  </g>
+</svg>
+<figcaption>Read the matrix product <b>right to left</b>: world → camera → image plane → pixels.</figcaption>
+</figure>
+
+<div class="tw"><table>
+<tr><th>Piece</th><th>Size</th><th>Corresponds to</th></tr>
+<tr><td><b>Intrinsic parameters</b> K</td><td>3×3</td><td>Camera <b>internals</b>: the image-to-image transform (sensor not at f = 1, origin shift).</td></tr>
+<tr><td><b>Perspective projection</b> [I | 0]</td><td>3×4</td><td>Maps 3D to 2D points (camera-to-image transformation).</td></tr>
+<tr><td><b>Extrinsic parameters</b> \(\begin{bmatrix}\mathbf{R}&-\mathbf{R}\tilde{\mathbf{C}}\\\mathbf{0}&1\end{bmatrix}\)</td><td>4×4</td><td>Camera <b>externals</b>: the world-to-camera transformation (where the camera is and where it points).</td></tr>
+</table></div>
+<p>Since \([\mathbf{I}\mid\mathbf{0}]\) just drops the last row of the 4×4 matrix, the middle and right pieces merge:</p>
+<div class="math">\[ \mathbf{P} = \underbrace{\begin{bmatrix} f & 0 & p_x \\ 0 & f & p_y \\ 0 & 0 & 1 \end{bmatrix}}_{\text{intrinsic } (3\times3)} \underbrace{\big[\,\mathbf{R} \;\big|\; -\mathbf{R}\mathbf{C}\,\big]}_{\text{extrinsic } (3\times4)} \]</div>
+
+<h2 id="s21"><span class="num">21</span>General pinhole camera matrix: P = K[R | t]</h2>
+<p>Two equivalent ways to write the same camera:</p>
+<div class="tw"><table>
+<tr><th>Form</th><th>Order of operations (on the world point)</th></tr>
+<tr><td>\(\mathbf{P} = \mathbf{K}\mathbf{R}\,[\,\mathbf{I} \mid -\mathbf{C}\,]\)</td><td><b>Translate first, then rotate</b> (subtract C, then apply R)</td></tr>
+<tr><td>\(\mathbf{P} = \mathbf{K}\,[\,\mathbf{R} \mid \mathbf{t}\,],\quad \mathbf{t} = -\mathbf{R}\mathbf{C}\)</td><td><b>Rotate first, then translate</b> (apply R, then add t)</td></tr>
+</table></div>
+<p>They're equal because \(\mathbf{R}[\mathbf{I}\mid-\mathbf{C}] = [\mathbf{R}\mid-\mathbf{R}\mathbf{C}] = [\mathbf{R}\mid\mathbf{t}]\).</p>
+<div class="math">\[ \mathbf{P} = \underbrace{\begin{bmatrix} f & 0 & p_x \\ 0 & f & p_y \\ 0 & 0 & 1 \end{bmatrix}}_{\text{intrinsic parameters}} \underbrace{\left[\begin{array}{ccc|c} r_1 & r_2 & r_3 & t_1 \\ r_4 & r_5 & r_6 & t_2 \\ r_7 & r_8 & r_9 & t_3 \end{array}\right]}_{\text{extrinsic parameters}} \qquad \mathbf{R} = \underbrace{\begin{bmatrix} r_1 & r_2 & r_3 \\ r_4 & r_5 & r_6 \\ r_7 & r_8 & r_9 \end{bmatrix}}_{\text{3D rotation}} \quad \mathbf{t} = \underbrace{\begin{bmatrix} t_1 \\ t_2 \\ t_3 \end{bmatrix}}_{\text{3D translation}} \]</div>
+<div class="card warn"><b class="tag">Careful: t ≠ C</b><br>
+\(\mathbf{C}\) is <b>where the camera is</b> in the world. \(\mathbf{t} = -\mathbf{R}\mathbf{C}\) is <b>where the world origin is</b>, seen from the camera's frame. Recover the camera center with \(\mathbf{C} = -\mathbf{R}^\top\mathbf{t}\) (because \(\mathbf{R}^{-1} = \mathbf{R}^\top\) for rotations).</div>
+
+<h2 id="s22"><span class="num">22</span>Recap &amp; quiz</h2>
+<p><b>What is the size and meaning of each term in the camera matrix \(\mathbf{P} = \mathbf{K}\mathbf{R}[\mathbf{I}\mid-\mathbf{C}]\)?</b></p>
+<div class="tw"><table>
+<tr><th>Term</th><th>Size</th><th>Meaning</th></tr>
+<tr><td>\(\mathbf{K}\)</td><td>3×3</td><td><b>intrinsics</b></td></tr>
+<tr><td>\(\mathbf{R}\)</td><td>3×3</td><td><b>3D rotation</b></td></tr>
+<tr><td>\(\mathbf{I}\)</td><td>3×3</td><td><b>identity</b></td></tr>
+<tr><td>\(\mathbf{C}\)</td><td>3×1</td><td><b>3D translation</b> (camera center)</td></tr>
+<tr><td>\(\mathbf{P}\)</td><td>3×4</td><td>full camera matrix</td></tr>
+</table></div>
+<div class="card ex"><b class="tag">Quiz (from the slides)</b><br>
+<b>Q: The camera matrix relates what two quantities?</b><br>
+A: \(\mathbf{x} = \mathbf{P}\mathbf{X}\). It maps <b>homogeneous 3D points to 2D image points</b>.<br><br>
+<b>Q: The camera matrix can be decomposed into?</b><br>
+A: \(\mathbf{P} = \mathbf{K}[\mathbf{R}\mid\mathbf{t}]\): <b>intrinsic and extrinsic parameters</b>.</div>
+
+<h2 id="s23"><span class="num">23</span>More general camera matrices &amp; DOF</h2>
+<p>The <b>standard camera matrix</b> we derived:</p>
+<div class="math">\[ \mathbf{P} = \begin{bmatrix} f & 0 & p_x \\ 0 & f & p_y \\ 0 & 0 & 1 \end{bmatrix} \big[\,\mathbf{R} \mid -\mathbf{R}\mathbf{C}\,\big] \]</div>
+
+<h3>CCD camera: pixels may not be square</h3>
+<div class="math">\[ \mathbf{P} = \begin{bmatrix} \alpha_x & 0 & p_x \\ 0 & \alpha_y & p_y \\ 0 & 0 & 1 \end{bmatrix} \big[\,\mathbf{R} \mid -\mathbf{R}\mathbf{C}\,\big] \]</div>
+<p>If pixels are rectangular, the focal length <i>in pixels</i> differs in x and y: \(\alpha_x = f\cdot m_x\), \(\alpha_y = f\cdot m_y\) (where \(m\) = pixels per unit length).</p>
+<p><b>How many degrees of freedom? → 10 DOF</b></p>
+
+<h3>Finite projective camera: the sensor may be skewed</h3>
+<div class="math">\[ \mathbf{P} = \begin{bmatrix} \alpha_x & s & p_x \\ 0 & \alpha_y & p_y \\ 0 & 0 & 1 \end{bmatrix} \big[\,\mathbf{R} \mid -\mathbf{R}\mathbf{C}\,\big] \]</div>
+<p>\(s\) = <b>skew</b>, for when the pixel x and y axes aren't perpendicular (a slanted sensor grid). It's usually ≈ 0 in modern cameras.</p>
+<p><b>How many degrees of freedom? → 11 DOF</b></p>
+
+<div class="tw"><table>
+<tr><th>Camera model</th><th>Intrinsic params</th><th>Extrinsic params</th><th>Total DOF</th></tr>
+<tr><td>Standard (square pixels)</td><td>\(f, p_x, p_y\) = 3</td><td>R: 3 + C: 3 = 6</td><td><b>9</b></td></tr>
+<tr><td>CCD (non-square pixels)</td><td>\(\alpha_x, \alpha_y, p_x, p_y\) = 4</td><td>6</td><td><b>10</b></td></tr>
+<tr><td>Finite projective (skew)</td><td>\(\alpha_x, \alpha_y, s, p_x, p_y\) = 5</td><td>6</td><td><b>11</b></td></tr>
+</table></div>
+<div class="card tip"><b class="tag">Why R has only 3 DOF</b><br>
+R has 9 entries, but it must be a rotation (orthonormal: \(\mathbf{R}^\top\mathbf{R} = \mathbf{I}\), \(\det = 1\)). Those 6 constraints leave <b>3 angles</b> (e.g. roll, pitch, yaw), just as 2D rotation had only θ in Module 08.</div>
+<div class="card tip"><b class="tag">Why 11 is the maximum</b><br>
+A 3×4 matrix has 12 entries, but it's defined <b>up to scale</b> (homogeneous), so 12 − 1 = <b>11</b>. The finite projective camera already uses all 11, so it's the most general camera of this form. Compare the homography: 9 − 1 = 8.</div>
+
+<h2 id="s24"><span class="num">24</span>Worked example + Python</h2>
+<div class="card ex"><b class="tag">By hand</b><br>
+Camera: \(f = 500\) px, principal point \((p_x, p_y) = (320, 240)\), no rotation (\(\mathbf{R} = \mathbf{I}\)), camera center at \(\mathbf{C} = (0, 0, -5)\) in the world.<br>
+Project the world point \(\mathbf{X}_w = (1,\ 0.5,\ 0)\).
+<ol>
+<li><b>t</b> = \(-\mathbf{R}\mathbf{C} = (0, 0, 5)\)</li>
+<li><b>Camera coords:</b> \(\mathbf{R}\mathbf{X}_w + \mathbf{t} = (1,\ 0.5,\ 5)\). The point is 5 units in front of the camera.</li>
+<li><b>Apply K:</b> \(\begin{bmatrix}500&0&320\\0&500&240\\0&0&1\end{bmatrix}\begin{bmatrix}1\\0.5\\5\end{bmatrix} = \begin{bmatrix}500 + 1600\\250 + 1200\\5\end{bmatrix} = \begin{bmatrix}2100\\1450\\5\end{bmatrix}\)</li>
+<li><b>Divide by z:</b> \((2100/5,\ 1450/5) = \)<b>(420, 290)</b> px</li>
+</ol>
+Sanity check: \(fX/Z + p_x = 500\cdot1/5 + 320 = 420\) ✔, \(fY/Z + p_y = 500\cdot0.5/5 + 240 = 290\) ✔</div>
+
+<pre><code>import numpy as np
+
+def camera_matrix(f, px, py, R, C):
+    K = np.array([[f, 0, px],
+                  [0, f, py],
+                  [0, 0,  1]], dtype=float)
+    t = -R @ C                         # t = -RC
+    return K @ np.hstack([R, t.reshape(3, 1)])   # P = K[R|t]  (3x4)
+
+def project(P, Xw):
+    X = np.append(Xw, 1.0)             # homogeneous 4x1
+    x = P @ X                          # homogeneous 3x1
+    return x[:2] / x[2]                # divide by z -&gt; pixels
+
+R = np.eye(3)
+C = np.array([0, 0, -5.0])
+P = camera_matrix(500, 320, 240, R, C)
+print(P)
+print(project(P, np.array([1, 0.5, 0])))   # [420. 290.]</code></pre>
+
+<!-- ================= CHEAT SHEET ================= -->
+<h2 id="s25"><span class="num">25</span>Cheat sheet &amp; self-test</h2>
+<div class="card">
+<ul>
+<li><b>Bare sensor:</b> every scene point hits every pixel, so the image is a blur. <b>Pinhole:</b> each point hits one pixel, giving an <b>inverted, scaled</b> copy.</li>
+<li>Camera obscura: first mention by Mozi (470–390 BC), first camera by Aristotle (384–322 BC).</li>
+<li>Terms: barrier (diaphragm), pinhole (aperture), camera center (center of projection), image plane, sensor (CCD/CMOS), focal length f = aperture-to-sensor distance.</li>
+<li>Image size ∝ f. Bigger pinhole = blurrier. 2× diameter = 4× light; 2× f = ¼ light.</li>
+<li>Lens = gathers bundles of rays (bright and sharp). Central rays behave as in a pinhole, so the same model applies (central rays, in focus, focus distance = f).</li>
+<li>Lens focal length = where parallel rays meet; in this lecture f = aperture–sensor distance.</li>
+<li>Accidental pinholes: window → room wall (inverted image); leaf gaps → eclipse crescents.</li>
+<li>\(\mathbf{x} = \mathbf{P}\mathbf{X}\): x 3×1, P 3×4, X 4×1 (all homogeneous).</li>
+<li>Similar triangles: \((X,Y,Z) \to (fX/Z,\ fY/Z)\); with principal point: \(+\,(p_x, p_y)\).</li>
+<li>\(\mathbf{P} = \mathbf{K}[\mathbf{I}\mid\mathbf{0}]\) (camera frame) → \(\mathbf{P} = \mathbf{K}[\mathbf{R}\mid\mathbf{t}] = \mathbf{K}\mathbf{R}[\mathbf{I}\mid-\mathbf{C}]\) (world frame), with \(\mathbf{t} = -\mathbf{R}\mathbf{C}\).</li>
+<li>World → camera: \(\tilde{\mathbf{X}}_c = \mathbf{R}(\tilde{\mathbf{X}}_w - \tilde{\mathbf{C}})\) (translate, then rotate).</li>
+<li>DOF: standard 9 · CCD (\(\alpha_x \ne \alpha_y\)) <b>10</b> · finite projective (+ skew s) <b>11</b>.</li>
+</ul></div>
+
+<details><summary>Q1. Why does a bare sensor produce no image?</summary>Every scene point sends light to every pixel, so each pixel records an average of the whole scene: a blur.</details>
+<details><summary>Q2. Why is the pinhole image upside down?</summary>Rays travel in straight lines and cross at the pinhole, so the top of the object maps to the bottom of the sensor and vice versa.</details>
+<details><summary>Q3. Effect of halving the focal length?</summary>The image is half the size (and 4× brighter per unit area).</details>
+<details><summary>Q4. Doubling the pinhole diameter changes the light by how much? Why?</summary>4×, because light ∝ area ∝ d².</details>
+<details><summary>Q5. What three assumptions let one model describe both lens and pinhole cameras?</summary>Use only central rays; the lens is in focus; the lens focus distance equals the pinhole focal length.</details>
+<details><summary>Q6. Project X = (4, 2, 8) with f = 2, pₓ = p_y = 0, camera at the origin.</summary>(fX/Z, fY/Z) = (2·4/8, 2·2/8) = (1, 0.5).</details>
+<details><summary>Q7. Why are pₓ, p_y in the 3rd column of P, not the 4th?</summary>They get multiplied by Z, so after dividing by Z they become a constant shift (fX/Z + pₓ).</details>
+<details><summary>Q8. Sizes of K, R, I, C in P = KR[I | −C]?</summary>3×3, 3×3, 3×3, 3×1. P itself is 3×4.</details>
+<details><summary>Q9. Relationship between t and C?</summary>t = −RC, so C = −Rᵀt.</details>
+<details><summary>Q10. DOF of a CCD camera vs a finite projective camera, and why?</summary>10 (αₓ, α_y, pₓ, p_y + 3 rotation + 3 translation) and 11 (adds skew s). 11 = 12 entries − 1 for scale, the maximum for a 3×4 matrix.</details>
+
+</main>
+<footer>
+  <a href="08-2d-transformations.html">← Module 08: 2D Transformations</a>
+  <a href="index.html">Back to index</a>
+  <span>Source: 16-385 CMU, Spring 2024, Lecture 9 (slides adapted from Kris Kitani, 15-463 Fall 2016; inspired by Fredo Durand, MIT)</span>
+</footer>
+</body>
+</html>
