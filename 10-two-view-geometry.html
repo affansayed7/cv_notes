@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Module 10 · Two-View Geometry</title>
+<script>
+  window.MathJax = { tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] }, svg: { fontCache: 'global' } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+:root{
+  --bg:#f7f8fb; --card:#ffffff; --ink:#1c2230; --muted:#5b6475; --line:#d9dee8;
+  --accent:#2f6fec; --accent-soft:#e7efff; --orange:#e8742c; --green:#1f9d6b; --red:#d6455d; --purple:#7a4fd6;
+  --code:#f1f3f8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11141b; --card:#1a1f2a; --ink:#e6e9f0; --muted:#9aa3b5; --line:#2c3444;
+    --accent:#6b9bff; --accent-soft:#1e2a44; --orange:#ff9a5a; --green:#3ccf94; --red:#ff6b81; --purple:#a98bff;
+    --code:#222938;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11141b; --card:#1a1f2a; --ink:#e6e9f0; --muted:#9aa3b5; --line:#2c3444;
+  --accent:#6b9bff; --accent-soft:#1e2a44; --orange:#ff9a5a; --green:#3ccf94; --red:#ff6b81; --purple:#a98bff;
+  --code:#222938;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header.top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+header.top .in{max-width:980px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+header.top a{color:var(--accent);text-decoration:none;font-weight:600}
+main{max-width:980px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:1.9rem;margin:.2em 0 .1em}
+.sub{color:var(--muted);margin:0 0 1.2em}
+h2{font-size:1.4rem;margin:2.2em 0 .6em;padding-bottom:.3em;border-bottom:2px solid var(--line)}
+h2 .num{color:var(--accent);margin-right:.35em}
+h3{font-size:1.12rem;margin:1.6em 0 .4em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.def{border-left:4px solid var(--accent);background:var(--accent-soft)}
+.def b.tag,.ex b.tag,.warn b.tag,.tip b.tag{display:inline-block;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.def b.tag{color:var(--accent)}
+.ex{border-left:4px solid var(--green)} .ex b.tag{color:var(--green)}
+.warn{border-left:4px solid var(--red)} .warn b.tag{color:var(--red)}
+.tip{border-left:4px solid var(--orange)} .tip b.tag{color:var(--orange)}
+.math{overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.card{overflow-x:auto}
+mjx-container[display="true"]{display:block;max-width:100%;overflow-x:auto;overflow-y:hidden}
+figure{margin:16px 0;text-align:center}
+figure svg{max-width:100%;height:auto}
+figcaption{color:var(--muted);font-size:.9rem;margin-top:6px}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:.95rem}
+.tw{overflow-x:auto}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft)}
+code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+code{background:var(--code);padding:1px 5px;border-radius:5px;font-size:.92em}
+pre{background:var(--code);padding:14px;border-radius:10px;overflow-x:auto;font-size:.88rem;line-height:1.5}
+ul,ol{padding-left:1.3em}
+li{margin:.25em 0}
+nav.toc ol{columns:2;column-gap:28px}
+@media (max-width:640px){nav.toc ol{columns:1} h1{font-size:1.55rem}}
+nav.toc a{color:var(--ink);text-decoration:none}
+nav.toc a:hover{color:var(--accent)}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}
+summary{cursor:pointer;font-weight:600}
+.pill{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:1px 10px;font-size:.8rem;font-weight:600}
+footer{max-width:980px;margin:0 auto;padding:20px 16px 40px;color:var(--muted);font-size:.85rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+footer a{color:var(--accent);text-decoration:none}
+/* svg tokens */
+svg text{fill:var(--ink);font-family:system-ui,sans-serif}
+svg .mut{fill:var(--muted)}
+svg .ax{stroke:var(--muted);stroke-width:1.5;fill:none}
+svg .grid{stroke:var(--line);stroke-width:1}
+svg .o{fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:5 4}
+svg .s1{fill:var(--accent);fill-opacity:.25;stroke:var(--accent);stroke-width:2}
+svg .s2{fill:var(--orange);fill-opacity:.25;stroke:var(--orange);stroke-width:2}
+svg .s3{fill:var(--green);fill-opacity:.25;stroke:var(--green);stroke-width:2}
+svg .s4{fill:var(--purple);fill-opacity:.25;stroke:var(--purple);stroke-width:2}
+svg .ln{stroke:var(--ink);stroke-width:1.6;fill:none}
+svg .lnA{stroke:var(--accent);stroke-width:2;fill:none}
+svg .lnO{stroke:var(--orange);stroke-width:2;fill:none}
+svg .lnG{stroke:var(--green);stroke-width:2;fill:none}
+svg .lnR{stroke:var(--red);stroke-width:2;fill:none}
+svg .dotA{fill:var(--accent)} svg .dotO{fill:var(--orange)} svg .dotG{fill:var(--green)} svg .dotR{fill:var(--red)} svg .dotK{fill:var(--ink)}
+svg .plane{fill:var(--orange);fill-opacity:.18;stroke:var(--orange);stroke-width:1.5}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="in">
+  <a href="index.html">← All modules</a>
+  <span class="pill">Module 10 · Lecture 11</span>
+</div></header>
+
+<main>
+<h1>Two-View Geometry</h1>
+<p class="sub">16-385 Computer Vision · Lecture 11 · what two cameras looking at the same scene tell us: recovering 3D points (triangulation), the epipolar constraint, the Essential &amp; Fundamental matrices, and how to estimate F with the 8-point algorithm.</p>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+  <marker id="arK" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker>
+  <marker id="arA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker>
+  <marker id="arR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--red)"/></marker>
+  <marker id="arG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--green)"/></marker>
+  <marker id="arO" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--orange)"/></marker>
+  </defs>
+</svg>
+
+<div class="card">
+<b>Lecture roadmap</b>
+<ol>
+<li><b>Triangulation</b>: cameras known, points matched → find the 3D point</li>
+<li><b>Epipolar geometry</b>: baseline, epipoles, epipolar plane &amp; lines</li>
+<li><b>Essential matrix E</b>: the epipolar constraint for calibrated cameras</li>
+<li><b>Fundamental matrix F</b>: the same constraint in pixel coordinates</li>
+<li><b>8-point algorithm</b>: estimating F from matched points with SVD</li>
+</ol>
+<p style="margin:.4em 0 0;color:var(--muted);font-size:.9rem">Builds on Module 08 (homogeneous coords, homography) and Module 09 (P = K[R | t], camera center).</p>
+</div>
+
+<nav class="toc card"><b>Contents</b>
+<ol>
+<li><a href="#s1">Two-view geometry: the big picture</a></li>
+<li><a href="#s2">Triangulation: the problem</a></li>
+<li><a href="#s3">Backprojection</a></li>
+<li><a href="#s4">Why rays don't meet (noise)</a></li>
+<li><a href="#s5">x = PX is a similarity relation</a></li>
+<li><a href="#s6">Cross &amp; dot product reminder</a></li>
+<li><a href="#s7">Triangulation via x × PX = 0</a></li>
+<li><a href="#s8">Stacking both views: AX = 0</a></li>
+<li><a href="#s9">Epipolar geometry: vocabulary</a></li>
+<li><a href="#s10">Quiz: fill in the blanks</a></li>
+<li><a href="#s11">The epipolar constraint</a></li>
+<li><a href="#s12">Converging vs parallel cameras</a></li>
+<li><a href="#s13">Why it matters: stereo matching</a></li>
+<li><a href="#s14">Essential matrix: motivation</a></li>
+<li><a href="#s15">Lines as vectors: xᵀl = 0</a></li>
+<li><a href="#s16">x′ᵀEx = 0</a></li>
+<li><a href="#s17">Essential matrix vs homography</a></li>
+<li><a href="#s18">Deriving E = R[t]ₓ</a></li>
+<li><a href="#s19">Properties of E</a></li>
+<li><a href="#s20">Fundamental matrix F</a></li>
+<li><a href="#s21">8-point algorithm: setting up</a></li>
+<li><a href="#s22">Solving AX = 0: total least squares &amp; SVD</a></li>
+<li><a href="#s23">The full algorithm + rank-2</a></li>
+<li><a href="#s24">Example: Arc de Triomphe</a></li>
+<li><a href="#s25">Finding the epipole</a></li>
+<li><a href="#s26">Python: triangulation, 8-point, epipole</a></li>
+<li><a href="#s27">Cheat sheet &amp; self-test</a></li>
+</ol>
+</nav>
+
+<!-- ================= 1 ================= -->
+<h2 id="s1"><span class="num">1</span>Two-view geometry: the big picture</h2>
+<p>The title slide shows a 3D structure (a pavilion) photographed from <b>two different viewpoints</b>. One small patch on its base appears in both photos. Each photo is a 2D projection, so depth is lost in each view, but <b>two views together</b> let us recover it.</p>
+<figure>
+<svg viewBox="0 0 640 250" role="img" aria-label="One 3D point seen by two cameras">
+  <circle cx="320" cy="40" r="7" class="dotK"/><text x="332" y="38" font-size="15" font-weight="700">X (3D point)</text>
+  <polygon points="90,120 210,95 210,190 90,215" class="s1"/><text x="150" y="235" text-anchor="middle" font-size="13">image 1 (camera P)</text>
+  <polygon points="430,95 550,120 550,215 430,190" class="s2"/><text x="490" y="235" text-anchor="middle" font-size="13">image 2 (camera P′)</text>
+  <circle cx="60" cy="200" r="6" class="dotR"/><text x="48" y="222" font-size="13" text-anchor="middle">C</text>
+  <circle cx="580" cy="200" r="6" class="dotR"/><text x="592" y="222" font-size="13" text-anchor="middle">C′</text>
+  <line x1="60" y1="200" x2="320" y2="40" class="ln" stroke-dasharray="6 4"/>
+  <line x1="580" y1="200" x2="320" y2="40" class="ln" stroke-dasharray="6 4"/>
+  <circle cx="153" cy="143" r="5" class="dotA"/><text x="160" y="140" font-size="14" font-weight="700" style="fill:var(--accent)">x</text>
+  <circle cx="487" cy="143" r="5" class="dotO"/><text x="463" y="140" font-size="14" font-weight="700" style="fill:var(--orange)">x′</text>
+</svg>
+<figcaption>Same 3D point X → pixel <b>x</b> in image 1 and pixel <b>x′</b> in image 2. A matched pair {x, x′} is called a <b>correspondence</b>.</figcaption>
+</figure>
+<div class="tw"><table>
+<tr><th>Question</th><th>Known</th><th>Unknown</th><th>Tool (this lecture)</th></tr>
+<tr><td>Where is the 3D point?</td><td>P, P′, x, x′</td><td>X</td><td><b>Triangulation</b></td></tr>
+<tr><td>Where can the match of x be?</td><td>x, cameras' relation</td><td>x′ (search region)</td><td><b>Epipolar geometry</b> (E / F)</td></tr>
+<tr><td>How are the two cameras related?</td><td>many {x, x′}</td><td>F</td><td><b>8-point algorithm</b></td></tr>
+</table></div>
+
+<!-- ================= TRIANGULATION ================= -->
+<h2 id="s2"><span class="num">2</span>Triangulation: the problem</h2>
+<div class="card def"><b class="tag">Definition</b><br>
+<b>Triangulation</b>: given a set of (noisy) matched points \(\{\mathbf{x}_i, \mathbf{x}'_i\}\) and the camera matrices \(\mathbf{P}, \mathbf{P}'\), <b>estimate the 3D point \(\mathbf{X}\)</b>.</div>
+<p>Slide question: <b>which 3D points map to x?</b> Not just one: <b>every point on a ray</b> from the camera center through x projects to x. One image alone can't tell how far along the ray the point is (depth is lost).</p>
+
+<h2 id="s3"><span class="num">3</span>Backprojection: computing the ray</h2>
+<p>Slide question: <b>how can you compute this ray?</b> A line needs two points. Create two points on it and connect them:</p>
+<ol>
+<li><b>The camera center C.</b> Every ray of the camera passes through it. (From Module 09: C is the null space of P, i.e. \(\mathbf{P}\mathbf{C} = \mathbf{0}\).)</li>
+<li><b>\(\mathbf{P}^{+}\mathbf{x}\)</b>, where \(\mathbf{P}^{+} = \mathbf{P}^\top(\mathbf{P}\mathbf{P}^\top)^{-1}\) is the <b>pseudo-inverse</b> of the 3×4 matrix P.</li>
+</ol>
+<div class="card def"><b class="tag">Definition</b><br>This procedure (camera center + \(\mathbf{P}^+\mathbf{x}\), joined by a line) is called <b>backprojection</b>: turning a 2D image point back into a 3D ray.</div>
+<div class="card tip"><b class="tag">Slide question: why does P⁺x map to x?</b><br>
+Project it: \(\mathbf{P}(\mathbf{P}^{+}\mathbf{x}) = \mathbf{P}\mathbf{P}^\top(\mathbf{P}\mathbf{P}^\top)^{-1}\mathbf{x} = \mathbf{I}\,\mathbf{x} = \mathbf{x}\). ✔ So \(\mathbf{P}^+\mathbf{x}\) is a 3D point that lands exactly on x, hence it lies on the ray.</div>
+<figure>
+<svg viewBox="0 0 640 230" role="img" aria-label="Backprojection ray through camera center and pseudo-inverse point">
+  <polygon points="200,90 300,60 300,180 200,210" class="s2"/><text x="250" y="225" text-anchor="middle" font-size="13">image 1</text>
+  <circle cx="90" cy="185" r="6" class="dotR"/><text x="78" y="205" font-size="15" font-weight="700">C</text>
+  <line x1="90" y1="185" x2="600" y2="20" class="ln"/>
+  <circle cx="246" cy="134.5" r="5" class="dotK"/><text x="226" y="128" font-size="15" font-weight="700">x</text>
+  <circle cx="440" cy="72" r="6" class="dotA"/><text x="450" y="95" font-size="15" font-weight="700" style="fill:var(--accent)">P⁺x</text>
+  <text x="560" y="55" font-size="12" class="mut">every point here also projects to x</text>
+</svg>
+<figcaption>Slide question "<b>how do we find the exact point on the ray?</b>": with one camera you can't. You need the <b>second camera's ray</b>.</figcaption>
+</figure>
+
+<h2 id="s4"><span class="num">4</span>Find the 3D point: will the rays intersect?</h2>
+<figure>
+<svg viewBox="0 0 640 250" role="img" aria-label="Two backprojected rays nearly intersecting">
+  <polygon points="90,110 190,85 190,200 90,225" class="s2"/>
+  <polygon points="450,85 550,110 550,225 450,200" class="s2"/>
+  <circle cx="60" cy="215" r="6" class="dotR"/><text x="44" y="238" font-size="14" font-weight="700">C</text>
+  <circle cx="580" cy="215" r="6" class="dotR"/><text x="584" y="238" font-size="14" font-weight="700">C′</text>
+  <line x1="60" y1="215" x2="355" y2="30" class="ln"/>
+  <line x1="580" y1="215" x2="292" y2="36" class="ln"/>
+  <line x1="320" y1="60" x2="327" y2="47" stroke="var(--red)" stroke-width="2" stroke-dasharray="3 2"/>
+  <circle cx="323" cy="54" r="12" fill="none" stroke="var(--red)" stroke-width="2"/>
+  <text x="345" y="80" font-size="12" style="fill:var(--red)">rays just miss each other</text>
+  <text x="140" y="245" text-anchor="middle" font-size="12">x</text><text x="500" y="245" text-anchor="middle" font-size="12">x′</text>
+</svg>
+</figure>
+<div class="card warn"><b class="tag">Slide question: will the lines intersect?</b><br>
+In theory yes, at X. In practice <b>almost never</b>. Pixel positions are noisy (detection error, rounding, imperfect calibration), so the two 3D rays are <b>skew lines</b>: they pass close to each other but don't touch. <b>No single solution exists due to noise</b>, so we look for the 3D point that best fits both views. That's a least-squares problem.</div>
+
+<h2 id="s5"><span class="num">5</span>x = PX is a similarity relation</h2>
+<p>Slide question: <b>can we compute X from a single correspondence x?</b> In \(\mathbf{x} = \mathbf{P}\mathbf{X}\), x and P are <b>known</b>, but one view only gives the ray, so no. We also can't just "solve" the equation directly, because:</p>
+<div class="card def"><b class="tag">Key point</b><br>
+\(\mathbf{x} = \mathbf{P}\mathbf{X}\) is a <b>similarity relation</b> (equality <i>up to scale</i>), because it involves <b>homogeneous coordinates</b>. Written with a real equals sign:
+<div class="math">\[ \mathbf{x} = \alpha\,\mathbf{P}\mathbf{X} \qquad\Longleftrightarrow\qquad \begin{bmatrix}x\\y\\z\end{bmatrix} = \alpha\begin{bmatrix} p_1 & p_2 & p_3 & p_4\\ p_5 & p_6 & p_7 & p_8 \\ p_9 & p_{10} & p_{11} & p_{12}\end{bmatrix}\begin{bmatrix}X\\Y\\Z\\1\end{bmatrix} \]</div>
+Same <b>ray direction</b>, but differs by an unknown <b>scale factor α</b>. (The slide labels this side "heterogeneous coordinate", meaning the actual vector values rather than the up-to-scale class.)</div>
+<p>Slide question: <b>how do we solve for unknowns in a similarity relation?</b> Get rid of α. The trick is the <b>cross product</b>.</p>
+
+<h2 id="s6"><span class="num">6</span>Linear algebra reminder: cross &amp; dot product</h2>
+<div class="card def"><b class="tag">Cross product</b><br>Takes two vectors and returns a vector <b>perpendicular</b> to both:
+<div class="math">\[ \mathbf{c} = \mathbf{a}\times\mathbf{b} = \begin{bmatrix} a_2b_3 - a_3b_2 \\ a_3b_1 - a_1b_3 \\ a_1b_2 - a_2b_1 \end{bmatrix}, \qquad \mathbf{c}\cdot\mathbf{a} = 0,\quad \mathbf{c}\cdot\mathbf{b} = 0 \]</div></div>
+<figure>
+<svg viewBox="0 0 640 210" role="img" aria-label="Cross product vector perpendicular to plane of a and b">
+  <polygon points="160,150 330,100 500,150 330,200" fill="var(--muted)" fill-opacity=".15" stroke="var(--line)"/>
+  <line x1="300" y1="160" x2="440" y2="120" class="lnA" marker-end="url(#arA)"/><text x="447" y="120" font-size="15" font-weight="700" style="fill:var(--accent)">b</text>
+  <line x1="300" y1="160" x2="420" y2="185" class="lnO" marker-end="url(#arO)"/><text x="425" y="195" font-size="15" font-weight="700" style="fill:var(--orange)">a</text>
+  <line x1="300" y1="160" x2="300" y2="30" class="lnG" marker-end="url(#arG)"/><text x="310" y="40" font-size="15" font-weight="700" style="fill:var(--green)">c = a × b</text>
+  <text x="560" y="80" font-size="13">c · a = 0</text><text x="560" y="100" font-size="13">c · b = 0</text>
+</svg>
+</figure>
+<div class="card warn"><b class="tag">Remember this!!!</b><br>
+The cross product of two vectors <b>in the same direction</b> is the zero vector: \(\mathbf{a}\times\mathbf{a} = \mathbf{0}\), and also \(\mathbf{a}\times(\alpha\mathbf{a}) = \mathbf{0}\) for any scale α.</div>
+<p><b>Cross product as a matrix multiplication</b> (we'll need this for the Essential matrix):</p>
+<div class="math">\[ \mathbf{a}\times\mathbf{b} = [\mathbf{a}]_\times\mathbf{b} = \begin{bmatrix} 0 & -a_3 & a_2 \\ a_3 & 0 & -a_1 \\ -a_2 & a_1 & 0 \end{bmatrix}\begin{bmatrix}b_1\\b_2\\b_3\end{bmatrix} \]</div>
+<p>\([\mathbf{a}]_\times\) is <b>skew-symmetric</b>: \([\mathbf{a}]_\times^\top = -[\mathbf{a}]_\times\) (zero diagonal, mirrored entries with flipped signs).</p>
+<div class="card def"><b class="tag">Compare with: dot product</b><br>The <b>dot product of two orthogonal vectors is (scalar) zero</b>. Since c = a × b is orthogonal to both a and b: \(\mathbf{c}\cdot\mathbf{a} = \mathbf{c}\cdot\mathbf{b} = 0\).</div>
+<div class="tw"><table>
+<tr><th></th><th>Cross product</th><th>Dot product</th></tr>
+<tr><td>Output</td><td>vector</td><td>scalar</td></tr>
+<tr><td>Is zero when…</td><td>vectors are <b>parallel</b> (same direction)</td><td>vectors are <b>perpendicular</b></td></tr>
+<tr><td>Used here for</td><td>removing scale in x = αPX (triangulation)</td><td>coplanarity (deriving E)</td></tr>
+</table></div>
+<div class="card ex"><b class="tag">Example</b><br>
+a = (1, 0, 0), b = (0, 1, 0): a × b = (0·0 − 0·1, 0·0 − 1·0, 1·1 − 0·0) = <b>(0, 0, 1)</b>, perpendicular to both. ✔<br>
+a = (2, 4, 6), b = (1, 2, 3) (parallel): a × b = (4·3 − 6·2, 6·1 − 2·3, 2·2 − 4·1) = <b>(0, 0, 0)</b>. ✔</div>
+
+<h2 id="s7"><span class="num">7</span>Back to triangulation: x × PX = 0</h2>
+<p>Slide question: <b>how can we rewrite x = αPX using vector products?</b> x and PX point in the <b>same direction</b>, so:</p>
+<div class="math">\[ \boxed{\;\mathbf{x}\times\mathbf{P}\mathbf{X} = \mathbf{0}\;} \qquad\text{(cross product of same-direction vectors is zero, and this equality removes the scale factor α)} \]</div>
+<p><b>Expand.</b> Write P by its rows \(\mathbf{p}_1^\top, \mathbf{p}_2^\top, \mathbf{p}_3^\top\):</p>
+<div class="math">\[ \begin{bmatrix}x\\y\\z\end{bmatrix} = \alpha\begin{bmatrix} \text{—}\ \mathbf{p}_1^\top\ \text{—} \\ \text{—}\ \mathbf{p}_2^\top\ \text{—} \\ \text{—}\ \mathbf{p}_3^\top\ \text{—}\end{bmatrix}\mathbf{X} = \alpha\begin{bmatrix}\mathbf{p}_1^\top\mathbf{X}\\ \mathbf{p}_2^\top\mathbf{X}\\ \mathbf{p}_3^\top\mathbf{X}\end{bmatrix} \]</div>
+<p>Take the cross product (with the image point normalized so z = 1):</p>
+<div class="math">\[ \begin{bmatrix}x\\y\\1\end{bmatrix}\times\begin{bmatrix}\mathbf{p}_1^\top\mathbf{X}\\ \mathbf{p}_2^\top\mathbf{X}\\ \mathbf{p}_3^\top\mathbf{X}\end{bmatrix} = \begin{bmatrix} y\,\mathbf{p}_3^\top\mathbf{X} - \mathbf{p}_2^\top\mathbf{X} \\ \mathbf{p}_1^\top\mathbf{X} - x\,\mathbf{p}_3^\top\mathbf{X} \\ x\,\mathbf{p}_2^\top\mathbf{X} - y\,\mathbf{p}_1^\top\mathbf{X} \end{bmatrix} = \begin{bmatrix}0\\0\\0\end{bmatrix} \]</div>
+<div class="card def"><b class="tag">Only 2 equations, not 3</b><br>
+The <b>third line is a linear combination of the first two</b>: it equals −(x·row 1 + y·row 2). Check: \(-x(y\mathbf{p}_3^\top - \mathbf{p}_2^\top) - y(\mathbf{p}_1^\top - x\mathbf{p}_3^\top) = x\mathbf{p}_2^\top - y\mathbf{p}_1^\top\). ✔ (The slide says "x times the first line plus y times the second", which is the same thing up to sign.)<br>
+⇒ <b>One 2D-to-3D point correspondence gives you 2 equations.</b></div>
+
+<h2 id="s8"><span class="num">8</span>Stacking both views: AX = 0</h2>
+<p><b>Remove the third row and rearrange as a system on the unknowns X:</b></p>
+<div class="math">\[ \begin{bmatrix} y\,\mathbf{p}_3^\top - \mathbf{p}_2^\top \\ \mathbf{p}_1^\top - x\,\mathbf{p}_3^\top \end{bmatrix}\mathbf{X} = \begin{bmatrix}0\\0\end{bmatrix} \quad\Longrightarrow\quad \mathbf{A}_i\mathbf{X} = \mathbf{0} \]</div>
+<p>Now <b>concatenate the 2D points from both images</b>: two rows from camera one, two rows from camera two:</p>
+<div class="math">\[ \underbrace{\begin{bmatrix} y\,\mathbf{p}_3^\top - \mathbf{p}_2^\top \\ \mathbf{p}_1^\top - x\,\mathbf{p}_3^\top \\ y'\,\mathbf{p}_3'^\top - \mathbf{p}_2'^\top \\ \mathbf{p}_1'^\top - x'\,\mathbf{p}_3'^\top \end{bmatrix}}_{\mathbf{A}}\mathbf{X} = \begin{bmatrix}0\\0\\0\\0\end{bmatrix} \qquad \mathbf{A}\mathbf{X} = \mathbf{0} \]</div>
+<div class="card tip"><b class="tag">Sanity check: dimensions?</b><br>
+Each \(\mathbf{p}_i^\top\) is 1×4, so <b>A is 4×4</b>. X is <b>4×1</b> (homogeneous 3D point [X, Y, Z, W]). The zero vector is <b>4×1</b>.<br>
+4 equations, 3 real unknowns (X is up to scale), so the system is <b>overdetermined</b>. That's good, because with noise it gives a best fit.</div>
+<div class="card def"><b class="tag">How do we solve a homogeneous linear system? SVD!</b><br>
+X = the <b>right singular vector of A with the smallest singular value</b> (last column of V in A = UΣVᵀ). Then divide by its 4th entry to get (X, Y, Z). This method is called <b>linear (DLT) triangulation</b>. Full reasoning in <a href="#s22">Section 22</a>.</div>
+
+<!-- ================= EPIPOLAR GEOMETRY ================= -->
+<h2 id="s9"><span class="num">9</span>Epipolar geometry: vocabulary</h2>
+<figure>
+<svg viewBox="0 0 640 290" role="img" aria-label="Epipolar geometry: baseline, epipoles, epipolar plane and lines">
+  <polygon points="40,240 320,50 600,240" fill="#f2d10c" fill-opacity=".45" stroke="#c9a800"/>
+  <polygon points="110,110 190,70 190,250 110,290" fill="var(--muted)" fill-opacity=".28" stroke="var(--muted)"/>
+  <polygon points="450,70 530,110 530,290 450,250" fill="var(--muted)" fill-opacity=".28" stroke="var(--muted)"/>
+  <line x1="40" y1="240" x2="600" y2="240" stroke="#22a35a" stroke-width="3.5"/>
+  <text x="320" y="262" text-anchor="middle" font-size="13" style="fill:var(--green)" font-weight="700">baseline</text>
+  <circle cx="40" cy="240" r="6" class="dotK"/><text x="22" y="236" font-size="15" font-weight="700">o</text>
+  <circle cx="600" cy="240" r="6" class="dotK"/><text x="608" y="236" font-size="15" font-weight="700">o′</text>
+  <circle cx="320" cy="50" r="6" class="dotK"/><text x="330" y="45" font-size="15" font-weight="700">p</text>
+  <line x1="40" y1="240" x2="320" y2="50" class="ln"/><line x1="600" y1="240" x2="320" y2="50" class="ln"/>
+  <circle cx="155" cy="240" r="5" class="dotR"/><text x="150" y="232" font-size="14" font-weight="700" style="fill:var(--red)">e</text>
+  <circle cx="485" cy="240" r="5" class="dotR"/><text x="489" y="232" font-size="14" font-weight="700" style="fill:var(--red)">e′</text>
+  <line x1="155" y1="240" x2="155" y2="162" stroke="var(--accent)" stroke-width="3.5"/>
+  <line x1="485" y1="240" x2="485" y2="162" stroke="var(--accent)" stroke-width="3.5"/>
+  <circle cx="155" cy="162" r="4" class="dotK"/><text x="160" y="160" font-size="13" font-weight="700">x</text>
+  <circle cx="485" cy="162" r="4" class="dotK"/><text x="460" y="160" font-size="13" font-weight="700">x′</text>
+  <text x="165" y="205" font-size="14" font-weight="700" style="fill:var(--accent)">l</text>
+  <text x="468" y="205" font-size="14" font-weight="700" style="fill:var(--accent)">l′</text>
+  <text x="320" y="150" text-anchor="middle" font-size="14" font-weight="700">epipolar plane</text>
+</svg>
+<figcaption>Two camera centers o, o′, a 3D point p, and the two image planes (grey).</figcaption>
+</figure>
+<div class="tw"><table>
+<tr><th>Term</th><th>Definition</th></tr>
+<tr><td><b style="color:var(--green)">Baseline</b></td><td>The line joining the two <b>camera centers</b> o and o′.</td></tr>
+<tr><td><b style="color:var(--red)">Epipole</b> (e, e′)</td><td><b>Projection of the other camera's center</b> on the image plane (e = image of o′ in camera 1). Equivalently, where the <b>baseline pierces each image plane</b>.</td></tr>
+<tr><td><b>Epipolar plane</b></td><td>The plane containing the <b>baseline and the 3D point p</b>, i.e. the triangle o–p–o′.</td></tr>
+<tr><td><b style="color:var(--accent)">Epipolar line</b> (l, l′)</td><td><b>Intersection of the epipolar plane with an image plane</b>. It always passes through the epipole.</td></tr>
+</table></div>
+<div class="card tip"><b class="tag">One family, many planes</b><br>Every 3D point gives its own epipolar plane, but <b>all of them contain the baseline</b>. They're like pages of a book rotating around its spine (the baseline). So all epipolar lines in an image pass through the same point, the <b>epipole</b>.</div>
+
+<h2 id="s10"><span class="num">10</span>Quiz: fill in the blanks</h2>
+<p>The slides run a "What is this?" quiz on the same picture: the yellow region is the <b>epipolar plane</b>, the line l is the <b>epipolar line</b>, the point e is the <b>epipole</b>, and the green line is the <b>baseline</b>. Then come the fill-in-the-blank questions:</p>
+<details><summary>The point x (left image) maps to a ______ in the right image.</summary><b>line</b>: the epipolar line l′. (x backprojects to a ray, and a ray seen by the other camera is a line.)</details>
+<details><summary>The baseline connects the ______ and ______.</summary>the two <b>camera centers</b> (o and o′).</details>
+<details><summary>An epipolar line (left image) maps to a ______ in the right image.</summary><b>line</b>: the corresponding epipolar line (both come from the same epipolar plane).</details>
+<details><summary>An epipole e is a projection of the ______ on the image plane.</summary><b>other camera's center</b> (e is the image of o′).</details>
+<details><summary>All epipolar lines in an image intersect at the ______.</summary><b>epipole</b>.</details>
+
+<h2 id="s11"><span class="num">11</span>The epipolar constraint</h2>
+<p><b>Another way to construct the epipolar plane, this time given x:</b> backproject x to a ray in 3D. The plane through this ray and the baseline is the epipolar plane, and its intersection with image 2 is the epipolar line l′.</p>
+<figure>
+<svg viewBox="0 0 640 250" role="img" aria-label="Points along the ray of x project onto the epipolar line l'">
+  <polygon points="430,60 520,95 520,245 430,210" fill="var(--muted)" fill-opacity=".28" stroke="var(--muted)"/>
+  <polygon points="80,95 170,60 170,210 80,245" fill="var(--muted)" fill-opacity=".28" stroke="var(--muted)"/>
+  <circle cx="40" cy="200" r="6" class="dotK"/><text x="22" y="198" font-size="15" font-weight="700">o</text>
+  <circle cx="600" cy="200" r="6" class="dotK"/><text x="606" y="198" font-size="15" font-weight="700">o′</text>
+  <line x1="40" y1="200" x2="600" y2="200" stroke="#22a35a" stroke-width="2.5"/>
+  <line x1="40" y1="200" x2="380" y2="20" class="lnA"/>
+  <circle cx="124" cy="155" r="5" class="dotA"/><text x="105" y="150" font-size="15" font-weight="700" style="fill:var(--accent)">x</text>
+  <g class="dotK"><circle cx="230" cy="99" r="4"/><circle cx="290" cy="68" r="4"/><circle cx="340" cy="41" r="4"/><circle cx="380" cy="20" r="4"/></g>
+  <g stroke="var(--muted)" stroke-width="1.2"><line x1="230" y1="99" x2="600" y2="200"/><line x1="290" y1="68" x2="600" y2="200"/><line x1="340" y1="41" x2="600" y2="200"/><line x1="380" y1="20" x2="600" y2="200"/></g>
+  <line x1="475" y1="200" x2="505" y2="150" stroke="var(--red)" stroke-width="3.5"/>
+  <text x="510" y="148" font-size="15" font-weight="700" style="fill:var(--red)">l′</text>
+  <text x="458" y="222" font-size="13">e′</text>
+  <text x="320" y="240" text-anchor="middle" font-size="13">candidates for X along the ray → all land on l′</text>
+</svg>
+</figure>
+<div class="card def"><b class="tag">Epipolar constraint</b><br><b>Potential matches for x lie on the epipolar line l′.</b> We don't know the depth of X, but wherever it is on the ray, its image in camera 2 is somewhere on l′.</div>
+
+<h2 id="s12"><span class="num">12</span>Converging vs parallel cameras</h2>
+<div class="tw"><table>
+<tr><th></th><th>Converging cameras</th><th>Parallel cameras</th></tr>
+<tr><td>Setup</td><td>Cameras turned toward each other (both looking at the vase)</td><td>Image planes parallel to the baseline (side-by-side stereo rig)</td></tr>
+<tr><td>Epipolar lines</td><td>Tilted, fanning out from one point</td><td><b>Parallel</b> (horizontal) lines</td></tr>
+<tr><td>Slide question: where is the epipole?</td><td>Where the lines meet. <b>It's not always in the image</b>; in the vase example it's far to the right of the picture.</td><td><b>At infinity</b>: parallel lines meet at a point at infinity, [x y 0]ᵀ (Module 08).</td></tr>
+</table></div>
+<figure>
+<svg viewBox="0 0 640 200" role="img" aria-label="Converging epipolar lines meet outside image; parallel lines meet at infinity">
+  <g transform="translate(10,20)">
+    <rect x="0" y="20" width="160" height="130" fill="var(--card)" stroke="var(--muted)"/>
+    <g class="lnG"><line x1="0" y1="35" x2="290" y2="95"/><line x1="0" y1="65" x2="290" y2="95"/><line x1="0" y1="110" x2="290" y2="95"/><line x1="0" y1="145" x2="290" y2="95"/></g>
+    <circle cx="290" cy="95" r="7" class="dotG"/><text x="290" y="70" text-anchor="middle" font-size="13">epipole e</text><text x="290" y="125" text-anchor="middle" font-size="12" class="mut">outside the image!</text>
+    <text x="80" y="170" text-anchor="middle" font-size="13" font-weight="600">converging</text>
+  </g>
+  <g transform="translate(360,20)">
+    <rect x="0" y="20" width="160" height="130" fill="var(--card)" stroke="var(--muted)"/>
+    <g class="lnA"><line x1="-10" y1="45" x2="260" y2="45"/><line x1="-10" y1="80" x2="260" y2="80"/><line x1="-10" y1="115" x2="260" y2="115"/></g>
+    <path d="M200 140 h70" class="ln" marker-end="url(#arK)"/><text x="228" y="160" font-size="13">e at ∞</text>
+    <text x="80" y="170" text-anchor="middle" font-size="13" font-weight="600">parallel</text>
+  </g>
+</svg>
+</figure>
+
+<h2 id="s13"><span class="num">13</span>Why it matters: stereo matching</h2>
+<div class="card def"><b class="tag">Task</b><br>The epipolar constraint is an important concept for <b>stereo vision</b>. Task: <b>match a point in the left image to a point in the right image</b> (the slides use a courtyard building photographed twice).</div>
+<ul>
+<li>Slide question: <b>how would you do it?</b> Naively, compare the patch around x with every pixel in the right image, which is slow and causes many false matches.</li>
+<li><b>We want to avoid search over the entire image.</b></li>
+<li><b>The epipolar constraint reduces the search to a single line</b>, l′: a 2D search becomes 1D.</li>
+<li>Next question: <b>how do you compute the epipolar line?</b> → the Essential matrix.</li>
+</ul>
+
+<!-- ================= ESSENTIAL ================= -->
+<h2 id="s14"><span class="num">14</span>The Essential matrix: motivation</h2>
+<div class="card def"><b class="tag">Definition</b><br>
+The <b>Essential Matrix E</b> is a <b>3×3 matrix that encodes epipolar geometry</b>. Given a point in one image, <b>multiplying by the essential matrix tells us the epipolar line</b> in the second image:
+<div class="math">\[ \boxed{\;\mathbf{E}\mathbf{x} = \mathbf{l}'\;} \]</div></div>
+
+<h2 id="s15"><span class="num">15</span>Lines as vectors: xᵀl = 0</h2>
+<p>A 2D line \(ax + by + c = 0\) is written as a 3-vector \(\mathbf{l} = [a\ \ b\ \ c]^\top\) (homogeneous, so defined up to scale).</p>
+<p>Slide question: <b>if point x is on line l, then xᵀl = ?</b></p>
+<div class="math">\[ \mathbf{x}^\top\mathbf{l} = \begin{bmatrix}x & y & 1\end{bmatrix}\begin{bmatrix}a\\b\\c\end{bmatrix} = ax + by + c = \mathbf{0} \]</div>
+<div class="card ex"><b class="tag">Example</b><br>Line \(\mathbf{l} = [1, -1, 0]\) is \(x - y = 0\) (the diagonal). Point (3, 3): \(\ [3,3,1]\cdot[1,-1,0] = 3 - 3 + 0 = 0\) ✔ on the line. Point (3, 4): \(3 - 4 = -1 \ne 0\), not on the line.</div>
+
+<h2 id="s16"><span class="num">16</span>Putting it together: x′ᵀEx = 0</h2>
+<p>Slide question: <b>if \(\mathbf{x}'^\top\mathbf{l}' = 0\) and \(\mathbf{E}\mathbf{x} = \mathbf{l}'\), then \(\mathbf{x}'^\top\mathbf{E}\mathbf{x} = ?\)</b> Substitute l′:</p>
+<div class="math">\[ \boxed{\;\mathbf{x}'^\top\mathbf{E}\,\mathbf{x} = 0\;} \]</div>
+<p>x′ lies on the epipolar line of x, and that's exactly what this one scalar equation says.</p>
+
+<h2 id="s17"><span class="num">17</span>Essential matrix vs homography</h2>
+<p>Slide question: <b>what's the difference?</b> They are both 3×3 matrices, but:</p>
+<div class="tw"><table>
+<tr><th></th><th>Essential matrix E</th><th>Homography H (Module 08)</th></tr>
+<tr><td>Equation</td><td>\(\mathbf{l}' = \mathbf{E}\mathbf{x}\)</td><td>\(\mathbf{x}' = \mathbf{H}\mathbf{x}\)</td></tr>
+<tr><td>Maps a…</td><td><b>point → line</b></td><td><b>point → point</b></td></tr>
+<tr><td>Why</td><td>Depth unknown, so the match can be anywhere on a line</td><td>Scene is a plane (or the camera only rotates), so the match is fixed</td></tr>
+<tr><td>Equations per correspondence</td><td><b>1</b></td><td><b>2</b></td></tr>
+<tr><td>Invertible?</td><td>No (rank 2)</td><td>Yes (full rank)</td></tr>
+</table></div>
+
+<h2 id="s18"><span class="num">18</span>Where does the Essential matrix come from? (derivation)</h2>
+<figure>
+<svg viewBox="0 0 640 230" role="img" aria-label="Vectors x, t, x' are coplanar">
+  <polygon points="40,180 320,40 600,180" fill="#f2d10c" fill-opacity=".4" stroke="#c9a800"/>
+  <line x1="600" y1="180" x2="50" y2="180" stroke="#22a35a" stroke-width="2.2" marker-end="url(#arG)"/>
+  <text x="320" y="200" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--green)">t</text>
+  <line x1="40" y1="180" x2="150" y2="125" stroke="var(--red)" stroke-width="2.2" marker-end="url(#arR)"/><text x="125" y="115" font-size="15" font-weight="700" style="fill:var(--red)">x</text>
+  <line x1="600" y1="180" x2="490" y2="125" stroke="var(--accent)" stroke-width="2.2" marker-end="url(#arA)"/><text x="500" y="115" font-size="15" font-weight="700" style="fill:var(--accent)">x′</text>
+  <circle cx="320" cy="40" r="6" class="dotK"/><text x="330" y="36" font-size="15" font-weight="700">X</text>
+  <circle cx="40" cy="180" r="5" class="dotK"/><text x="16" y="186" font-size="15" font-weight="700">o</text>
+  <circle cx="600" cy="180" r="5" class="dotK"/><text x="606" y="176" font-size="15" font-weight="700">o′</text>
+  <path d="M60 205 Q320 245 580 205" class="lnO" stroke-dasharray="6 4" marker-end="url(#arO)"/><text x="470" y="228" font-size="13" style="fill:var(--orange)">R, t</text>
+</svg>
+<figcaption>x, t and x′ all lie in the epipolar plane, so they are <b>coplanar</b>.</figcaption>
+</figure>
+<p><b>Ingredient 1: rigid motion.</b> Camera 2 is camera 1 moved by rotation R and translation t:</p>
+<div class="math">\[ \mathbf{x}' = \mathbf{R}(\mathbf{x} - \mathbf{t}) \]</div>
+<p>Slide question: <b>does this look familiar?</b> Yes: it's the <b>camera-camera transform, just like the world-camera transform</b> \(\tilde{\mathbf{X}}_c = \mathbf{R}(\tilde{\mathbf{X}}_w - \tilde{\mathbf{C}})\) from Module 09.</p>
+
+<p><b>Ingredient 2: coplanarity.</b> The three vectors x, t, x′ are coplanar.</p>
+<ul>
+<li>Slide question: \(\mathbf{x}^\top(\mathbf{t}\times\mathbf{x}) = ?\) <b>0</b>. The cross product \(\mathbf{t}\times\mathbf{x}\) is a vector <b>orthogonal to the plane</b>, and the dot product of orthogonal vectors is 0.</li>
+<li>Slide question: \((\mathbf{x}-\mathbf{t})^\top(\mathbf{t}\times\mathbf{x}) = ?\) Also <b>0</b>: \(\mathbf{x} - \mathbf{t}\) also lies in the plane (it's the direction from o′ to the point, written in camera-1 coordinates).</li>
+</ul>
+<div class="math">\[ (\mathbf{x}-\mathbf{t})^\top(\mathbf{t}\times\mathbf{x}) = 0 \]</div>
+
+<h3>Putting it together (step by step)</h3>
+<div class="tw"><table>
+<tr><th>Step</th><th>Equation</th><th>What we did</th></tr>
+<tr><td>1</td><td>\((\mathbf{x}-\mathbf{t})^\top(\mathbf{t}\times\mathbf{x}) = 0\)</td><td>coplanarity</td></tr>
+<tr><td>2</td><td>\((\mathbf{x}'^\top\mathbf{R})(\mathbf{t}\times\mathbf{x}) = 0\)</td><td>From rigid motion, \(\mathbf{x}-\mathbf{t} = \mathbf{R}^\top\mathbf{x}'\) (R is a rotation, so \(\mathbf{R}^{-1} = \mathbf{R}^\top\)). Transposing gives \(\mathbf{x}'^\top\mathbf{R}\).</td></tr>
+<tr><td>3</td><td>\((\mathbf{x}'^\top\mathbf{R})([\mathbf{t}]_\times\mathbf{x}) = 0\)</td><td>Use the skew-symmetric matrix to represent the cross product</td></tr>
+<tr><td>4</td><td>\(\mathbf{x}'^\top(\mathbf{R}[\mathbf{t}]_\times)\mathbf{x} = 0\)</td><td>Regroup (matrix multiplication is associative)</td></tr>
+<tr><td>5</td><td>\(\boxed{\mathbf{x}'^\top\mathbf{E}\,\mathbf{x} = 0},\quad \mathbf{E} = \mathbf{R}[\mathbf{t}]_\times\)</td><td>Name it: the <b>Essential Matrix</b> [Longuet-Higgins 1981]</td></tr>
+</table></div>
+<div class="card tip"><b class="tag">So E depends only on the camera motion</b><br>E is built from R and t only (the <b>extrinsics</b> between the two cameras). No K appears, because E works on <b>camera coordinates</b>. Since \([\mathbf{t}]_\times\) has rank 2, <b>E has rank 2</b>. It has 5 DOF: 3 for rotation + 2 for the translation direction, since the overall scale is lost.<br>
+<span style="color:var(--muted);font-size:.9rem">(The rank and DOF facts are standard results from Hartley–Zisserman, not stated on the slides.)</span></div>
+
+<h2 id="s19"><span class="num">19</span>Properties of the E matrix</h2>
+<div class="tw"><table>
+<tr><th>Property</th><th>Equations</th><th>Meaning</th></tr>
+<tr><td style="background:rgba(232,84,84,.15)"><b>Longuet-Higgins equation</b></td><td>\(\mathbf{x}'^\top\mathbf{E}\mathbf{x} = 0\)</td><td>The epipolar constraint for a correspondence</td></tr>
+<tr><td style="background:rgba(112,190,68,.18)"><b>Epipolar lines</b></td><td>\(\mathbf{x}^\top\mathbf{l} = 0,\ \ \mathbf{l}' = \mathbf{E}\mathbf{x}\)<br>\(\mathbf{x}'^\top\mathbf{l}' = 0,\ \ \mathbf{l} = \mathbf{E}^\top\mathbf{x}'\)</td><td>E maps left points to right lines; <b>Eᵀ</b> maps right points to left lines</td></tr>
+<tr><td style="background:rgba(80,160,240,.18)"><b>Epipoles</b></td><td>\(\mathbf{e}'^\top\mathbf{E} = \mathbf{0},\ \ \mathbf{E}\mathbf{e} = \mathbf{0}\)</td><td>The epipoles are the <b>null spaces</b> of E (right null space → e, left null space → e′)</td></tr>
+</table></div>
+<div class="card warn"><b class="tag">Assumption (important!)</b><br>All of this holds for <b>2D points expressed in the camera coordinate system</b>, i.e. the <b>intrinsic matrices are identities</b> (K = I). Real images are in pixels → next section.</div>
+<div class="card tip"><b class="tag">Why Ee = 0?</b><br>Every epipolar line passes through e, so \(\mathbf{e}^\top\mathbf{l} = 0\) for every \(\mathbf{l} = \mathbf{E}^\top\mathbf{x}'\), i.e. \((\mathbf{E}\mathbf{e})^\top\mathbf{x}' = 0\) for all x′. That forces Ee = 0.</div>
+
+<!-- ================= FUNDAMENTAL ================= -->
+<h2 id="s20"><span class="num">20</span>The Fundamental matrix F</h2>
+<p>Slide question: <b>how do you generalize to non-identity intrinsic matrices?</b></p>
+<div class="card def"><b class="tag">Definition</b><br>The <b>fundamental matrix</b> is a <b>generalization of the essential matrix</b>, where the assumption of <b>identity intrinsic matrices is removed</b>.</div>
+<p>E operates on <b>2D coordinates expressed in the camera coordinate system</b> (\(\hat{\mathbf{x}}\)). Convert pixels to camera coordinates with the inverse intrinsics:</p>
+<div class="math">\[ \underbrace{\hat{\mathbf{x}}}_{\text{camera point}} = \mathbf{K}^{-1}\underbrace{\mathbf{x}}_{\text{image point}}, \qquad \hat{\mathbf{x}}' = \mathbf{K}'^{-1}\mathbf{x}' \]</div>
+<p>Substitute into \(\hat{\mathbf{x}}'^\top\mathbf{E}\hat{\mathbf{x}} = 0\), writing out the epipolar constraint in terms of image coordinates:</p>
+<div class="math">\[ (\mathbf{K}'^{-1}\mathbf{x}')^\top\mathbf{E}(\mathbf{K}^{-1}\mathbf{x}) = 0 \;\Rightarrow\; \mathbf{x}'^\top(\mathbf{K}'^{-\top}\mathbf{E}\mathbf{K}^{-1})\mathbf{x} = 0 \;\Rightarrow\; \boxed{\;\mathbf{x}'^\top\mathbf{F}\,\mathbf{x} = 0\;} \]</div>
+<p class="mut" style="color:var(--muted);font-size:.9rem">(One slide line shows "K′⁻ᵀEK⁻¹x = 0" without the leading x′ᵀ; that's a typo. The next line is the correct one.)</p>
+<div class="card def"><b class="tag">Same equation works in image coordinates!</b><br>\(\mathbf{x}'^\top\mathbf{F}\mathbf{x} = 0\). <b>F maps pixels to epipolar lines</b>: \(\mathbf{l}' = \mathbf{F}\mathbf{x}\). Every property of E carries over by swapping E → F (now with points in <b>image</b> coordinates):
+<ul style="margin:.3em 0">
+<li>\(\mathbf{x}'^\top\mathbf{F}\mathbf{x} = 0\)</li>
+<li>\(\mathbf{l}' = \mathbf{F}\mathbf{x},\quad \mathbf{l} = \mathbf{F}^\top\mathbf{x}'\)</li>
+<li>\(\mathbf{F}\mathbf{e} = \mathbf{0},\quad \mathbf{e}'^\top\mathbf{F} = \mathbf{0}\)</li>
+</ul></div>
+<h3>Breaking down the fundamental matrix</h3>
+<div class="math">\[ \mathbf{F} = \mathbf{K}'^{-\top}\mathbf{E}\mathbf{K}^{-1} \qquad\qquad \mathbf{F} = \mathbf{K}'^{-\top}[\mathbf{t}_\times]\mathbf{R}\mathbf{K}^{-1} \]</div>
+<p>F <b>depends on both intrinsic (K, K′) and extrinsic (R, t) parameters</b>.</p>
+<div class="card warn"><b class="tag">Note on notation</b><br>The derivation gave \(\mathbf{E} = \mathbf{R}[\mathbf{t}]_\times\), but this slide writes \([\mathbf{t}]_\times\mathbf{R}\). Both forms appear in textbooks; they correspond to different conventions for how t is defined (which camera's frame it is measured in). For exams: <b>E = R[t]ₓ</b> from the slide's derivation, and <b>F = K′⁻ᵀ E K⁻¹</b>.</div>
+<div class="tw"><table>
+<tr><th></th><th>Essential E</th><th>Fundamental F</th></tr>
+<tr><td>Points in</td><td>camera (normalized) coords \(\hat{\mathbf{x}} = \mathbf{K}^{-1}\mathbf{x}\)</td><td><b>pixel</b> coords x</td></tr>
+<tr><td>Depends on</td><td>R, t only</td><td>R, t <b>and</b> K, K′</td></tr>
+<tr><td>Need calibration?</td><td>Yes (must know K)</td><td><b>No</b>, estimate from point matches alone</td></tr>
+<tr><td>Relation</td><td colspan="2" style="text-align:center">\(\mathbf{F} = \mathbf{K}'^{-\top}\mathbf{E}\mathbf{K}^{-1} \;\Longleftrightarrow\; \mathbf{E} = \mathbf{K}'^\top\mathbf{F}\mathbf{K}\)</td></tr>
+<tr><td>Rank / DOF</td><td>rank 2 · 5 DOF</td><td>rank 2 · <b>7 DOF</b> (9 − 1 scale − 1 for det = 0)</td></tr>
+</table></div>
+<p>Slide question: <b>how would you solve for F?</b> From many matches \(\mathbf{x}'^\top_m\mathbf{F}\mathbf{x}_m = 0\) → the 8-point algorithm.</p>
+
+<!-- ================= 8-POINT ================= -->
+<h2 id="s21"><span class="num">21</span>The 8-point algorithm: setting up</h2>
+<p><b>Assume you have M matched image points</b> \(\{\mathbf{x}_m, \mathbf{x}'_m\},\ m = 1,\dots,M\). Each correspondence should satisfy \(\mathbf{x}'^\top_m\mathbf{F}\mathbf{x}_m = 0\).</p>
+<p>Slide question: <b>how would you solve for the 3×3 F matrix?</b> SVD! <b>Set up a homogeneous linear system with 9 unknowns</b> (f₁ … f₉).</p>
+<div class="math">\[ \begin{bmatrix} x'_m & y'_m & 1 \end{bmatrix}\begin{bmatrix} f_1 & f_2 & f_3 \\ f_4 & f_5 & f_6 \\ f_7 & f_8 & f_9 \end{bmatrix}\begin{bmatrix} x_m \\ y_m \\ 1 \end{bmatrix} = 0 \]</div>
+<p>Slide question: <b>how many equations do you get from one correspondence?</b> <b>ONE correspondence gives you ONE equation</b> (the result is a scalar). Multiplying out:</p>
+<div class="math">\[ x'_m x_m f_1 + x'_m y_m f_2 + x'_m f_3 + y'_m x_m f_4 + y'_m y_m f_5 + y'_m f_6 + x_m f_7 + y_m f_8 + f_9 = 0 \]</div>
+<div class="card warn"><b class="tag">Note: the slide's row ordering</b><br>The slide writes the row as \([x_m x'_m,\ x_m y'_m,\ x_m,\ y_m x'_m,\ y_m y'_m,\ y_m,\ x'_m,\ y'_m,\ 1]\). That's the expansion above with the roles of (x, y) and (x′, y′) swapped, so the 9-vector it solves for is really <b>Fᵀ</b> read row-wise. Both work as long as you reshape the solution consistently. The version above matches \(\mathbf{x}'^\top\mathbf{F}\mathbf{x}\) directly.</div>
+<p><b>Stack M correspondences</b> into an M×9 system:</p>
+<div class="math">\[ \underbrace{\begin{bmatrix} x'_1x_1 & x'_1y_1 & x'_1 & y'_1x_1 & y'_1y_1 & y'_1 & x_1 & y_1 & 1 \\ \vdots & & & & \vdots & & & & \vdots \\ x'_Mx_M & x'_My_M & x'_M & y'_Mx_M & y'_My_M & y'_M & x_M & y_M & 1 \end{bmatrix}}_{\mathbf{A}\ (M\times 9)}\underbrace{\begin{bmatrix}f_1\\ \vdots \\ f_9\end{bmatrix}}_{\mathbf{f}} = \mathbf{0} \]</div>
+<p>Slide question: <b>how many equations do you need?</b></p>
+<div class="card def"><b class="tag">Hence, the 8-point algorithm!</b><br>
+9 unknowns, but F is only defined <b>up to scale</b> (F and 2F give the same constraint), so <b>8 independent unknowns</b>. Each point pair contributes <b>only one scalar equation</b>, so <b>we need at least 8 points</b>.<br><br>
+<b>Note:</b> this is different from <b>homography estimation, where each point pair contributes 2 equations</b> (H: 8 DOF / 2 = 4 points).</div>
+<div class="tw"><table>
+<tr><th>Estimate</th><th>Unknowns (DOF)</th><th>Equations / match</th><th>Min. matches</th></tr>
+<tr><td>Affine (Mod 08)</td><td>6</td><td>2</td><td>3</td></tr>
+<tr><td>Homography</td><td>8</td><td>2</td><td>4</td></tr>
+<tr><td>Triangulated point X</td><td>3</td><td>2 per view</td><td>2 views</td></tr>
+<tr><td><b>Fundamental F</b></td><td>8 (linear method)</td><td><b>1</b></td><td><b>8</b></td></tr>
+</table></div>
+
+<h2 id="s22"><span class="num">22</span>Solving a homogeneous linear system: total least squares &amp; SVD</h2>
+<p>Slide question: <b>how do you solve AX = 0?</b> X = 0 is always a solution, but it's useless. Fix the scale instead:</p>
+<div class="card def"><b class="tag">Total Least Squares</b>
+<div class="math">\[ \text{minimize}\ \ \|\mathbf{A}\mathbf{x}\|^2 \qquad \text{subject to}\ \ \|\mathbf{x}\|^2 = 1 \]</div>
+<b>Solution: SVD!</b> Write \(\mathbf{A} = \mathbf{U}\Sigma\mathbf{V}^\top\). The minimizer is the <b>column of V corresponding to the smallest singular value</b> (the last column of V, i.e. the last row of Vᵀ).</div>
+<div class="card tip"><b class="tag">Why the smallest singular vector?</b><br>\(\|\mathbf{A}\mathbf{v}_i\| = \sigma_i\) for each right singular vector \(\mathbf{v}_i\) (unit length). Any unit x is a mix of the \(\mathbf{v}_i\), and \(\|\mathbf{A}\mathbf{x}\|^2 = \sum \sigma_i^2 c_i^2\) with \(\sum c_i^2 = 1\). This is smallest when all the weight goes on the smallest \(\sigma\). If \(\sigma_{\min} = 0\), it's an exact solution (no noise).</div>
+<p>This one tool solves <b>all three</b> problems in this lecture: triangulation (AX = 0), F estimation (Af = 0), and finding the epipole (Fe = 0).</p>
+
+<h2 id="s23"><span class="num">23</span>The full Eight-Point Algorithm</h2>
+<div class="card">
+<ol start="0">
+<li style="color:var(--green)"><b>(Normalize points)</b>: translate each image's points so their centroid is at the origin, and scale so the average distance is √2 (similarity transforms T, T′).</li>
+<li><b>Construct the M × 9 matrix A</b> (one row per correspondence).</li>
+<li><b>Find the SVD of A.</b></li>
+<li><b>Entries of F are the elements of the column of V corresponding to the least singular value.</b> Reshape the 9-vector into 3×3.</li>
+<li style="color:var(--green)"><b>(Enforce rank 2 constraint on F)</b></li>
+<li style="color:var(--green)"><b>(Un-normalize F)</b>: \(\mathbf{F} = \mathbf{T}'^\top\hat{\mathbf{F}}\mathbf{T}\).</li>
+</ol>
+<p style="margin:.3em 0 0;color:var(--muted);font-size:.9rem">The slides mark steps 0, 4 and 5 in green as optional refinements ("see Hartley–Zisserman for why we do this"). In practice they matter a lot. Normalization keeps the matrix well-conditioned, because raw pixel products like x′x ≈ 10⁵ dwarf the 1s in the last column.</p>
+</div>
+
+<h3>Why rank 2?</h3>
+<p>A true F has <b>rank 2</b> (det F = 0), since \([\mathbf{t}]_\times\) has rank 2. With noisy data, the SVD answer is almost always <b>rank 3</b>. Then the epipolar lines don't all meet at a single epipole (Fe = 0 has no solution).</p>
+<h3>Enforcing rank constraints (how do we do this? SVD!)</h3>
+<div class="card def"><b class="tag">Problem → Solution</b><br>
+<b>Problem:</b> given a matrix F, find the matrix F′ of rank k that is closest to F:
+<div class="math">\[ \min_{\mathbf{F}',\ \text{rank}(\mathbf{F}') = k}\ \|\mathbf{F} - \mathbf{F}'\|^2 \]</div>
+<b>Solution:</b> compute the SVD \(\mathbf{F} = \mathbf{U}\Sigma\mathbf{V}^\top\). Form \(\Sigma'\) by <b>replacing all but the k largest singular values with 0</b>. Then
+<div class="math">\[ \mathbf{F}' = \mathbf{U}\Sigma'\mathbf{V}^\top \]</div>
+For F: k = 2, so set σ₃ = 0: \(\ \text{diag}(\sigma_1, \sigma_2, \sigma_3) \to \text{diag}(\sigma_1, \sigma_2, 0)\).</div>
+<div class="card ex"><b class="tag">Mini example</b><br>Suppose SVD of a noisy F gives Σ = diag(12.0, 7.5, 0.03). The third value is tiny but not zero (that's the noise). Set it to 0: Σ′ = diag(12.0, 7.5, 0). Then F′ = UΣ′Vᵀ has rank 2, and all its epipolar lines now pass exactly through one epipole.</div>
+
+<h2 id="s24"><span class="num">24</span>Example: Arc de Triomphe</h2>
+<p>Two very different photos of the same monument (an evening long-exposure shot and a night shot, different zoom and viewpoint). F is estimated with the 8-point algorithm from matched points. The <b>epipolar lines</b> are drawn in matching colours in both images: each feature in one image lies on the same-coloured line in the other.</p>
+<div class="math">\[ \mathbf{F} = \begin{bmatrix} -0.00310695 & -0.0025646 & 2.96584 \\ -0.028094 & -0.00771621 & 56.3813 \\ 13.1905 & -29.2007 & -9999.79 \end{bmatrix}, \qquad \mathbf{x} = \begin{bmatrix} 343.53 \\ 221.70 \\ 1.0 \end{bmatrix} \]</div>
+<div class="math">\[ \mathbf{l}' = \mathbf{F}\mathbf{x} = \begin{bmatrix} 0.0295 \\ 0.9996 \\ -265.1531 \end{bmatrix} \]</div>
+<div class="card ex"><b class="tag">Reading the result</b><br>
+<ul style="margin:.2em 0">
+<li>The raw product is \(\mathbf{F}\mathbf{x} \approx [1.33,\ 45.02,\ -11942]\). The slide shows it <b>scaled so a² + b² = 1</b> (fine, since lines are homogeneous). I checked this numerically. ✔</li>
+<li>Line: \(0.0295\,x + 0.9996\,y - 265.15 = 0 \Rightarrow y \approx 265.3 - 0.0295\,x\): an <b>almost horizontal line around y ≈ 265</b> in the right image.</li>
+<li>That's the blue line drawn across the arch in the night photo. The match of the blue point is <b>somewhere on that line</b>: a 1D search.</li>
+<li>Note how F's entries span ~10⁻³ to ~10⁴. That's the unnormalized-coordinate scaling problem that step 0 fixes.</li>
+</ul></div>
+
+<h2 id="s25"><span class="num">25</span>Where is the epipole?</h2>
+<p>In the Arc de Triomphe image, the coloured epipolar lines converge toward a point <b>outside the image</b> (off to the side). Slide question: <b>how would you compute it?</b></p>
+<div class="math">\[ \mathbf{F}\mathbf{e} = \mathbf{0} \qquad\text{the epipole is in the right null space of } \mathbf{F} \]</div>
+<p>Slide question: <b>how would you solve for the epipole?</b> <b>SVD!</b> Take \(\mathbf{F} = \mathbf{U}\Sigma\mathbf{V}^\top\). e is the <b>last column of V</b> (singular value 0 after the rank-2 fix). Divide by its third entry to get pixel coordinates. (For e′: the last column of U, since \(\mathbf{e}'^\top\mathbf{F} = \mathbf{0}\).)</p>
+<div class="card tip"><b class="tag">"SVDs are pretty useful, huh?"</b><br>Triangulation, F estimation, rank enforcement and epipole finding: all four steps in this lecture are one SVD call.</div>
+
+<h2 id="s26"><span class="num">26</span>Python: triangulation, 8-point, epipole</h2>
+<pre><code>import numpy as np
+
+# ---------- Triangulation (Sections 7–8) ----------
+def triangulate(P1, P2, x1, x2):
+    """P1,P2: 3x4 cameras; x1,x2: (x,y) pixel matches. Returns 3D point."""
+    A = np.vstack([
+        x1[1]*P1[2] - P1[1],     # y p3ᵀ - p2ᵀ
+        P1[0] - x1[0]*P1[2],     # p1ᵀ - x p3ᵀ
+        x2[1]*P2[2] - P2[1],
+        P2[0] - x2[0]*P2[2],
+    ])                            # 4x4
+    _, _, Vt = np.linalg.svd(A)
+    X = Vt[-1]                    # smallest singular vector
+    return X[:3] / X[3]
+
+# ---------- Normalized 8-point algorithm (Sections 21–23) ----------
+def normalize(pts):
+    c = pts.mean(0)
+    s = np.sqrt(2) / np.mean(np.linalg.norm(pts - c, axis=1))
+    T = np.array([[s, 0, -s*c[0]], [0, s, -s*c[1]], [0, 0, 1]])
+    ph = np.c_[pts, np.ones(len(pts))] @ T.T
+    return ph, T
+
+def eight_point(x1, x2):
+    """x1, x2: (M,2) matched pixels, M >= 8. Returns F with x2ᵀ F x1 = 0."""
+    p1, T1 = normalize(x1)                         # step 0
+    p2, T2 = normalize(x2)
+    A = np.array([[u2*u1, u2*v1, u2, v2*u1, v2*v1, v2, u1, v1, 1]
+                  for (u1, v1, _), (u2, v2, _) in zip(p1, p2)])  # step 1
+    _, _, Vt = np.linalg.svd(A)                    # step 2
+    F = Vt[-1].reshape(3, 3)                       # step 3
+    U, S, Vt = np.linalg.svd(F)                    # step 4: rank 2
+    F = U @ np.diag([S[0], S[1], 0]) @ Vt
+    F = T2.T @ F @ T1                              # step 5: un-normalize
+    return F / F[2, 2]
+
+# ---------- Epipole (Section 25) ----------
+def epipoles(F):
+    U, _, Vt = np.linalg.svd(F)
+    e  = Vt[-1];  e  = e / e[2]     # F e = 0   (image 1)
+    ep = U[:, -1]; ep = ep / ep[2]  # e'ᵀ F = 0 (image 2)
+    return e, ep
+
+# Epipolar line in image 2 for a pixel x in image 1:
+# l2 = F @ np.array([x, y, 1.0])   -> a*x' + b*y' + c = 0</code></pre>
+
+<!-- ================= CHEAT SHEET ================= -->
+<h2 id="s27"><span class="num">27</span>Cheat sheet &amp; self-test</h2>
+<div class="card">
+<ul>
+<li><b>Triangulation</b>: known P, P′, x, x′ → X. Backproject (C and P⁺x) to get rays, but noisy rays don't meet, so solve least squares.</li>
+<li>x = αPX (up to scale) → <b>x × PX = 0</b> → 3 rows, only <b>2 independent</b> per view → stack 2 views → <b>4×4 A, AX = 0 → SVD</b>.</li>
+<li>a × a = 0; a × b ⟂ a, b; \([\mathbf{a}]_\times\) is skew-symmetric; the dot product of orthogonal vectors = 0.</li>
+<li><b>Baseline</b> joins the camera centers · <b>epipole</b> = image of the other camera's center = where the baseline hits the image · <b>epipolar plane</b> = baseline + X · <b>epipolar line</b> = epipolar plane ∩ image.</li>
+<li>All epipolar lines pass through the epipole. Converging cameras: epipole may lie outside the image. Parallel cameras: epipole at ∞, lines horizontal.</li>
+<li><b>Epipolar constraint</b>: the match of x lies on l′, so the search goes from 2D to 1D (stereo).</li>
+<li>Line l = [a, b, c]; x on l ⇔ xᵀl = 0.</li>
+<li><b>E</b>: l′ = Ex, <b>x′ᵀEx = 0</b>, E = R[t]ₓ (rigid motion + coplanarity), camera coords (K = I), Longuet-Higgins 1981.</li>
+<li>E: point → line (1 eq/match). H: point → point (2 eq/match).</li>
+<li>E props: l′ = Ex, l = Eᵀx′, Ee = 0, e′ᵀE = 0.</li>
+<li><b>F = K′⁻ᵀ E K⁻¹</b>, pixel coords, x′ᵀFx = 0, depends on intrinsics + extrinsics, rank 2.</li>
+<li><b>8-point</b>: 9 unknowns − scale = 8, 1 equation per match → ≥ 8 matches. Steps: normalize → A (M×9) → SVD → last col of V → rank-2 (zero σ₃) → un-normalize.</li>
+<li><b>TLS</b>: min ‖Ax‖² s.t. ‖x‖ = 1 → smallest right singular vector.</li>
+<li><b>Epipole</b>: Fe = 0 → last column of V of F.</li>
+</ul></div>
+
+<details><summary>Q1. Why can't you triangulate from a single image?</summary>A single pixel backprojects to a whole ray; every point on it projects to the same x. Depth is unknown, so you need a second view's ray.</details>
+<details><summary>Q2. Why don't the two backprojected rays intersect in practice?</summary>Noise in pixel positions and calibration makes them skew lines. So we find the best-fit X with least squares (SVD on AX = 0).</details>
+<details><summary>Q3. Why does x × PX = 0 give only 2 independent equations?</summary>The third row is a linear combination of the first two (−(x·row1 + y·row2)), so it adds nothing new.</details>
+<details><summary>Q4. Size of A in two-view triangulation, and how do you solve it?</summary>4×4 (2 rows per view, each row 1×4). Solve AX = 0 with SVD: X = last column of V, then divide by its 4th entry.</details>
+<details><summary>Q5. Define epipole. Where is it for parallel cameras?</summary>The projection of the other camera's center onto the image plane (where the baseline intersects the image). For parallel cameras it is at infinity, so the epipolar lines are parallel.</details>
+<details><summary>Q6. How does the epipolar constraint help stereo matching?</summary>The match for x must lie on the epipolar line l′ = Fx, so the search is 1D along a line instead of over the entire image.</details>
+<details><summary>Q7. Derive x′ᵀEx = 0 in three lines.</summary>Rigid motion x′ = R(x − t) ⇒ x − t = Rᵀx′. Coplanarity: (x − t)ᵀ(t × x) = 0 ⇒ x′ᵀR[t]ₓx = 0 ⇒ x′ᵀEx = 0 with E = R[t]ₓ.</details>
+<details><summary>Q8. Essential vs Fundamental matrix?</summary>E works on camera (normalized) coordinates, depends only on R, t, and needs known K. F works on pixel coordinates, includes K and K′: F = K′⁻ᵀEK⁻¹. F can be estimated from matches alone.</details>
+<details><summary>Q9. Essential matrix vs homography?</summary>Both 3×3. E maps a point to a line (l′ = Ex, 1 equation per match). H maps a point to a point (x′ = Hx, 2 equations per match).</details>
+<details><summary>Q10. Why 8 points, when homography needs only 4?</summary>F has 9 entries but is up to scale, so 8 unknowns. Each match gives only 1 scalar equation (x′ᵀFx = 0), so 8 matches. H gets 2 equations per match, so 8/2 = 4.</details>
+<details><summary>Q11. How do you enforce rank 2 on F, and why?</summary>SVD F = UΣVᵀ, set the smallest singular value to 0, recompute UΣ′Vᵀ. It's needed because a true F is singular (all epipolar lines meet at one epipole); noise makes the estimate rank 3.</details>
+<details><summary>Q12. Given F, how do you find the epipole e?</summary>Solve Fe = 0: e is the right null space of F, which is the last column of V from the SVD of F. Divide by e₃.</details>
+
+</main>
+<footer>
+  <a href="09-camera-models.html">← Module 09: Geometric Camera Models</a>
+  <a href="index.html">Back to index</a>
+  <span>Source: 16-385 CMU, Fall 2022, Lecture 11 (slides adapted from Kris Kitani 16-385 Spring 2017 &amp; Srinivasa Narasimhan 16-720 Fall 2017)</span>
+</footer>
+</body>
+</html>
