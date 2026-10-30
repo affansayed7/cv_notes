@@ -1,0 +1,762 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Module 11 · Camera Models (cont.) &amp; Calibration</title>
+<script>
+  window.MathJax = { tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] }, svg: { fontCache: 'global' } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+:root{
+  --bg:#f7f8fb; --card:#ffffff; --ink:#1c2230; --muted:#5b6475; --line:#d9dee8;
+  --accent:#2f6fec; --accent-soft:#e7efff; --orange:#e8742c; --green:#1f9d6b; --red:#d6455d; --purple:#7a4fd6;
+  --code:#f1f3f8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11141b; --card:#1a1f2a; --ink:#e6e9f0; --muted:#9aa3b5; --line:#2c3444;
+    --accent:#6b9bff; --accent-soft:#1e2a44; --orange:#ff9a5a; --green:#3ccf94; --red:#ff6b81; --purple:#a98bff;
+    --code:#222938;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11141b; --card:#1a1f2a; --ink:#e6e9f0; --muted:#9aa3b5; --line:#2c3444;
+  --accent:#6b9bff; --accent-soft:#1e2a44; --orange:#ff9a5a; --green:#3ccf94; --red:#ff6b81; --purple:#a98bff;
+  --code:#222938;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header.top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+header.top .in{max-width:980px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+header.top a{color:var(--accent);text-decoration:none;font-weight:600}
+main{max-width:980px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:1.9rem;margin:.2em 0 .1em}
+.sub{color:var(--muted);margin:0 0 1.2em}
+h2{font-size:1.4rem;margin:2.2em 0 .6em;padding-bottom:.3em;border-bottom:2px solid var(--line)}
+h2 .num{color:var(--accent);margin-right:.35em}
+h3{font-size:1.12rem;margin:1.6em 0 .4em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.def{border-left:4px solid var(--accent);background:var(--accent-soft)}
+.def b.tag,.ex b.tag,.warn b.tag,.tip b.tag{display:inline-block;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.def b.tag{color:var(--accent)}
+.ex{border-left:4px solid var(--green)} .ex b.tag{color:var(--green)}
+.warn{border-left:4px solid var(--red)} .warn b.tag{color:var(--red)}
+.tip{border-left:4px solid var(--orange)} .tip b.tag{color:var(--orange)}
+.math{overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.card{overflow-x:auto}
+mjx-container[display="true"]{display:block;max-width:100%;overflow-x:auto;overflow-y:hidden}
+figure{margin:16px 0;text-align:center}
+figure svg{max-width:100%;height:auto}
+figcaption{color:var(--muted);font-size:.9rem;margin-top:6px}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:.95rem}
+.tw{overflow-x:auto}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft)}
+code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+code{background:var(--code);padding:1px 5px;border-radius:5px;font-size:.92em}
+pre{background:var(--code);padding:14px;border-radius:10px;overflow-x:auto;font-size:.88rem;line-height:1.5}
+ul,ol{padding-left:1.3em}
+li{margin:.25em 0}
+nav.toc ol{columns:2;column-gap:28px}
+@media (max-width:640px){nav.toc ol{columns:1} h1{font-size:1.55rem}}
+nav.toc a{color:var(--ink);text-decoration:none}
+nav.toc a:hover{color:var(--accent)}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}
+summary{cursor:pointer;font-weight:600}
+.pill{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:1px 10px;font-size:.8rem;font-weight:600}
+footer{max-width:980px;margin:0 auto;padding:20px 16px 40px;color:var(--muted);font-size:.85rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+footer a{color:var(--accent);text-decoration:none}
+/* svg tokens */
+svg text{fill:var(--ink);font-family:system-ui,sans-serif}
+svg .mut{fill:var(--muted)}
+svg .ax{stroke:var(--muted);stroke-width:1.5;fill:none}
+svg .grid{stroke:var(--line);stroke-width:1}
+svg .o{fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:5 4}
+svg .s1{fill:var(--accent);fill-opacity:.25;stroke:var(--accent);stroke-width:2}
+svg .s2{fill:var(--orange);fill-opacity:.25;stroke:var(--orange);stroke-width:2}
+svg .s3{fill:var(--green);fill-opacity:.25;stroke:var(--green);stroke-width:2}
+svg .s4{fill:var(--purple);fill-opacity:.25;stroke:var(--purple);stroke-width:2}
+svg .ln{stroke:var(--ink);stroke-width:1.6;fill:none}
+svg .lnA{stroke:var(--accent);stroke-width:2;fill:none}
+svg .lnO{stroke:var(--orange);stroke-width:2;fill:none}
+svg .lnG{stroke:var(--green);stroke-width:2;fill:none}
+svg .lnR{stroke:var(--red);stroke-width:2;fill:none}
+svg .dotA{fill:var(--accent)} svg .dotO{fill:var(--orange)} svg .dotG{fill:var(--green)} svg .dotR{fill:var(--red)} svg .dotK{fill:var(--ink)}
+svg .plane{fill:var(--orange);fill-opacity:.18;stroke:var(--orange);stroke-width:1.5}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="in">
+  <a href="index.html">← All modules</a>
+  <span class="pill">Module 11 · Lecture 10</span>
+</div></header>
+
+<main>
+<h1>Geometric Camera Models (cont.) &amp; Calibration</h1>
+<p class="sub">16-385 Computer Vision · Lecture 10 · why perspective images "lie" about size, the weak-perspective / affine / orthographic cameras, and how to recover the camera matrix P (pose estimation / geometric calibration) from 3D↔2D matches.</p>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+  <marker id="arK" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker>
+  <marker id="arA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker>
+  <marker id="arR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--red)"/></marker>
+  <marker id="arG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--green)"/></marker>
+  <marker id="arO" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--orange)"/></marker>
+  </defs>
+</svg>
+
+<div class="card">
+<b>Lecture roadmap</b> (slide 2 "Overview")
+<ol>
+<li><b>Review of camera matrix</b>: P = K R [I | −C], the finite projective camera</li>
+<li><b>Perspective</b>: magnification depends on depth &amp; focal length → illusions, perspective distortion, the vertigo (dolly-zoom) effect</li>
+<li><b>Other camera models</b>: weak perspective, affine, orthographic, telecentric lenses</li>
+<li><b>Pose estimation</b> (geometric camera calibration): DLT + SVD, decomposing P into K, R, c, reprojection error, radial distortion, checkerboard calibration, AR</li>
+</ol>
+<p style="margin:.4em 0 0;color:var(--muted);font-size:.9rem">In lecture order this sits between Module 09 (Lecture 9, camera models) and Module 10 (Lecture 11, two-view geometry). Slide credits: Kris Kitani (15-463 Fall 2016), Fredo Durand (MIT).</p>
+</div>
+
+<nav class="toc card"><b>Contents</b>
+<ol>
+<li><a href="#s1">Recap: the camera matrix</a></li>
+<li><a href="#s2">Perspective projection &amp; magnification</a></li>
+<li><a href="#s3">Forced perspective</a></li>
+<li><a href="#s4">The Ames room illusion</a></li>
+<li><a href="#s5">Arrow illusion &amp; forced-perspective displays</a></li>
+<li><a href="#s6">Magnification depends on depth</a></li>
+<li><a href="#s7">Magnification depends on focal length</a></li>
+<li><a href="#s8">"What if…": halve f and halve Z</a></li>
+<li><a href="#s9">Perspective distortion (portraits)</a></li>
+<li><a href="#s10">The vertigo effect (dolly zoom)</a></li>
+<li><a href="#s11">Towards other camera models: f → ∞</a></li>
+<li><a href="#s12">Weak perspective vs perspective</a></li>
+<li><a href="#s13">Comparing camera matrices</a></li>
+<li><a href="#s14">When can we assume weak perspective?</a></li>
+<li><a href="#s15">Orthographic camera &amp; telecentric lens</a></li>
+<li><a href="#s16">Calibration vs triangulation vs reconstruction</a></li>
+<li><a href="#s17">Geometric calibration: the problem</a></li>
+<li><a href="#s18">Linearising x = PX</a></li>
+<li><a href="#s19">Stacking N points &amp; solving with SVD</a></li>
+<li><a href="#s20">Decomposing P into K, R, c</a></li>
+<li><a href="#s21">Where do the matches come from?</a></li>
+<li><a href="#s22">Pros/cons &amp; reprojection error</a></li>
+<li><a href="#s23">Radial distortion</a></li>
+<li><a href="#s24">Multi-plane (checkerboard) calibration</a></li>
+<li><a href="#s25">What does "calibrate a camera" mean?</a></li>
+<li><a href="#s26">Application: augmented reality</a></li>
+<li><a href="#s27">Python: DLT calibration + decomposition</a></li>
+<li><a href="#s28">Cheat sheet &amp; self-test</a></li>
+</ol>
+</nav>
+
+<!-- ================= 1 ================= -->
+<h2 id="s1"><span class="num">1</span>Recap: the camera matrix</h2>
+<p>From last lecture, a general pinhole camera is one 3×4 matrix that takes a world point (homogeneous 4-vector) to an image point (homogeneous 3-vector):</p>
+<div class="math">\[ \mathbf{x} = \mathbf{P}\mathbf{X},\qquad \mathbf{P} = \mathbf{K}\,\mathbf{R}\,[\,\mathbf{I}\mid -\mathbf{C}\,] \]</div>
+<div class="tw"><table>
+<tr><th>Piece</th><th>Size</th><th>Meaning</th></tr>
+<tr><td>\(\mathbf{K}\)</td><td>3×3</td><td><b>intrinsic</b> parameters (focal lengths, skew, principal point)</td></tr>
+<tr><td>\(\mathbf{R}\)</td><td>3×3</td><td><b>rotation</b> of world axes into camera axes</td></tr>
+<tr><td>\(\mathbf{I}\)</td><td>3×3</td><td>identity</td></tr>
+<tr><td>\(\mathbf{C}\)</td><td>3×1</td><td>camera centre in world coordinates (the "translation" part)</td></tr>
+</table></div>
+<p>Multiplying out gives the <b>finite projective camera</b>:</p>
+<div class="math">\[ \mathbf{P} = \begin{bmatrix}\alpha_x & s & p_x\\ 0 & \alpha_y & p_y\\ 0&0&1\end{bmatrix}\,[\,\mathbf{R}\mid -\mathbf{R}\mathbf{C}\,] \]</div>
+<div class="card def"><b class="tag">Definition</b><br><b>Finite projective camera</b>: the most general pinhole camera with a finite centre: K has two focal lengths in pixels \(\alpha_x,\alpha_y\), a skew \(s\), and a principal point \((p_x,p_y)\). Total <b>11 degrees of freedom</b> (5 intrinsic + 3 rotation + 3 translation).</div>
+<p>If the world and camera coordinate systems coincide (R = I, C = 0), this simplifies to</p>
+<div class="math">\[ \mathbf{P} = \mathbf{K}\,[\,\mathbf{I}\mid \mathbf{0}\,] \]</div>
+<p>which is pure <b>perspective projection</b>: a map from homogeneous 3D to homogeneous 2D. The slide's key warning: <b>all the cameras we have seen so far have "perspective distortion"</b>. The next sections explain exactly what that means.</p>
+
+<!-- ================= 2 ================= -->
+<h2 id="s2"><span class="num">2</span>Perspective projection &amp; magnification</h2>
+<p>Rearranged pinhole camera: put the (virtual) image plane in front of the pinhole at distance <b>z = f</b>. The line through the pinhole perpendicular to the image plane is the <b>principal axis</b>. Then \(\mathbf{x} = \mathbf{P}\mathbf{X}\). Looking at it in 2D (side view), similar triangles give:</p>
+<div class="math">\[ [X\ \ Y\ \ Z]^\top \;\mapsto\; [\,fX/Z\ \ \ fY/Z\,]^\top \]</div>
+<figure>
+<svg viewBox="0 0 620 230" role="img" aria-label="Side view of perspective projection with similar triangles">
+  <line x1="20" y1="170" x2="600" y2="170" class="ax"/><text x="585" y="190" font-size="14">z</text>
+  <line x1="60" y1="210" x2="60" y2="20" class="ax"/><text x="45" y="30" font-size="14">y</text>
+  <circle cx="60" cy="170" r="5" class="dotR"/><text x="40" y="190" font-size="13">pinhole</text>
+  <line x1="200" y1="40" x2="200" y2="200" style="stroke:var(--orange);stroke-width:4"/><text x="170" y="32" font-size="13">image plane</text>
+  <circle cx="540" cy="60" r="6" class="dotK"/><text x="552" y="58" font-size="15" font-weight="700">X = (Y, Z)</text>
+  <line x1="60" y1="170" x2="540" y2="60" class="ln"/>
+  <circle cx="200" cy="137.9" r="5" class="dotA"/><text x="208" y="128" font-size="14" style="fill:var(--accent)">fY/Z</text>
+  <line x1="60" y1="215" x2="200" y2="215" class="lnA" marker-end="url(#arA)"/><text x="120" y="210" font-size="14" style="fill:var(--accent)">f</text>
+  <line x1="540" y1="60" x2="540" y2="170" class="o"/><text x="548" y="120" font-size="14">Y</text>
+  <line x1="60" y1="225" x2="540" y2="225" class="ln" marker-end="url(#arK)"/><text x="300" y="220" font-size="14">Z</text>
+</svg>
+<figcaption>Similar triangles: \(y/f = Y/Z\) so \(y = fY/Z\). The image size is the real size times <b>f/Z</b>.</figcaption>
+</figure>
+<div class="card def"><b class="tag">Definition</b><br><b>Magnification</b> \(m = f/Z\): the factor by which real-world lengths shrink on the image plane. Because Z (depth) is in the denominator, <b>magnification changes with depth</b>: near things look big, far things look small.</div>
+<div class="card ex"><b class="tag">Example</b><br>f = 50 mm. A 1.8 m person at Z = 10 m → image height 1.8·50/10 = 9 mm. The same person at Z = 20 m → 4.5 mm. Half the size at twice the distance. A 0.9 m child at 5 m also gives 9 mm, so from the image alone the two are <b>indistinguishable</b>. That ambiguity is what every illusion below exploits.</div>
+
+<!-- ================= 3 ================= -->
+<h2 id="s3"><span class="num">3</span>Forced perspective</h2>
+<p>Slides show (a) a girl apparently "holding" the Eiffel tower between her fingers and (b) someone on a salt flat apparently stepping on a tiny person.</p>
+<div class="card def"><b class="tag">Definition</b><br><b>Forced perspective</b>: a photographic technique that places objects at very different depths so that, after projection, they appear to be at the <b>same depth</b> and to have a <b>misleading relative size</b>.</div>
+<p>Why it works: the image only records <b>size/depth</b> (f·size/Z). A huge tower far away and a small hand close by can have the same ratio. Featureless backgrounds (sky, salt flat) remove the depth cues (texture gradient, ground contact, shadows) that would reveal the trick.</p>
+
+<!-- ================= 4 ================= -->
+<h2 id="s4"><span class="num">4</span>The Ames room illusion</h2>
+<p>Two people stand in what looks like an ordinary rectangular room, but one looks like a giant and the other like a dwarf. The room is actually <b>trapezoidal</b>, and you view it through a single <b>peephole</b> placed exactly where the illusion works.</p>
+<figure>
+<svg viewBox="0 0 600 330" role="img" aria-label="Top view of the Ames room: actual trapezoid shape vs apparent rectangle">
+  <polygon points="90,20 450,100 450,260 150,260" class="s2"/>
+  <polygon points="150,100 450,100 450,260 150,260" style="fill:none;stroke:var(--accent);stroke-width:2;stroke-dasharray:7 5"/>
+  <circle cx="300" cy="300" r="6" class="dotK"/><text x="312" y="312" font-size="13">peephole (viewer)</text>
+  <line x1="300" y1="300" x2="90" y2="20" class="o"/>
+  <line x1="300" y1="300" x2="450" y2="100" class="o"/>
+  <circle cx="112" cy="46" r="10" class="dotR"/><text x="20" y="50" font-size="14" font-weight="700" style="fill:var(--red)">A actual</text>
+  <circle cx="151" cy="100" r="10" style="fill:var(--red);fill-opacity:.35;stroke:var(--red);stroke-dasharray:3 2"/><text x="166" y="92" font-size="13" style="fill:var(--red)">A apparent</text>
+  <circle cx="425" cy="120" r="10" class="dotG"/><text x="470" y="125" font-size="14" font-weight="700" style="fill:var(--green)">B</text>
+  <text x="470" y="95" font-size="13" style="fill:var(--accent)">apparent room</text>
+  <text x="470" y="75" font-size="13" style="fill:var(--orange)">actual room</text>
+  <rect x="452" y="64" width="14" height="10" class="s2"/><rect x="452" y="85" width="14" height="10" style="fill:none;stroke:var(--accent);stroke-dasharray:3 2"/>
+</svg>
+<figcaption>Top view. The back-left corner is much farther away than the back-right corner, but both lie on the same rays from the peephole as the corners of a rectangular room, so the image is identical. Person A is far → small image; the brain assumes A is at the "apparent" position (same depth as B) → A must be tiny.</figcaption>
+</figure>
+<div class="card tip"><b class="tag">Key idea</b><br>A single perspective image cannot distinguish the actual room from the apparent room: every point slides along its own ray (that's the depth ambiguity from backprojection). The brain fills in the "most likely" 3D shape (rectangular rooms), and so it gets size wrong.</div>
+
+<!-- ================= 5 ================= -->
+<h2 id="s5"><span class="num">5</span>Arrow illusion &amp; forced-perspective displays</h2>
+<ul>
+<li><b>Arrow illusion</b> (video on slide): an object whose 3D shape is designed so that, from one viewpoint, it projects to a different-looking 2D shape (e.g. an arrow that always seems to point the same way even after rotating, because the "turned" version is a different 3D shape that projects similarly). Same lesson: projection throws away depth, so many 3D shapes give the same 2D image.</li>
+<li><b>Forced-perspective displays</b>: the giant dog billboard in Seoul and the 3D billboard in Chengdu are flat (or corner-shaped) LED screens. The video content is rendered with perspective for <b>one specific viewpoint</b> on the street, so from there a 3D creature appears to pop out. From any other viewpoint it looks warped.</li>
+</ul>
+<div class="card ex"><b class="tag">How it's made</b><br>Pick the intended viewer position (a camera centre C). Model the 3D creature. Project it with P for that viewpoint onto the screen surface. Display the result. Any viewer at C sees exactly the image a real 3D object would produce.</div>
+
+<!-- ================= 6 ================= -->
+<h2 id="s6"><span class="num">6</span>Magnification depends on depth</h2>
+<figure>
+<svg viewBox="0 0 520 250" role="img" aria-label="Two equal objects at depth Z and 2Z produce images of different sizes">
+  <line x1="20" y1="130" x2="500" y2="130" class="ax"/>
+  <line x1="60" y1="130" x2="60" y2="60" style="stroke:var(--green);stroke-width:5"/><text x="30" y="50" font-size="13" style="fill:var(--green)">tree at 2Z</text>
+  <line x1="180" y1="130" x2="180" y2="60" style="stroke:var(--accent);stroke-width:5"/><text x="150" y="50" font-size="13" style="fill:var(--accent)">tree at Z</text>
+  <line x1="300" y1="40" x2="300" y2="122" style="stroke:var(--ink);stroke-width:4"/><line x1="300" y1="138" x2="300" y2="220" style="stroke:var(--ink);stroke-width:4"/><text x="270" y="30" font-size="13">pinhole</text>
+  <line x1="380" y1="40" x2="380" y2="220" style="stroke:var(--orange);stroke-width:3"/><text x="390" y="40" font-size="13">image plane</text>
+  <line x1="180" y1="60" x2="380" y2="176.7" class="lnA"/>
+  <line x1="60" y1="60" x2="380" y2="153.3" class="lnG"/>
+  <line x1="380" y1="130" x2="380" y2="176.7" style="stroke:var(--accent);stroke-width:6"/>
+  <line x1="386" y1="130" x2="386" y2="153.3" style="stroke:var(--green);stroke-width:6"/>
+  <text x="396" y="168" font-size="13" style="fill:var(--accent)">big image</text><text x="396" y="148" font-size="13" style="fill:var(--green)">half size</text>
+  <line x1="180" y1="240" x2="296" y2="240" class="lnA" marker-end="url(#arA)"/><text x="225" y="236" font-size="13">Z</text>
+  <line x1="60" y1="225" x2="296" y2="225" class="lnG" marker-end="url(#arG)"/><text x="120" y="220" font-size="13">2Z</text>
+  <line x1="300" y1="240" x2="376" y2="240" class="ln" marker-end="url(#arK)"/><text x="335" y="236" font-size="13">f</text>
+</svg>
+<figcaption>Identical trees: the one at depth 2Z produces an image half as tall as the one at depth Z (m = f/Z vs f/2Z). Images are inverted behind a real pinhole.</figcaption>
+</figure>
+<p>Slide question: <b>what happens as we change the focal length?</b> → next section.</p>
+
+<!-- ================= 7 ================= -->
+<h2 id="s7"><span class="num">7</span>Magnification depends on focal length</h2>
+<figure>
+<svg viewBox="0 0 540 250" role="img" aria-label="Same object, image plane at f and at 2f">
+  <line x1="20" y1="130" x2="520" y2="130" class="ax"/>
+  <line x1="100" y1="130" x2="100" y2="60" style="stroke:var(--green);stroke-width:5"/><text x="60" y="50" font-size="13">real-world object</text>
+  <line x1="300" y1="40" x2="300" y2="122" style="stroke:var(--ink);stroke-width:4"/><line x1="300" y1="138" x2="300" y2="220" style="stroke:var(--ink);stroke-width:4"/>
+  <line x1="100" y1="60" x2="460" y2="186" class="lnG"/>
+  <line x1="380" y1="50" x2="380" y2="210" style="stroke:var(--orange);stroke-width:2;stroke-dasharray:4 3"/>
+  <line x1="460" y1="50" x2="460" y2="210" style="stroke:var(--orange);stroke-width:3"/>
+  <line x1="380" y1="130" x2="380" y2="158" style="stroke:var(--accent);stroke-width:6"/>
+  <line x1="460" y1="130" x2="460" y2="186" style="stroke:var(--accent);stroke-width:6"/>
+  <text x="340" y="45" font-size="13">plane at f</text><text x="440" y="45" font-size="13">plane at 2f</text>
+  <line x1="300" y1="228" x2="376" y2="228" class="ln" marker-end="url(#arK)"/><text x="333" y="222" font-size="13">f</text>
+  <line x1="300" y1="242" x2="456" y2="242" class="ln" marker-end="url(#arK)"/><text x="470" y="246" font-size="13">2f</text>
+</svg>
+<figcaption>Moving the image plane from f to 2f doubles the image (m = 2f/Z). Longer focal length = more zoom, smaller field of view.</figcaption>
+</figure>
+
+<!-- ================= 8 ================= -->
+<h2 id="s8"><span class="num">8</span>"What if…": halve f and halve Z</h2>
+<p>Start from focal length 2f, depth 2Z. The slides ask:</p>
+<ol>
+<li><b>Set focal length to half</b> (2f → f) → image shrinks by half.</li>
+<li><b>Set depth to half</b> (2Z → Z, walk closer) → image grows back.</li>
+</ol>
+<div class="math">\[ m = \frac{2f}{2Z} = \frac{f}{Z} \quad\text{(same magnification)} \]</div>
+<div class="card tip"><b class="tag">Slide question: is this the same image as the one at focal length 2f and distance 2Z?</b><br>
+<b>For the subject (one depth): yes</b>, same size. <b>For the whole scene: no.</b> Other objects at different depths change size by different amounts. Example with an object 1 unit behind the subject:
+<ul style="margin:.4em 0 0">
+<li>(2f, 2Z): subject m = 2f/2Z, background m = 2f/(2Z+1)</li>
+<li>(f, Z): subject m = f/Z (same), background m = f/(Z+1), which is relatively smaller.</li>
+</ul>
+Ratio background/subject = Z/(Z+1) when close vs 2Z/(2Z+1) when far. Being closer exaggerates <b>relative</b> size differences between near and far parts. That is <b>perspective distortion</b>.</div>
+
+<!-- ================= 9 ================= -->
+<h2 id="s9"><span class="num">9</span>Perspective distortion (portraits)</h2>
+<p>Two slides show the same face shot at <b>long, mid, short focal lengths</b> (and a series 350, 230, 200, 135, 100, 70, 50, 35, 24, 19 mm), with the photographer moving so the face stays the same size in the frame.</p>
+<div class="tw"><table>
+<tr><th></th><th>Long focal length (e.g. 135–350 mm)</th><th>Short focal length (e.g. 19–35 mm)</th></tr>
+<tr><td>Camera distance</td><td>far</td><td>very close</td></tr>
+<tr><td>Depth range of face relative to Z</td><td>small (nose–ear ≈ 10 cm out of several m)</td><td>large (10 cm out of ~30 cm)</td></tr>
+<tr><td>Look</td><td>face looks flat, ears visible, "compressed"</td><td>nose enlarged, ears hidden, face bulges</td></tr>
+<tr><td>Background</td><td>appears large, close</td><td>appears small, far</td></tr>
+</table></div>
+<div class="card def"><b class="tag">Definition</b><br><b>Perspective distortion</b>: unequal magnification of parts of a scene at different depths, \(m(Z) = f/Z\). It depends only on <b>camera position</b> (how close you are), not on the lens itself; the focal length is just what you change to keep the subject the same size.</div>
+<div class="card ex"><b class="tag">Worked example</b><br>Nose tip at Z, ear 0.1 m farther. Distance 0.3 m: nose/ear magnification ratio = 0.4/0.3 = <b>1.33</b> (nose 33% bigger). Distance 3 m: 3.1/3 = <b>1.03</b> (3% bigger). That's why portrait photographers prefer ~85–135 mm.</div>
+
+<!-- ================= 10 ================= -->
+<h2 id="s10"><span class="num">10</span>The vertigo effect (dolly zoom)</h2>
+<div class="card def"><b class="tag">Definition</b><br>The <b>vertigo effect</b>, named after Alfred Hitchcock's movie <i>Vertigo</i> (the staircase shot), also known as <b>"dolly zoom"</b>: move the camera towards/away from the subject (dolly) while simultaneously zooming the opposite way, keeping \(f/Z_{\text{subject}}\) constant. The subject stays the same size, but the <b>background grows or shrinks</b>, producing an unsettling sense of space stretching.</div>
+<figure>
+<svg viewBox="0 0 600 250" role="img" aria-label="Dolly zoom: subject constant, background changes">
+  <text x="10" y="22" font-size="14" font-weight="700">close + short f</text>
+  <circle cx="30" cy="70" r="7" class="dotR"/><text x="16" y="96" font-size="12">camera</text>
+  <line x1="130" y1="70" x2="130" y2="40" style="stroke:var(--accent);stroke-width:6"/><text x="115" y="96" font-size="12">subject</text>
+  <line x1="330" y1="70" x2="330" y2="10" style="stroke:var(--green);stroke-width:6"/><text x="305" y="96" font-size="12">background</text>
+  <line x1="30" y1="108" x2="126" y2="108" class="ln" marker-end="url(#arK)"/><text x="60" y="122" font-size="12">Z = 100</text>
+  <text x="390" y="22" font-size="13">image (f = 50)</text>
+  <rect x="390" y="30" width="190" height="70" style="fill:var(--card);stroke:var(--line)"/>
+  <line x1="450" y1="95" x2="450" y2="65" style="stroke:var(--accent);stroke-width:8"/><text x="460" y="88" font-size="12">30</text>
+  <line x1="530" y1="95" x2="530" y2="85" style="stroke:var(--green);stroke-width:8"/><text x="540" y="94" font-size="12">10</text>
+
+  <text x="10" y="152" font-size="14" font-weight="700">far + long f</text>
+  <circle cx="30" cy="200" r="7" class="dotR"/>
+  <line x1="230" y1="200" x2="230" y2="170" style="stroke:var(--accent);stroke-width:6"/>
+  <line x1="363" y1="200" x2="363" y2="140" style="stroke:var(--green);stroke-width:6"/>
+  <line x1="30" y1="238" x2="226" y2="238" class="ln" marker-end="url(#arK)"/><text x="100" y="232" font-size="12">Z = 300</text>
+  <rect x="440" y="160" width="140" height="70" style="fill:var(--card);stroke:var(--line)"/><text x="440" y="152" font-size="13">image (f = 150)</text>
+  <line x1="480" y1="225" x2="480" y2="195" style="stroke:var(--accent);stroke-width:8"/><text x="490" y="218" font-size="12">30</text>
+  <line x1="550" y1="225" x2="550" y2="207" style="stroke:var(--green);stroke-width:8"/><text x="560" y="222" font-size="12">18</text>
+</svg>
+<figcaption>Subject (height 60) and background (height 60, 200 units behind). Close: subject 60·50/100 = 30, background 60·50/300 = 10. Far: subject 60·150/300 = 30 (same!), background 60·150/500 = 18. The background nearly doubles while the subject is frozen.</figcaption>
+</figure>
+<div class="card tip"><b class="tag">Slide question: how would you create this effect? (concrete block on the beach / dog on the path)</b><br>Put the camera on a dolly (or walk) and move it <b>away</b> from the block/dog while zooming <b>in</b> (or move closer while zooming out), adjusting the zoom continuously so the subject's image size stays fixed. The houses (background) appear to approach/recede.</div>
+
+<!-- ================= 11 ================= -->
+<h2 id="s11"><span class="num">11</span>Towards other camera models: f → ∞</h2>
+<p>Slide question: <b>what if we continue increasing Z and f while maintaining the same magnification?</b></p>
+<div class="math">\[ f\to\infty \quad\text{and}\quad \frac{f}{Z} = \text{constant} \]</div>
+<p>As the camera moves infinitely far away, the depth differences <i>within</i> the object become negligible compared to Z, so every part of the object gets the <b>same</b> magnification. The projection rays become <b>parallel</b>.</p>
+<figure>
+<svg viewBox="0 0 620 210" role="img" aria-label="Rays from a cube become parallel as the camera goes far away">
+<g transform="translate(30,0)"><rect x="0" y="100" width="60" height="60" style="fill:var(--card);stroke:var(--ink);stroke-width:1.5"/><polygon points="0,100 20,80 80,80 60,100" style="fill:var(--line);stroke:var(--ink)"/><polygon points="60,100 80,80 80,140 60,160" style="fill:var(--muted);fill-opacity:.6;stroke:var(--ink)"/></g><line x1="110" y1="80" x2="200.0" y2="15.0" class="o"/><line x1="90" y1="100" x2="200.0" y2="15.0" class="o"/><line x1="110" y1="140" x2="200.0" y2="15.0" class="o"/><line x1="90" y1="160" x2="200.0" y2="15.0" class="o"/><circle cx="200" cy="15" r="4" class="dotK"/><text x="208" y="20" font-size="12">centre</text><g transform="translate(250,0)"><rect x="0" y="100" width="60" height="60" style="fill:var(--card);stroke:var(--ink);stroke-width:1.5"/><polygon points="0,100 20,80 80,80 60,100" style="fill:var(--line);stroke:var(--ink)"/><polygon points="60,100 80,80 80,140 60,160" style="fill:var(--muted);fill-opacity:.6;stroke:var(--ink)"/></g><line x1="330" y1="80" x2="410.8" y2="5.4" class="o"/><line x1="310" y1="100" x2="390.7" y2="25.3" class="o"/><line x1="330" y1="140" x2="406.3" y2="60.8" class="o"/><line x1="310" y1="160" x2="386.4" y2="80.8" class="o"/><g transform="translate(460,0)"><rect x="0" y="100" width="60" height="60" style="fill:var(--card);stroke:var(--ink);stroke-width:1.5"/><polygon points="0,100 20,80 80,80 60,100" style="fill:var(--line);stroke:var(--ink)"/><polygon points="60,100 80,80 80,140 60,160" style="fill:var(--muted);fill-opacity:.6;stroke:var(--ink)"/></g><line x1="540" y1="80" x2="615.0" y2="5.0" class="o"/><line x1="520" y1="100" x2="595.0" y2="25.0" class="o"/><line x1="540" y1="140" x2="615.0" y2="65.0" class="o"/><line x1="520" y1="160" x2="595.0" y2="85.0" class="o"/><text x="30" y="182" font-size="13">perspective</text><text x="460" y="182" font-size="13">weak perspective</text><line x1="130" y1="200" x2="450" y2="200" class="ln" marker-end="url(#arK)"/><text x="180" y="194" font-size="12" class="mut">increasing focal length &amp; distance</text>
+</svg>
+<figcaption>Left: camera <b>close</b> with <b>small</b> focal length, rays converge to the centre. Right: camera <b>far</b> with <b>large</b> focal length, rays (nearly) parallel. The building photos on the slide show the same: the close shot has strongly converging lines, the far shot looks "flat".</figcaption>
+</figure>
+<p>"Different cameras" slide: two identical screws, one slightly behind the other. <b>Perspective camera</b>: the front screw looks bigger. <b>Weak perspective camera</b>: both look the same size.</p>
+
+<!-- ================= 12 ================= -->
+<h2 id="s12"><span class="num">12</span>Weak perspective vs perspective camera</h2>
+<figure>
+<svg viewBox="0 0 560 260" role="img" aria-label="Weak perspective: project to reference depth Z0 first">
+  <line x1="40" y1="220" x2="540" y2="220" class="ax" marker-end="url(#arK)"/><text x="530" y="240" font-size="14">z</text>
+  <line x1="40" y1="250" x2="40" y2="20" class="ax" marker-end="url(#arK)"/><text x="22" y="30" font-size="14">y</text>
+  <line x1="200" y1="40" x2="200" y2="250" style="stroke:var(--orange);stroke-width:4"/><text x="160" y="34" font-size="13">image plane</text>
+  <line x1="380" y1="40" x2="380" y2="250" class="o"/><text x="388" y="250" font-size="13">depth Z₀</text>
+  <circle cx="470" cy="100" r="6" class="dotK"/><text x="480" y="96" font-size="16" font-weight="700">X</text>
+  <line x1="40" y1="220" x2="470" y2="100" class="ln" style="opacity:.55"/>
+  <circle cx="200" cy="175.3" r="5" class="dotR"/><text x="208" y="192" font-size="12" style="fill:var(--red)">perspective: fY/Z</text>
+  <line x1="470" y1="100" x2="380" y2="100" class="lnA" marker-end="url(#arA)"/>
+  <line x1="380" y1="100" x2="40" y2="220" class="lnA"/>
+  <circle cx="200" cy="163.5" r="5" class="dotA"/><text x="208" y="158" font-size="12" style="fill:var(--accent)">weak: fY/Z₀</text>
+  <line x1="40" y1="236" x2="196" y2="236" class="ln" marker-end="url(#arK)"/><text x="115" y="250" font-size="13">f</text>
+</svg>
+<figcaption>Weak perspective = (1) push every point orthographically (parallel to z) onto a reference plane at depth \(Z_o\), then (2) apply ordinary perspective from that plane.</figcaption>
+</figure>
+<div class="tw"><table>
+<tr><th>Model</th><th>Mapping</th><th>Magnification</th></tr>
+<tr><td>Perspective</td><td>\([X\ Y\ Z]^\top\mapsto[fX/Z\ \ fY/Z]^\top\)</td><td>changes with depth</td></tr>
+<tr><td>Weak perspective</td><td>\([X\ Y\ Z]^\top\mapsto[fX/Z_o\ \ fY/Z_o]^\top\)</td><td><b>constant</b>, \(f/Z_o\), does not change with depth</td></tr>
+</table></div>
+<div class="card def"><b class="tag">Definition</b><br><b>Weak perspective camera</b> (scaled orthographic): every point uses the same depth \(Z_o\) (typically the object's average depth), so magnification is a single constant \(m=f/Z_o\) depending on f and \(Z_o\). It is a <b>linear</b> map: no division by each point's own Z.</div>
+<div class="card ex"><b class="tag">Example</b><br>f = 100, \(Z_o\) = 1000 → m = 0.1. Points (50, 20, 990) and (50, 20, 1010): perspective gives x = 5.05 and 4.95, weak perspective gives 5.0 for both. Error ≈ 1%, i.e. ΔZ/Z₀.</div>
+
+<!-- ================= 13 ================= -->
+<h2 id="s13"><span class="num">13</span>Comparing camera matrices</h2>
+<p>Assume world and camera coordinate systems are the same.</p>
+<div class="math">\[ \textbf{Perspective: }\ \mathbf{P}=\begin{bmatrix}f&0&p_x\\0&f&p_y\\0&0&1\end{bmatrix}\begin{bmatrix}1&0&0&0\\0&1&0&0\\0&0&1&0\end{bmatrix} \]</div>
+<p>Slide question: <b>what would the matrix of the weak perspective camera look like?</b> Move the "1" in the last row from the Z column to the constant column and make it \(Z_o\):</p>
+<div class="math">\[ \textbf{Weak perspective: }\ \mathbf{P}=\begin{bmatrix}f&0&p_x\\0&f&p_y\\0&0&1\end{bmatrix}\begin{bmatrix}1&0&0&0\\0&1&0&0\\0&0&0&Z_o\end{bmatrix} \]</div>
+<div class="card tip"><b class="tag">Check it</b><br>
+\(\begin{bmatrix}1&0&0&0\\0&1&0&0\\0&0&0&Z_o\end{bmatrix}\begin{bmatrix}X\\Y\\Z\\1\end{bmatrix}=\begin{bmatrix}X\\Y\\Z_o\end{bmatrix}\), then K gives \(\begin{bmatrix}fX+p_xZ_o\\fY+p_yZ_o\\Z_o\end{bmatrix}\) → dividing by the third entry: \(\left(\frac{fX}{Z_o}+p_x,\ \frac{fY}{Z_o}+p_y\right)\). The third coordinate is the same constant \(Z_o\) for every point; Z has vanished.</div>
+<p>Generalising K to the full intrinsic matrix \(\mathbf{K}=\begin{bmatrix}\alpha_x&s&p_x\\0&\alpha_y&p_y\\0&0&1\end{bmatrix}\):</p>
+<div class="tw"><table>
+<tr><th>Camera</th><th>Matrix</th><th>Generalises</th></tr>
+<tr><td><b>Finite projective</b></td><td>\(\mathbf{P}=\mathbf{K}\begin{bmatrix}1&0&0&0\\0&1&0&0\\0&0&1&0\end{bmatrix}\)</td><td>perspective</td></tr>
+<tr><td><b>Affine</b></td><td>\(\mathbf{P}=\mathbf{K}\begin{bmatrix}1&0&0&0\\0&1&0&0\\0&0&0&Z_o\end{bmatrix}\)</td><td>weak perspective</td></tr>
+</table></div>
+<p>In both cameras we can incorporate extrinsic parameters the same way as before (multiply on the right by the 4×4 [R t; 0 1]).</p>
+<div class="card def"><b class="tag">Definition</b><br><b>Affine camera</b>: a camera whose last row of P is \([0\ 0\ 0\ *]\). Consequences: (1) it's linear on inhomogeneous coordinates (x = AX + b), (2) <b>parallel 3D lines stay parallel</b> in the image (no vanishing points), (3) its centre is at infinity (all rays are parallel).</div>
+
+<!-- ================= 14 ================= -->
+<h2 id="s14"><span class="num">14</span>When can we assume a weak perspective camera?</h2>
+<ol>
+<li><b>When the scene (or parts of it) is very far away.</b> Slide photo: weak perspective applies to the <b>mountains</b> (depth variations are tiny vs their distance), but <b>not to the road</b> in the foreground (its lines clearly converge). Rule of thumb: depth range ΔZ ≪ Z₀ (e.g. ΔZ &lt; Z₀/10).</li>
+<li><b>When we use a telecentric lens.</b> Place a pinhole (aperture) at the lens's <b>focal length</b>, so that only rays <b>parallel to the primary (optical) axis</b> on the object side pass through.</li>
+</ol>
+<figure>
+<svg viewBox="0 0 620 300" role="img" aria-label="Telecentric lens ray diagram">
+  <line x1="30" y1="160" x2="600" y2="160" style="stroke:var(--muted);stroke-dasharray:4 4"/>
+  <line x1="60" y1="40" x2="60" y2="280" class="o"/>
+  <ellipse cx="260" cy="160" rx="14" ry="110" style="fill:var(--accent);fill-opacity:.3;stroke:var(--accent)"/>
+  <line x1="380" y1="40" x2="380" y2="153" style="stroke:var(--ink);stroke-width:5"/><line x1="380" y1="167" x2="380" y2="280" style="stroke:var(--ink);stroke-width:5"/>
+  <line x1="500" y1="40" x2="500" y2="280" class="o"/>
+  <circle cx="60" cy="70" r="5" class="dotG"/><circle cx="60" cy="250" r="5" class="dotO"/>
+  <line x1="60" y1="70" x2="260" y2="70" class="lnG"/><line x1="260" y1="70" x2="500" y2="250" class="lnG"/>
+  <line x1="60" y1="250" x2="260" y2="250" class="lnO"/><line x1="260" y1="250" x2="500" y2="70" class="lnO"/>
+  <circle cx="500" cy="250" r="5" class="dotG"/><circle cx="500" cy="70" r="5" class="dotO"/>
+  <line x1="60" y1="70" x2="260" y2="200" style="stroke:var(--green);stroke-opacity:.35;stroke-width:1.5"/><line x1="260" y1="200" x2="380" y2="215" style="stroke:var(--green);stroke-opacity:.35;stroke-width:1.5"/>
+  <text x="372" y="225" font-size="16" style="fill:var(--red)">✕</text><text x="392" y="232" font-size="11" style="fill:var(--red)">blocked</text>
+  <line x1="60" y1="292" x2="256" y2="292" class="ln" marker-end="url(#arK)"/><text x="110" y="288" font-size="12">object distance D</text>
+  <line x1="262" y1="22" x2="376" y2="22" class="ln" marker-end="url(#arK)"/><text x="290" y="18" font-size="12">focal length f</text>
+  <line x1="262" y1="36" x2="496" y2="36" class="lnA" marker-end="url(#arA)"/><text x="420" y="32" font-size="12" style="fill:var(--accent)">sensor dist. D′</text>
+  <text x="385" y="150" font-size="11">pinhole at f</text>
+</svg>
+<figcaption>Only the ray leaving each object point <b>parallel to the axis</b> gets through the pinhole at the back focal point (a lens bends axis-parallel rays through its focal point). Non-parallel rays hit the stop and are blocked. Since the chosen ray is parallel, moving the object (changing D) does not change where it lands: <b>magnification is independent of depth</b>.</figcaption>
+</figure>
+
+<!-- ================= 15 ================= -->
+<h2 id="s15"><span class="num">15</span>Orthographic camera &amp; telecentric lens</h2>
+<div class="card def"><b class="tag">Definition</b><br><b>Orthographic camera</b>: special case of the weak perspective camera where
+<ul style="margin:.3em 0 0">
+<li>constant magnification is equal to <b>1</b>,</li>
+<li>there is <b>no shift</b> between camera and image origins (principal point at 0),</li>
+<li>the world and camera coordinate systems are the <b>same</b>.</li>
+</ul></div>
+<figure>
+<svg viewBox="0 0 520 200" role="img" aria-label="Orthographic projection: parallel projection lines">
+  <polygon points="60,60 260,20 260,140 60,180" style="fill:var(--card);stroke:var(--ink);stroke-width:1.5"/><text x="210" y="40" font-size="13">image</text>
+  <polygon points="110,100 230,70 150,140" style="fill:var(--accent);fill-opacity:.2;stroke:var(--accent);stroke-width:2.2"/>
+  <polygon points="390,100 470,70 430,140" style="fill:none;stroke:var(--ink);stroke-width:2.2"/><text x="440" y="50" font-size="13">world</text>
+  <line x1="230" y1="70" x2="470" y2="70" class="o"/><line x1="110" y1="100" x2="390" y2="100" class="o"/><line x1="150" y1="140" x2="430" y2="140" class="o"/>
+</svg>
+<figcaption>Projection lines are parallel and perpendicular to the image plane: you simply drop Z.</figcaption>
+</figure>
+<p>Slide question: <b>what is the camera matrix in this case?</b></p>
+<div class="math">\[ \mathbf{P}_{\text{ortho}}=\begin{bmatrix}1&0&0&0\\0&1&0&0\\0&0&0&1\end{bmatrix},\qquad [X\ Y\ Z\ 1]^\top\mapsto[X\ Y\ 1]^\top \]</div>
+<p>(Weak perspective with f = Z₀, so m = 1, and p<sub>x</sub> = p<sub>y</sub> = 0.)</p>
+<h3>Orthographic projection using a telecentric lens</h3>
+<p>Slide question: <b>how do we make the telecentric lens act as an orthographic camera?</b> Set the sensor distance</p>
+<div class="math">\[ D' = 2f \]</div>
+<div class="card tip"><b class="tag">Why 2f? (similar triangles)</b><br>A point at height h sends its axis-parallel ray to the lens at height h. After the lens the ray passes through the focal point (on the axis, at distance f) and keeps going. At the sensor, distance D′ from the lens, i.e. D′ − f beyond the focal point, its height is \(-h\,\frac{D'-f}{f}\). Unit magnification (|image| = h) requires \(D'-f=f\Rightarrow D'=2f\). The image is inverted, as in the diagram (green top point lands at the bottom).</div>
+
+<!-- ================= 16 ================= -->
+<h2 id="s16"><span class="num">16</span>Calibration vs triangulation vs reconstruction</h2>
+<div class="tw"><table>
+<tr><th></th><th>Structure (scene geometry)</th><th>Motion (camera geometry)</th><th>Measurements</th></tr>
+<tr><td><b>Camera calibration</b> (a.k.a. <b>pose estimation</b>)</td><td>known</td><td style="color:var(--accent);font-weight:700">estimate</td><td>3D to 2D correspondences</td></tr>
+<tr><td><b>Triangulation</b></td><td style="color:var(--accent);font-weight:700">estimate</td><td>known</td><td>2D to 2D correspondences</td></tr>
+<tr><td><b>Reconstruction</b></td><td style="color:var(--accent);font-weight:700">estimate</td><td style="color:var(--accent);font-weight:700">estimate</td><td>2D to 2D correspondences</td></tr>
+</table></div>
+<div class="card def"><b class="tag">Definition</b><br><b>Pose estimation</b>: given a single image, estimate the exact position (and orientation) of the photographer. Slide example: Photo Tourism / Prague Old Town Square, where every photo gets a camera frustum placed in a 3D reconstruction.</div>
+
+<!-- ================= 17 ================= -->
+<h2 id="s17"><span class="num">17</span>Geometric camera calibration: the problem</h2>
+<div class="card def"><b class="tag">Definition</b><br><b>Geometric camera calibration</b>: given a set of matched points \(\{\mathbf{X}_i,\mathbf{x}_i\}\) (point in 3D space, point in the image) and a camera model
+\[ \mathbf{x} = \mathbf{f}(\mathbf{X};\mathbf{p}) = \mathbf{P}\mathbf{X} \]
+(projection model, parameters, camera matrix), find the (pose) estimate of <b>P</b>. We use a <b>perspective</b> camera model.</div>
+<p>It's the <b>same setup as homography estimation</b> (Module 08: build A, solve Ah = 0 with SVD), just with a 3×4 matrix instead of 3×3 and a slightly different derivation.</p>
+
+<!-- ================= 18 ================= -->
+<h2 id="s18"><span class="num">18</span>Linearising x = PX</h2>
+<div class="math">\[ \begin{bmatrix}x\\y\\z\end{bmatrix}=\begin{bmatrix}p_1&p_2&p_3&p_4\\p_5&p_6&p_7&p_8\\p_9&p_{10}&p_{11}&p_{12}\end{bmatrix}\begin{bmatrix}X\\Y\\Z\\1\end{bmatrix} \]</div>
+<div class="card tip"><b class="tag">Slide question: what are the unknowns?</b><br>The 12 entries \(p_1,\dots,p_{12}\). The 3D points X and the 2D points (x′, y′) are <b>known</b>. P is defined only up to scale, so there are <b>11</b> independent unknowns.</div>
+<p>Write P by rows: \(\mathbf{p}_1^\top,\mathbf{p}_2^\top,\mathbf{p}_3^\top\) (each 1×4). Converting to heterogeneous (pixel) coordinates:</p>
+<div class="math">\[ x' = \frac{\mathbf{p}_1^\top\mathbf{X}}{\mathbf{p}_3^\top\mathbf{X}},\qquad y' = \frac{\mathbf{p}_2^\top\mathbf{X}}{\mathbf{p}_3^\top\mathbf{X}} \]</div>
+<p>This is a <b>non-linear</b> relation (unknowns in the denominator). Slide question: <b>how can we make these relations linear?</b> Multiply both sides by the denominator and move everything to one side (algebraic manipulation):</p>
+<div class="math">\[ \mathbf{p}_2^\top\mathbf{X} - \mathbf{p}_3^\top\mathbf{X}\,y' = 0 \qquad\qquad \mathbf{p}_1^\top\mathbf{X} - \mathbf{p}_3^\top\mathbf{X}\,x' = 0 \]</div>
+<p>Now they're <b>linear in the unknowns</b> p. Each correspondence gives <b>2</b> equations, so we can set up a system of linear equations with multiple point correspondences.</p>
+
+<!-- ================= 19 ================= -->
+<h2 id="s19"><span class="num">19</span>Stacking N points &amp; solving with SVD</h2>
+<p>Slide question: <b>how do we proceed?</b> Write it in matrix form (each block is 1×4, so the row is 1×12):</p>
+<div class="math">\[ \begin{bmatrix}\mathbf{X}^\top & \mathbf{0} & -x'\mathbf{X}^\top\\ \mathbf{0} & \mathbf{X}^\top & -y'\mathbf{X}^\top\end{bmatrix}\begin{bmatrix}\mathbf{p}_1\\\mathbf{p}_2\\\mathbf{p}_3\end{bmatrix}=\mathbf{0} \]</div>
+<p>For N points, stack the 2-row blocks:</p>
+<div class="math">\[ \underbrace{\begin{bmatrix}\mathbf{X}_1^\top & \mathbf{0} & -x'\mathbf{X}_1^\top\\ \mathbf{0} & \mathbf{X}_1^\top & -y'\mathbf{X}_1^\top\\ \vdots&\vdots&\vdots\\ \mathbf{X}_N^\top & \mathbf{0} & -x'\mathbf{X}_N^\top\\ \mathbf{0} & \mathbf{X}_N^\top & -y'\mathbf{X}_N^\top\end{bmatrix}}_{\mathbf{A}\ (2N\times 12)}\underbrace{\begin{bmatrix}\mathbf{p}_1\\\mathbf{p}_2\\\mathbf{p}_3\end{bmatrix}}_{\mathbf{x}\ (12\times1)}=\mathbf{0} \]</div>
+<p>Slide question: <b>how do we solve this system?</b> Noise means there's no exact solution, and x = 0 is trivial, so solve the constrained least-squares problem:</p>
+<div class="math">\[ \hat{\mathbf{x}} = \arg\min_{\mathbf{x}}\ \|\mathbf{A}\mathbf{x}\|^2 \quad\text{subject to}\quad \|\mathbf{x}\|^2 = 1 \]</div>
+<div class="card def"><b class="tag">SVD!</b><br>With \(\mathbf{A}=\mathbf{U}\Sigma\mathbf{V}^\top\), the solution x is the <b>column of V corresponding to the smallest singular value</b> of A. Equivalently, x is the <b>eigenvector of \(\mathbf{A}^\top\mathbf{A}\) with the smallest eigenvalue</b>. Reshape the 12 numbers into the 3×4 P.</div>
+<div class="card ex"><b class="tag">How many points?</b><br>11 unknowns, 2 equations per point → at least <b>5½, i.e. 6 points</b>. Use many more (dozens) to average noise. The 3D points must <b>not all lie on one plane</b>; for coplanar points A loses rank and P is not unique (that's why the calibration rig on the slide has two walls + a floor).</div>
+<p>Slide: "Now we have P = [p₁ … p₁₂]. <b>Are we done?</b>" Almost there… slide question: <b>how do you get the intrinsic and extrinsic parameters from the projection matrix?</b></p>
+
+<!-- ================= 20 ================= -->
+<h2 id="s20"><span class="num">20</span>Decomposing P into K, R, c</h2>
+<p>Split P into its left 3×3 block and last column:</p>
+<div class="math">\[ \mathbf{P}=\left[\begin{array}{ccc|c}p_1&p_2&p_3&p_4\\p_5&p_6&p_7&p_8\\p_9&p_{10}&p_{11}&p_{12}\end{array}\right],\qquad \mathbf{P}=\mathbf{K}[\mathbf{R}\mid\mathbf{t}] = \mathbf{K}[\mathbf{R}\mid -\mathbf{R}\mathbf{c}] = [\mathbf{M}\mid -\mathbf{M}\mathbf{c}] \]</div>
+<p>with \(\mathbf{M}=\mathbf{K}\mathbf{R}\) (3×3) and \(\mathbf{t}=-\mathbf{R}\mathbf{c}\).</p>
+<figure>
+<svg viewBox="0 0 600 190" role="img" aria-label="Decomposition flow">
+  <rect x="230" y="10" width="140" height="40" rx="8" class="s1"/><text x="300" y="36" text-anchor="middle" font-size="15" font-weight="700">P (3×4)</text>
+  <line x1="270" y1="52" x2="150" y2="92" class="ln" marker-end="url(#arK)"/><line x1="330" y1="52" x2="450" y2="92" class="ln" marker-end="url(#arK)"/>
+  <rect x="20" y="95" width="260" height="85" rx="8" class="s3"/>
+  <text x="150" y="118" text-anchor="middle" font-size="14" font-weight="700">Camera centre c</text>
+  <text x="150" y="140" text-anchor="middle" font-size="13">Pc = 0 → SVD of P</text>
+  <text x="150" y="160" text-anchor="middle" font-size="12">c = singular vector of smallest σ</text>
+  <rect x="320" y="95" width="260" height="85" rx="8" class="s2"/>
+  <text x="450" y="118" text-anchor="middle" font-size="14" font-weight="700">Intrinsics K, rotation R</text>
+  <text x="450" y="140" text-anchor="middle" font-size="13">M = KR (left 3×3 of P)</text>
+  <text x="450" y="160" text-anchor="middle" font-size="12">upper-triangular × orthogonal → "QR" (RQ)</text>
+</svg>
+</figure>
+<h3>Find the camera centre c</h3>
+<p>Slide question: <b>what is the projection of the camera centre?</b> The centre is the one point with no image: every ray passes through it, so it projects to the "zero vector":</p>
+<div class="math">\[ \mathbf{P}\mathbf{c} = \mathbf{0} \]</div>
+<p>(Check: \([\mathbf{M}\mid-\mathbf{M}\mathbf{c}]\begin{bmatrix}\mathbf{c}\\1\end{bmatrix}=\mathbf{M}\mathbf{c}-\mathbf{M}\mathbf{c}=\mathbf{0}\).) Slide question: <b>how do we compute the camera centre from this?</b> → <b>SVD of P</b>: c is the (right) singular vector corresponding to the smallest singular value (the null space of P). Divide by its 4th entry.</p>
+<h3>Find intrinsic K and rotation R</h3>
+<p>\(\mathbf{M}=\mathbf{K}\mathbf{R}\). Slide question: <b>any useful properties of K and R we can use?</b> Yes:</p>
+<ul>
+<li><b>K</b> is <b>right upper triangular</b>.</li>
+<li><b>R</b> is <b>orthogonal</b> (a rotation).</li>
+</ul>
+<p>Slide question: <b>how do we find K and R?</b> → <b>QR decomposition</b>: any square matrix factors uniquely (up to signs) into "triangular × orthogonal".</p>
+<div class="card warn"><b class="tag">Careful: QR vs RQ</b><br>The slide says "QR decomposition", but M = <b>K R</b> is (upper-triangular) × (orthogonal), which is technically an <b>RQ</b> decomposition (standard QR gives orthogonal × triangular). In code use <code>scipy.linalg.rq(M)</code>, or apply QR to the flipped/transposed matrix. Afterwards fix signs so K has a positive diagonal, and normalise so K[2,2] = 1. Finally t = −Rc (or t = K⁻¹p₄).</div>
+
+<!-- ================= 21 ================= -->
+<h2 id="s21"><span class="num">21</span>Where do we get the matched points from?</h2>
+<p>Slide question: <b>where do we get these matched points {Xᵢ, xᵢ} from?</b></p>
+<div class="card def"><b class="tag">Calibration using a reference object</b><br>Place a <b>known object</b> in the scene (slide: two perpendicular boards + a floor covered with a grid of dots at precisely known 3D positions):
+<ul style="margin:.3em 0 0"><li>identify correspondences between image and scene,</li><li>compute the mapping from scene to image (P via the DLT above).</li></ul>
+<b>Issues</b>: must know the geometry <b>very accurately</b>; must know the <b>3D→2D correspondence</b> (which dot is which).</div>
+
+<!-- ================= 22 ================= -->
+<h2 id="s22"><span class="num">22</span>Pros/cons &amp; minimising reprojection error</h2>
+<div class="tw"><table>
+<tr><th>Advantages (linear method)</th><th>Disadvantages</th></tr>
+<tr><td>Very simple to formulate.<br>Analytical (closed-form) solution.</td><td>Doesn't model radial distortion.<br>Hard to impose constraints (e.g. known f).<br>Doesn't minimise the correct error function.</td></tr>
+</table></div>
+<p>For these reasons, <b>nonlinear methods</b> are preferred:</p>
+<ul>
+<li>Define an error function E between projected 3D points and observed image positions. E is a nonlinear function of intrinsics, extrinsics, radial distortion.</li>
+<li>Minimise E using nonlinear optimisation techniques (e.g. Gauss-Newton / Levenberg-Marquardt), usually initialised with the linear (DLT) solution.</li>
+</ul>
+<figure>
+<svg viewBox="0 0 560 230" role="img" aria-label="Reprojection error between observed and projected point">
+  <polygon points="40,40 200,10 200,200 40,220" style="fill:var(--card);stroke:var(--ink);stroke-width:1.5"/>
+  <circle cx="330" cy="87.3" r="5" class="dotK"/><text x="300" y="112" font-size="12">camera centre</text>
+  <circle cx="520" cy="40" r="6" class="dotK"/><text x="480" y="30" font-size="14" font-weight="700">Pᵢ (3D)</text>
+  <line x1="520" y1="40" x2="110" y2="142" class="lnR"/>
+  <circle cx="110" cy="142" r="6" class="dotR"/><text x="60" y="130" font-size="14" font-weight="700" style="fill:var(--red)">MPᵢ</text>
+  <circle cx="132" cy="176" r="6" class="dotA"/><text x="140" y="196" font-size="14" font-weight="700" style="fill:var(--accent)">(uᵢ, vᵢ)</text>
+  <line x1="110" y1="142" x2="132" y2="176" style="stroke:var(--orange);stroke-width:3"/>
+  <text x="225" y="200" font-size="13" style="fill:var(--orange)">reprojection error</text>
+</svg>
+<figcaption>Red: where the current model M projects the known 3D point Pᵢ. Blue: where it was actually observed. Minimise the pixel distance, summed over all points.</figcaption>
+</figure>
+<div class="math">\[ E=\sum_i\left(u_i-\frac{\mathbf{m}_1\cdot\mathbf{P}_i}{\mathbf{m}_3\cdot\mathbf{P}_i}\right)^2+\left(v_i-\frac{\mathbf{m}_2\cdot\mathbf{P}_i}{\mathbf{m}_3\cdot\mathbf{P}_i}\right)^2 \]</div>
+<p>(Notation on this slide: \(\mathbf{P}_i\) = 3D point, M = projection matrix with rows \(\mathbf{m}_1,\mathbf{m}_2,\mathbf{m}_3\), \((u_i,v_i)\) = observed pixel.)</p>
+<div class="card tip"><b class="tag">Slide question: is this equivalent to what we were doing previously?</b><br><b>No.</b> The DLT minimises the <b>algebraic error</b> \(\|\mathbf{A}\mathbf{p}\|^2\), whose rows are \(\mathbf{m}_1\!\cdot\!\mathbf{P}_i-u_i\,\mathbf{m}_3\!\cdot\!\mathbf{P}_i\) = (\(\mathbf{m}_3\!\cdot\!\mathbf{P}_i\)) × (pixel error). So each point's error is weighted by its depth \(\mathbf{m}_3\cdot\mathbf{P}_i\), which has no physical meaning. Reprojection error is the true <b>geometric error</b> in pixels (the statistically right choice under Gaussian pixel noise). The two coincide only when every point has the same depth (affine case).</div>
+
+<!-- ================= 23 ================= -->
+<h2 id="s23"><span class="num">23</span>Radial distortion</h2>
+<p>Slide image: a calibration room of dots where straight edges bow outwards.</p>
+<figure>
+<svg viewBox="0 0 620 175" role="img" aria-label="No distortion, barrel distortion, pincushion distortion grids">
+<polyline class="ln" points="15.0,20.0 15.0,23.2 15.0,26.4 15.0,29.6 15.0,32.8 15.0,36.0 15.0,39.2 15.0,42.4 15.0,45.6 15.0,48.8 15.0,52.0 15.0,55.2 15.0,58.4 15.0,61.6 15.0,64.8 15.0,68.0 15.0,71.2 15.0,74.4 15.0,77.6 15.0,80.8 15.0,84.0 15.0,87.2 15.0,90.4 15.0,93.6 15.0,96.8 15.0,100.0 15.0,103.2 15.0,106.4 15.0,109.6 15.0,112.8 15.0,116.0 15.0,119.2 15.0,122.4 15.0,125.6 15.0,128.8 15.0,132.0 15.0,135.2 15.0,138.4 15.0,141.6 15.0,144.8 15.0,148.0"/>
+<polyline class="ln" points="36.2,20.0 36.2,23.2 36.2,26.4 36.2,29.6 36.2,32.8 36.2,36.0 36.2,39.2 36.2,42.4 36.2,45.6 36.2,48.8 36.2,52.0 36.2,55.2 36.2,58.4 36.2,61.6 36.2,64.8 36.2,68.0 36.2,71.2 36.2,74.4 36.2,77.6 36.2,80.8 36.2,84.0 36.2,87.2 36.2,90.4 36.2,93.6 36.2,96.8 36.2,100.0 36.2,103.2 36.2,106.4 36.2,109.6 36.2,112.8 36.2,116.0 36.2,119.2 36.2,122.4 36.2,125.6 36.2,128.8 36.2,132.0 36.2,135.2 36.2,138.4 36.2,141.6 36.2,144.8 36.2,148.0"/>
+<polyline class="ln" points="57.5,20.0 57.5,23.2 57.5,26.4 57.5,29.6 57.5,32.8 57.5,36.0 57.5,39.2 57.5,42.4 57.5,45.6 57.5,48.8 57.5,52.0 57.5,55.2 57.5,58.4 57.5,61.6 57.5,64.8 57.5,68.0 57.5,71.2 57.5,74.4 57.5,77.6 57.5,80.8 57.5,84.0 57.5,87.2 57.5,90.4 57.5,93.6 57.5,96.8 57.5,100.0 57.5,103.2 57.5,106.4 57.5,109.6 57.5,112.8 57.5,116.0 57.5,119.2 57.5,122.4 57.5,125.6 57.5,128.8 57.5,132.0 57.5,135.2 57.5,138.4 57.5,141.6 57.5,144.8 57.5,148.0"/>
+<polyline class="ln" points="78.8,20.0 78.8,23.2 78.8,26.4 78.8,29.6 78.8,32.8 78.8,36.0 78.8,39.2 78.8,42.4 78.8,45.6 78.8,48.8 78.8,52.0 78.8,55.2 78.8,58.4 78.8,61.6 78.8,64.8 78.8,68.0 78.8,71.2 78.8,74.4 78.8,77.6 78.8,80.8 78.8,84.0 78.8,87.2 78.8,90.4 78.8,93.6 78.8,96.8 78.8,100.0 78.8,103.2 78.8,106.4 78.8,109.6 78.8,112.8 78.8,116.0 78.8,119.2 78.8,122.4 78.8,125.6 78.8,128.8 78.8,132.0 78.8,135.2 78.8,138.4 78.8,141.6 78.8,144.8 78.8,148.0"/>
+<polyline class="ln" points="100.0,20.0 100.0,23.2 100.0,26.4 100.0,29.6 100.0,32.8 100.0,36.0 100.0,39.2 100.0,42.4 100.0,45.6 100.0,48.8 100.0,52.0 100.0,55.2 100.0,58.4 100.0,61.6 100.0,64.8 100.0,68.0 100.0,71.2 100.0,74.4 100.0,77.6 100.0,80.8 100.0,84.0 100.0,87.2 100.0,90.4 100.0,93.6 100.0,96.8 100.0,100.0 100.0,103.2 100.0,106.4 100.0,109.6 100.0,112.8 100.0,116.0 100.0,119.2 100.0,122.4 100.0,125.6 100.0,128.8 100.0,132.0 100.0,135.2 100.0,138.4 100.0,141.6 100.0,144.8 100.0,148.0"/>
+<polyline class="ln" points="121.2,20.0 121.2,23.2 121.2,26.4 121.2,29.6 121.2,32.8 121.2,36.0 121.2,39.2 121.2,42.4 121.2,45.6 121.2,48.8 121.2,52.0 121.2,55.2 121.2,58.4 121.2,61.6 121.2,64.8 121.2,68.0 121.2,71.2 121.2,74.4 121.2,77.6 121.2,80.8 121.2,84.0 121.2,87.2 121.2,90.4 121.2,93.6 121.2,96.8 121.2,100.0 121.2,103.2 121.2,106.4 121.2,109.6 121.2,112.8 121.2,116.0 121.2,119.2 121.2,122.4 121.2,125.6 121.2,128.8 121.2,132.0 121.2,135.2 121.2,138.4 121.2,141.6 121.2,144.8 121.2,148.0"/>
+<polyline class="ln" points="142.5,20.0 142.5,23.2 142.5,26.4 142.5,29.6 142.5,32.8 142.5,36.0 142.5,39.2 142.5,42.4 142.5,45.6 142.5,48.8 142.5,52.0 142.5,55.2 142.5,58.4 142.5,61.6 142.5,64.8 142.5,68.0 142.5,71.2 142.5,74.4 142.5,77.6 142.5,80.8 142.5,84.0 142.5,87.2 142.5,90.4 142.5,93.6 142.5,96.8 142.5,100.0 142.5,103.2 142.5,106.4 142.5,109.6 142.5,112.8 142.5,116.0 142.5,119.2 142.5,122.4 142.5,125.6 142.5,128.8 142.5,132.0 142.5,135.2 142.5,138.4 142.5,141.6 142.5,144.8 142.5,148.0"/>
+<polyline class="ln" points="163.8,20.0 163.8,23.2 163.8,26.4 163.8,29.6 163.8,32.8 163.8,36.0 163.8,39.2 163.8,42.4 163.8,45.6 163.8,48.8 163.8,52.0 163.8,55.2 163.8,58.4 163.8,61.6 163.8,64.8 163.8,68.0 163.8,71.2 163.8,74.4 163.8,77.6 163.8,80.8 163.8,84.0 163.8,87.2 163.8,90.4 163.8,93.6 163.8,96.8 163.8,100.0 163.8,103.2 163.8,106.4 163.8,109.6 163.8,112.8 163.8,116.0 163.8,119.2 163.8,122.4 163.8,125.6 163.8,128.8 163.8,132.0 163.8,135.2 163.8,138.4 163.8,141.6 163.8,144.8 163.8,148.0"/>
+<polyline class="ln" points="185.0,20.0 185.0,23.2 185.0,26.4 185.0,29.6 185.0,32.8 185.0,36.0 185.0,39.2 185.0,42.4 185.0,45.6 185.0,48.8 185.0,52.0 185.0,55.2 185.0,58.4 185.0,61.6 185.0,64.8 185.0,68.0 185.0,71.2 185.0,74.4 185.0,77.6 185.0,80.8 185.0,84.0 185.0,87.2 185.0,90.4 185.0,93.6 185.0,96.8 185.0,100.0 185.0,103.2 185.0,106.4 185.0,109.6 185.0,112.8 185.0,116.0 185.0,119.2 185.0,122.4 185.0,125.6 185.0,128.8 185.0,132.0 185.0,135.2 185.0,138.4 185.0,141.6 185.0,144.8 185.0,148.0"/>
+<polyline class="ln" points="15.0,20.0 19.2,20.0 23.5,20.0 27.8,20.0 32.0,20.0 36.2,20.0 40.5,20.0 44.8,20.0 49.0,20.0 53.2,20.0 57.5,20.0 61.8,20.0 66.0,20.0 70.2,20.0 74.5,20.0 78.8,20.0 83.0,20.0 87.2,20.0 91.5,20.0 95.8,20.0 100.0,20.0 104.2,20.0 108.5,20.0 112.8,20.0 117.0,20.0 121.2,20.0 125.5,20.0 129.8,20.0 134.0,20.0 138.2,20.0 142.5,20.0 146.8,20.0 151.0,20.0 155.2,20.0 159.5,20.0 163.8,20.0 168.0,20.0 172.2,20.0 176.5,20.0 180.8,20.0 185.0,20.0"/>
+<polyline class="ln" points="15.0,41.3 19.2,41.3 23.5,41.3 27.8,41.3 32.0,41.3 36.2,41.3 40.5,41.3 44.8,41.3 49.0,41.3 53.2,41.3 57.5,41.3 61.8,41.3 66.0,41.3 70.2,41.3 74.5,41.3 78.8,41.3 83.0,41.3 87.2,41.3 91.5,41.3 95.8,41.3 100.0,41.3 104.2,41.3 108.5,41.3 112.8,41.3 117.0,41.3 121.2,41.3 125.5,41.3 129.8,41.3 134.0,41.3 138.2,41.3 142.5,41.3 146.8,41.3 151.0,41.3 155.2,41.3 159.5,41.3 163.8,41.3 168.0,41.3 172.2,41.3 176.5,41.3 180.8,41.3 185.0,41.3"/>
+<polyline class="ln" points="15.0,62.7 19.2,62.7 23.5,62.7 27.8,62.7 32.0,62.7 36.2,62.7 40.5,62.7 44.8,62.7 49.0,62.7 53.2,62.7 57.5,62.7 61.8,62.7 66.0,62.7 70.2,62.7 74.5,62.7 78.8,62.7 83.0,62.7 87.2,62.7 91.5,62.7 95.8,62.7 100.0,62.7 104.2,62.7 108.5,62.7 112.8,62.7 117.0,62.7 121.2,62.7 125.5,62.7 129.8,62.7 134.0,62.7 138.2,62.7 142.5,62.7 146.8,62.7 151.0,62.7 155.2,62.7 159.5,62.7 163.8,62.7 168.0,62.7 172.2,62.7 176.5,62.7 180.8,62.7 185.0,62.7"/>
+<polyline class="ln" points="15.0,84.0 19.2,84.0 23.5,84.0 27.8,84.0 32.0,84.0 36.2,84.0 40.5,84.0 44.8,84.0 49.0,84.0 53.2,84.0 57.5,84.0 61.8,84.0 66.0,84.0 70.2,84.0 74.5,84.0 78.8,84.0 83.0,84.0 87.2,84.0 91.5,84.0 95.8,84.0 100.0,84.0 104.2,84.0 108.5,84.0 112.8,84.0 117.0,84.0 121.2,84.0 125.5,84.0 129.8,84.0 134.0,84.0 138.2,84.0 142.5,84.0 146.8,84.0 151.0,84.0 155.2,84.0 159.5,84.0 163.8,84.0 168.0,84.0 172.2,84.0 176.5,84.0 180.8,84.0 185.0,84.0"/>
+<polyline class="ln" points="15.0,105.3 19.2,105.3 23.5,105.3 27.8,105.3 32.0,105.3 36.2,105.3 40.5,105.3 44.8,105.3 49.0,105.3 53.2,105.3 57.5,105.3 61.8,105.3 66.0,105.3 70.2,105.3 74.5,105.3 78.8,105.3 83.0,105.3 87.2,105.3 91.5,105.3 95.8,105.3 100.0,105.3 104.2,105.3 108.5,105.3 112.8,105.3 117.0,105.3 121.2,105.3 125.5,105.3 129.8,105.3 134.0,105.3 138.2,105.3 142.5,105.3 146.8,105.3 151.0,105.3 155.2,105.3 159.5,105.3 163.8,105.3 168.0,105.3 172.2,105.3 176.5,105.3 180.8,105.3 185.0,105.3"/>
+<polyline class="ln" points="15.0,126.7 19.2,126.7 23.5,126.7 27.8,126.7 32.0,126.7 36.2,126.7 40.5,126.7 44.8,126.7 49.0,126.7 53.2,126.7 57.5,126.7 61.8,126.7 66.0,126.7 70.2,126.7 74.5,126.7 78.8,126.7 83.0,126.7 87.2,126.7 91.5,126.7 95.8,126.7 100.0,126.7 104.2,126.7 108.5,126.7 112.8,126.7 117.0,126.7 121.2,126.7 125.5,126.7 129.8,126.7 134.0,126.7 138.2,126.7 142.5,126.7 146.8,126.7 151.0,126.7 155.2,126.7 159.5,126.7 163.8,126.7 168.0,126.7 172.2,126.7 176.5,126.7 180.8,126.7 185.0,126.7"/>
+<polyline class="ln" points="15.0,148.0 19.2,148.0 23.5,148.0 27.8,148.0 32.0,148.0 36.2,148.0 40.5,148.0 44.8,148.0 49.0,148.0 53.2,148.0 57.5,148.0 61.8,148.0 66.0,148.0 70.2,148.0 74.5,148.0 78.8,148.0 83.0,148.0 87.2,148.0 91.5,148.0 95.8,148.0 100.0,148.0 104.2,148.0 108.5,148.0 112.8,148.0 117.0,148.0 121.2,148.0 125.5,148.0 129.8,148.0 134.0,148.0 138.2,148.0 142.5,148.0 146.8,148.0 151.0,148.0 155.2,148.0 159.5,148.0 163.8,148.0 168.0,148.0 172.2,148.0 176.5,148.0 180.8,148.0 185.0,148.0"/>
+<polyline class="ln" points="242.8,33.4 242.0,35.4 241.3,37.4 240.5,39.5 239.8,41.7 239.1,44.0 238.5,46.3 237.9,48.7 237.3,51.2 236.7,53.7 236.2,56.2 235.8,58.9 235.4,61.5 235.0,64.2 234.7,67.0 234.4,69.8 234.2,72.6 234.0,75.4 233.9,78.3 233.8,81.1 233.8,84.0 233.8,86.9 233.9,89.7 234.0,92.6 234.2,95.4 234.4,98.2 234.7,101.0 235.0,103.8 235.4,106.5 235.8,109.1 236.2,111.8 236.7,114.3 237.3,116.8 237.9,119.3 238.5,121.7 239.1,124.0 239.8,126.3 240.5,128.5 241.3,130.6 242.0,132.6 242.8,134.6"/>
+<polyline class="ln" points="254.5,28.3 253.8,30.4 253.1,32.6 252.4,34.9 251.8,37.2 251.2,39.7 250.6,42.2 250.0,44.8 249.5,47.5 249.0,50.3 248.5,53.1 248.1,56.0 247.7,59.0 247.3,62.0 247.0,65.0 246.8,68.1 246.6,71.3 246.4,74.4 246.3,77.6 246.2,80.8 246.2,84.0 246.2,87.2 246.3,90.4 246.4,93.6 246.6,96.7 246.8,99.9 247.0,103.0 247.3,106.0 247.7,109.0 248.1,112.0 248.5,114.9 249.0,117.7 249.5,120.5 250.0,123.2 250.6,125.8 251.2,128.3 251.8,130.8 252.4,133.1 253.1,135.4 253.8,137.6 254.5,139.7"/>
+<polyline class="ln" points="270.1,24.0 269.6,26.2 269.0,28.5 268.5,30.9 268.0,33.4 267.5,36.0 267.1,38.7 266.6,41.5 266.2,44.4 265.8,47.4 265.4,50.4 265.1,53.6 264.8,56.8 264.5,60.0 264.3,63.3 264.1,66.7 263.9,70.1 263.8,73.6 263.7,77.0 263.6,80.5 263.6,84.0 263.6,87.5 263.7,91.0 263.8,94.4 263.9,97.9 264.1,101.3 264.3,104.7 264.5,108.0 264.8,111.2 265.1,114.4 265.4,117.6 265.8,120.6 266.2,123.6 266.6,126.5 267.1,129.3 267.5,132.0 268.0,134.6 268.5,137.1 269.0,139.5 269.6,141.8 270.1,144.0"/>
+<polyline class="ln" points="289.1,21.0 288.8,23.3 288.5,25.7 288.2,28.2 287.9,30.8 287.7,33.5 287.4,36.3 287.1,39.3 286.9,42.3 286.7,45.4 286.5,48.6 286.3,51.9 286.1,55.2 286.0,58.7 285.8,62.2 285.7,65.7 285.6,69.3 285.6,73.0 285.5,76.6 285.5,80.3 285.5,84.0 285.5,87.7 285.5,91.4 285.6,95.0 285.6,98.7 285.7,102.3 285.8,105.8 286.0,109.3 286.1,112.8 286.3,116.1 286.5,119.4 286.7,122.6 286.9,125.7 287.1,128.7 287.4,131.7 287.7,134.5 287.9,137.2 288.2,139.8 288.5,142.3 288.8,144.7 289.1,147.0"/>
+<polyline class="ln" points="310.0,20.0 310.0,22.3 310.0,24.7 310.0,27.2 310.0,29.9 310.0,32.6 310.0,35.5 310.0,38.4 310.0,41.5 310.0,44.7 310.0,47.9 310.0,51.3 310.0,54.7 310.0,58.2 310.0,61.8 310.0,65.4 310.0,69.0 310.0,72.7 310.0,76.5 310.0,80.2 310.0,84.0 310.0,87.8 310.0,91.5 310.0,95.3 310.0,99.0 310.0,102.6 310.0,106.2 310.0,109.8 310.0,113.3 310.0,116.7 310.0,120.1 310.0,123.3 310.0,126.5 310.0,129.6 310.0,132.5 310.0,135.4 310.0,138.1 310.0,140.8 310.0,143.3 310.0,145.7 310.0,148.0"/>
+<polyline class="ln" points="330.9,21.0 331.2,23.3 331.5,25.7 331.8,28.2 332.1,30.8 332.3,33.5 332.6,36.3 332.9,39.3 333.1,42.3 333.3,45.4 333.5,48.6 333.7,51.9 333.9,55.2 334.0,58.7 334.2,62.2 334.3,65.7 334.4,69.3 334.4,73.0 334.5,76.6 334.5,80.3 334.5,84.0 334.5,87.7 334.5,91.4 334.4,95.0 334.4,98.7 334.3,102.3 334.2,105.8 334.0,109.3 333.9,112.8 333.7,116.1 333.5,119.4 333.3,122.6 333.1,125.7 332.9,128.7 332.6,131.7 332.3,134.5 332.1,137.2 331.8,139.8 331.5,142.3 331.2,144.7 330.9,147.0"/>
+<polyline class="ln" points="349.9,24.0 350.4,26.2 351.0,28.5 351.5,30.9 352.0,33.4 352.5,36.0 352.9,38.7 353.4,41.5 353.8,44.4 354.2,47.4 354.6,50.4 354.9,53.6 355.2,56.8 355.5,60.0 355.7,63.3 355.9,66.7 356.1,70.1 356.2,73.6 356.3,77.0 356.4,80.5 356.4,84.0 356.4,87.5 356.3,91.0 356.2,94.4 356.1,97.9 355.9,101.3 355.7,104.7 355.5,108.0 355.2,111.2 354.9,114.4 354.6,117.6 354.2,120.6 353.8,123.6 353.4,126.5 352.9,129.3 352.5,132.0 352.0,134.6 351.5,137.1 351.0,139.5 350.4,141.8 349.9,144.0"/>
+<polyline class="ln" points="365.5,28.3 366.2,30.4 366.9,32.6 367.6,34.9 368.2,37.2 368.8,39.7 369.4,42.2 370.0,44.8 370.5,47.5 371.0,50.3 371.5,53.1 371.9,56.0 372.3,59.0 372.7,62.0 373.0,65.0 373.2,68.1 373.4,71.3 373.6,74.4 373.7,77.6 373.8,80.8 373.8,84.0 373.8,87.2 373.7,90.4 373.6,93.6 373.4,96.7 373.2,99.9 373.0,103.0 372.7,106.0 372.3,109.0 371.9,112.0 371.5,114.9 371.0,117.7 370.5,120.5 370.0,123.2 369.4,125.8 368.8,128.3 368.2,130.8 367.6,133.1 366.9,135.4 366.2,137.6 365.5,139.7"/>
+<polyline class="ln" points="377.2,33.4 378.0,35.4 378.7,37.4 379.5,39.5 380.2,41.7 380.9,44.0 381.5,46.3 382.1,48.7 382.7,51.2 383.3,53.7 383.8,56.2 384.2,58.9 384.6,61.5 385.0,64.2 385.3,67.0 385.6,69.8 385.8,72.6 386.0,75.4 386.1,78.3 386.2,81.1 386.2,84.0 386.2,86.9 386.1,89.7 386.0,92.6 385.8,95.4 385.6,98.2 385.3,101.0 385.0,103.8 384.6,106.5 384.2,109.1 383.8,111.8 383.3,114.3 382.7,116.8 382.1,119.3 381.5,121.7 380.9,124.0 380.2,126.3 379.5,128.5 378.7,130.6 378.0,132.6 377.2,134.6"/>
+<polyline class="ln" points="242.8,33.4 244.8,32.4 247.0,31.3 249.4,30.3 251.9,29.3 254.5,28.3 257.3,27.4 260.3,26.4 263.4,25.6 266.7,24.8 270.1,24.0 273.7,23.3 277.4,22.6 281.2,22.0 285.1,21.5 289.1,21.0 293.2,20.7 297.3,20.4 301.5,20.2 305.8,20.0 310.0,20.0 314.2,20.0 318.5,20.2 322.7,20.4 326.8,20.7 330.9,21.0 334.9,21.5 338.8,22.0 342.6,22.6 346.3,23.3 349.9,24.0 353.3,24.8 356.6,25.6 359.7,26.4 362.7,27.4 365.5,28.3 368.1,29.3 370.6,30.3 373.0,31.3 375.2,32.4 377.2,33.4"/>
+<polyline class="ln" points="238.1,47.9 240.1,47.1 242.4,46.3 244.8,45.5 247.4,44.7 250.2,44.0 253.1,43.2 256.3,42.5 259.6,41.8 263.1,41.2 266.8,40.6 270.6,40.0 274.5,39.5 278.6,39.0 282.9,38.6 287.2,38.3 291.7,38.0 296.2,37.7 300.8,37.6 305.4,37.5 310.0,37.4 314.6,37.5 319.2,37.6 323.8,37.7 328.3,38.0 332.8,38.3 337.1,38.6 341.4,39.0 345.5,39.5 349.4,40.0 353.2,40.6 356.9,41.2 360.4,41.8 363.7,42.5 366.9,43.2 369.8,44.0 372.6,44.7 375.2,45.5 377.6,46.3 379.9,47.1 381.9,47.9"/>
+<polyline class="ln" points="234.9,65.1 237.0,64.7 239.2,64.3 241.7,63.8 244.4,63.4 247.2,63.0 250.3,62.6 253.5,62.2 257.0,61.8 260.6,61.5 264.4,61.1 268.4,60.8 272.6,60.5 276.9,60.3 281.4,60.0 285.9,59.8 290.6,59.7 295.4,59.5 300.2,59.5 305.1,59.4 310.0,59.4 314.9,59.4 319.8,59.5 324.6,59.5 329.4,59.7 334.1,59.8 338.6,60.0 343.1,60.3 347.4,60.5 351.6,60.8 355.6,61.1 359.4,61.5 363.0,61.8 366.5,62.2 369.7,62.6 372.8,63.0 375.6,63.4 378.3,63.8 380.8,64.3 383.0,64.7 385.1,65.1"/>
+<polyline class="ln" points="233.8,84.0 235.9,84.0 238.1,84.0 240.6,84.0 243.3,84.0 246.2,84.0 249.3,84.0 252.5,84.0 256.0,84.0 259.7,84.0 263.6,84.0 267.7,84.0 271.9,84.0 276.3,84.0 280.8,84.0 285.5,84.0 290.2,84.0 295.1,84.0 300.0,84.0 305.0,84.0 310.0,84.0 315.0,84.0 320.0,84.0 324.9,84.0 329.8,84.0 334.5,84.0 339.2,84.0 343.7,84.0 348.1,84.0 352.3,84.0 356.4,84.0 360.3,84.0 364.0,84.0 367.5,84.0 370.7,84.0 373.8,84.0 376.7,84.0 379.4,84.0 381.9,84.0 384.1,84.0 386.2,84.0"/>
+<polyline class="ln" points="234.9,102.9 237.0,103.3 239.2,103.7 241.7,104.2 244.4,104.6 247.2,105.0 250.3,105.4 253.5,105.8 257.0,106.2 260.6,106.5 264.4,106.9 268.4,107.2 272.6,107.5 276.9,107.7 281.4,108.0 285.9,108.2 290.6,108.3 295.4,108.5 300.2,108.5 305.1,108.6 310.0,108.6 314.9,108.6 319.8,108.5 324.6,108.5 329.4,108.3 334.1,108.2 338.6,108.0 343.1,107.7 347.4,107.5 351.6,107.2 355.6,106.9 359.4,106.5 363.0,106.2 366.5,105.8 369.7,105.4 372.8,105.0 375.6,104.6 378.3,104.2 380.8,103.7 383.0,103.3 385.1,102.9"/>
+<polyline class="ln" points="238.1,120.1 240.1,120.9 242.4,121.7 244.8,122.5 247.4,123.3 250.2,124.0 253.1,124.8 256.3,125.5 259.6,126.2 263.1,126.8 266.8,127.4 270.6,128.0 274.5,128.5 278.6,129.0 282.9,129.4 287.2,129.7 291.7,130.0 296.2,130.3 300.8,130.4 305.4,130.5 310.0,130.6 314.6,130.5 319.2,130.4 323.8,130.3 328.3,130.0 332.8,129.7 337.1,129.4 341.4,129.0 345.5,128.5 349.4,128.0 353.2,127.4 356.9,126.8 360.4,126.2 363.7,125.5 366.9,124.8 369.8,124.0 372.6,123.3 375.2,122.5 377.6,121.7 379.9,120.9 381.9,120.1"/>
+<polyline class="ln" points="242.8,134.6 244.8,135.6 247.0,136.7 249.4,137.7 251.9,138.7 254.5,139.7 257.3,140.6 260.3,141.6 263.4,142.4 266.7,143.2 270.1,144.0 273.7,144.7 277.4,145.4 281.2,146.0 285.1,146.5 289.1,147.0 293.2,147.3 297.3,147.6 301.5,147.8 305.8,148.0 310.0,148.0 314.2,148.0 318.5,147.8 322.7,147.6 326.8,147.3 330.9,147.0 334.9,146.5 338.8,146.0 342.6,145.4 346.3,144.7 349.9,144.0 353.3,143.2 356.6,142.4 359.7,141.6 362.7,140.6 365.5,139.7 368.1,138.7 370.6,137.7 373.0,136.7 375.2,135.6 377.2,134.6"/>
+<polyline class="ln" points="435.0,20.0 436.1,24.0 437.2,27.9 438.2,31.6 439.1,35.3 439.9,38.8 440.7,42.2 441.4,45.5 442.0,48.8 442.6,51.9 443.1,55.0 443.6,58.1 444.0,61.1 444.3,64.1 444.6,67.0 444.9,69.9 445.1,72.7 445.3,75.6 445.4,78.4 445.4,81.2 445.5,84.0 445.4,86.8 445.4,89.6 445.3,92.4 445.1,95.3 444.9,98.1 444.6,101.0 444.3,103.9 444.0,106.9 443.6,109.9 443.1,113.0 442.6,116.1 442.0,119.2 441.4,122.5 440.7,125.8 439.9,129.2 439.1,132.7 438.2,136.4 437.2,140.1 436.1,144.0 435.0,148.0"/>
+<polyline class="ln" points="462.5,26.3 463.2,29.8 463.8,33.3 464.4,36.6 465.0,39.8 465.5,43.0 466.0,46.0 466.4,49.0 466.8,52.0 467.1,54.8 467.5,57.6 467.8,60.4 468.0,63.1 468.2,65.8 468.4,68.5 468.6,71.1 468.7,73.7 468.8,76.3 468.9,78.9 468.9,81.4 468.9,84.0 468.9,86.6 468.9,89.1 468.8,91.7 468.7,94.3 468.6,96.9 468.4,99.5 468.2,102.2 468.0,104.9 467.8,107.6 467.5,110.4 467.1,113.2 466.8,116.0 466.4,119.0 466.0,122.0 465.5,125.0 465.0,128.2 464.4,131.4 463.8,134.7 463.2,138.2 462.5,141.7"/>
+<polyline class="ln" points="484.2,30.0 484.6,33.3 484.9,36.5 485.3,39.6 485.6,42.6 485.9,45.5 486.2,48.4 486.5,51.2 486.7,53.9 486.9,56.6 487.1,59.2 487.2,61.8 487.4,64.4 487.5,66.9 487.6,69.4 487.7,71.9 487.8,74.3 487.9,76.7 487.9,79.2 487.9,81.6 488.0,84.0 487.9,86.4 487.9,88.8 487.9,91.3 487.8,93.7 487.7,96.1 487.6,98.6 487.5,101.1 487.4,103.6 487.2,106.2 487.1,108.8 486.9,111.4 486.7,114.1 486.5,116.8 486.2,119.6 485.9,122.5 485.6,125.4 485.3,128.4 484.9,131.5 484.6,134.7 484.2,138.0"/>
+<polyline class="ln" points="502.8,32.1 502.9,35.2 503.1,38.2 503.3,41.2 503.4,44.1 503.6,46.9 503.7,49.6 503.8,52.3 503.9,55.0 504.0,57.5 504.1,60.1 504.2,62.6 504.3,65.0 504.3,67.5 504.4,69.9 504.4,72.3 504.5,74.6 504.5,77.0 504.5,79.3 504.5,81.7 504.5,84.0 504.5,86.3 504.5,88.7 504.5,91.0 504.5,93.4 504.4,95.7 504.4,98.1 504.3,100.5 504.3,103.0 504.2,105.4 504.1,107.9 504.0,110.5 503.9,113.0 503.8,115.7 503.7,118.4 503.6,121.1 503.4,123.9 503.3,126.8 503.1,129.8 502.9,132.8 502.8,135.9"/>
+<polyline class="ln" points="520.0,32.7 520.0,35.8 520.0,38.8 520.0,41.7 520.0,44.6 520.0,47.3 520.0,50.0 520.0,52.7 520.0,55.3 520.0,57.8 520.0,60.3 520.0,62.8 520.0,65.3 520.0,67.7 520.0,70.0 520.0,72.4 520.0,74.7 520.0,77.1 520.0,79.4 520.0,81.7 520.0,84.0 520.0,86.3 520.0,88.6 520.0,90.9 520.0,93.3 520.0,95.6 520.0,98.0 520.0,100.3 520.0,102.7 520.0,105.2 520.0,107.7 520.0,110.2 520.0,112.7 520.0,115.3 520.0,118.0 520.0,120.7 520.0,123.4 520.0,126.3 520.0,129.2 520.0,132.2 520.0,135.3"/>
+<polyline class="ln" points="537.2,32.1 537.1,35.2 536.9,38.2 536.7,41.2 536.6,44.1 536.4,46.9 536.3,49.6 536.2,52.3 536.1,55.0 536.0,57.5 535.9,60.1 535.8,62.6 535.7,65.0 535.7,67.5 535.6,69.9 535.6,72.3 535.5,74.6 535.5,77.0 535.5,79.3 535.5,81.7 535.5,84.0 535.5,86.3 535.5,88.7 535.5,91.0 535.5,93.4 535.6,95.7 535.6,98.1 535.7,100.5 535.7,103.0 535.8,105.4 535.9,107.9 536.0,110.5 536.1,113.0 536.2,115.7 536.3,118.4 536.4,121.1 536.6,123.9 536.7,126.8 536.9,129.8 537.1,132.8 537.2,135.9"/>
+<polyline class="ln" points="555.8,30.0 555.4,33.3 555.1,36.5 554.7,39.6 554.4,42.6 554.1,45.5 553.8,48.4 553.5,51.2 553.3,53.9 553.1,56.6 552.9,59.2 552.8,61.8 552.6,64.4 552.5,66.9 552.4,69.4 552.3,71.9 552.2,74.3 552.1,76.7 552.1,79.2 552.1,81.6 552.0,84.0 552.1,86.4 552.1,88.8 552.1,91.3 552.2,93.7 552.3,96.1 552.4,98.6 552.5,101.1 552.6,103.6 552.8,106.2 552.9,108.8 553.1,111.4 553.3,114.1 553.5,116.8 553.8,119.6 554.1,122.5 554.4,125.4 554.7,128.4 555.1,131.5 555.4,134.7 555.8,138.0"/>
+<polyline class="ln" points="577.5,26.3 576.8,29.8 576.2,33.3 575.6,36.6 575.0,39.8 574.5,43.0 574.0,46.0 573.6,49.0 573.2,52.0 572.9,54.8 572.5,57.6 572.2,60.4 572.0,63.1 571.8,65.8 571.6,68.5 571.4,71.1 571.3,73.7 571.2,76.3 571.1,78.9 571.1,81.4 571.1,84.0 571.1,86.6 571.1,89.1 571.2,91.7 571.3,94.3 571.4,96.9 571.6,99.5 571.8,102.2 572.0,104.9 572.2,107.6 572.5,110.4 572.9,113.2 573.2,116.0 573.6,119.0 574.0,122.0 574.5,125.0 575.0,128.2 575.6,131.4 576.2,134.7 576.8,138.2 577.5,141.7"/>
+<polyline class="ln" points="605.0,20.0 603.9,24.0 602.8,27.9 601.8,31.6 600.9,35.3 600.1,38.8 599.3,42.2 598.6,45.5 598.0,48.8 597.4,51.9 596.9,55.0 596.4,58.1 596.0,61.1 595.7,64.1 595.4,67.0 595.1,69.9 594.9,72.7 594.7,75.6 594.6,78.4 594.6,81.2 594.5,84.0 594.6,86.8 594.6,89.6 594.7,92.4 594.9,95.3 595.1,98.1 595.4,101.0 595.7,103.9 596.0,106.9 596.4,109.9 596.9,113.0 597.4,116.1 598.0,119.2 598.6,122.5 599.3,125.8 600.1,129.2 600.9,132.7 601.8,136.4 602.8,140.1 603.9,144.0 605.0,148.0"/>
+<polyline class="ln" points="435.0,20.0 441.2,21.5 446.9,22.9 452.4,24.1 457.6,25.2 462.5,26.3 467.2,27.2 471.7,28.0 476.0,28.8 480.1,29.4 484.2,30.0 488.1,30.6 491.9,31.0 495.6,31.4 499.2,31.8 502.8,32.1 506.3,32.3 509.7,32.5 513.2,32.6 516.6,32.7 520.0,32.7 523.4,32.7 526.8,32.6 530.3,32.5 533.7,32.3 537.2,32.1 540.8,31.8 544.4,31.4 548.1,31.0 551.9,30.6 555.8,30.0 559.9,29.4 564.0,28.8 568.3,28.0 572.8,27.2 577.5,26.3 582.4,25.2 587.6,24.1 593.1,22.9 598.8,21.5 605.0,20.0"/>
+<polyline class="ln" points="441.1,44.4 446.7,45.3 452.0,46.1 457.0,46.8 461.7,47.4 466.3,48.0 470.6,48.6 474.7,49.1 478.8,49.5 482.6,49.9 486.4,50.2 490.0,50.5 493.6,50.8 497.0,51.1 500.4,51.3 503.8,51.4 507.1,51.6 510.3,51.7 513.6,51.8 516.8,51.8 520.0,51.8 523.2,51.8 526.4,51.8 529.7,51.7 532.9,51.6 536.2,51.4 539.6,51.3 543.0,51.1 546.4,50.8 550.0,50.5 553.6,50.2 557.4,49.9 561.2,49.5 565.3,49.1 569.4,48.6 573.7,48.0 578.3,47.4 583.0,46.8 588.0,46.1 593.3,45.3 598.9,44.4"/>
+<polyline class="ln" points="444.4,65.0 449.7,65.4 454.7,65.8 459.5,66.1 464.0,66.4 468.3,66.7 472.4,66.9 476.4,67.2 480.3,67.4 484.0,67.6 487.6,67.7 491.1,67.9 494.5,68.0 497.8,68.1 501.1,68.2 504.3,68.3 507.5,68.3 510.7,68.4 513.8,68.4 516.9,68.4 520.0,68.5 523.1,68.4 526.2,68.4 529.3,68.4 532.5,68.3 535.7,68.3 538.9,68.2 542.2,68.1 545.5,68.0 548.9,67.9 552.4,67.7 556.0,67.6 559.7,67.4 563.6,67.2 567.6,66.9 571.7,66.7 576.0,66.4 580.5,66.1 585.3,65.8 590.3,65.4 595.6,65.0"/>
+<polyline class="ln" points="445.5,84.0 450.7,84.0 455.6,84.0 460.2,84.0 464.7,84.0 468.9,84.0 473.0,84.0 476.9,84.0 480.7,84.0 484.4,84.0 488.0,84.0 491.4,84.0 494.8,84.0 498.1,84.0 501.3,84.0 504.5,84.0 507.7,84.0 510.8,84.0 513.9,84.0 516.9,84.0 520.0,84.0 523.1,84.0 526.1,84.0 529.2,84.0 532.3,84.0 535.5,84.0 538.7,84.0 541.9,84.0 545.2,84.0 548.6,84.0 552.0,84.0 555.6,84.0 559.3,84.0 563.1,84.0 567.0,84.0 571.1,84.0 575.3,84.0 579.8,84.0 584.4,84.0 589.3,84.0 594.5,84.0"/>
+<polyline class="ln" points="444.4,103.0 449.7,102.6 454.7,102.2 459.5,101.9 464.0,101.6 468.3,101.3 472.4,101.1 476.4,100.8 480.3,100.6 484.0,100.4 487.6,100.3 491.1,100.1 494.5,100.0 497.8,99.9 501.1,99.8 504.3,99.7 507.5,99.7 510.7,99.6 513.8,99.6 516.9,99.6 520.0,99.5 523.1,99.6 526.2,99.6 529.3,99.6 532.5,99.7 535.7,99.7 538.9,99.8 542.2,99.9 545.5,100.0 548.9,100.1 552.4,100.3 556.0,100.4 559.7,100.6 563.6,100.8 567.6,101.1 571.7,101.3 576.0,101.6 580.5,101.9 585.3,102.2 590.3,102.6 595.6,103.0"/>
+<polyline class="ln" points="441.1,123.6 446.7,122.7 452.0,121.9 457.0,121.2 461.7,120.6 466.3,120.0 470.6,119.4 474.7,118.9 478.8,118.5 482.6,118.1 486.4,117.8 490.0,117.5 493.6,117.2 497.0,116.9 500.4,116.7 503.8,116.6 507.1,116.4 510.3,116.3 513.6,116.2 516.8,116.2 520.0,116.2 523.2,116.2 526.4,116.2 529.7,116.3 532.9,116.4 536.2,116.6 539.6,116.7 543.0,116.9 546.4,117.2 550.0,117.5 553.6,117.8 557.4,118.1 561.2,118.5 565.3,118.9 569.4,119.4 573.7,120.0 578.3,120.6 583.0,121.2 588.0,121.9 593.3,122.7 598.9,123.6"/>
+<polyline class="ln" points="435.0,148.0 441.2,146.5 446.9,145.1 452.4,143.9 457.6,142.8 462.5,141.7 467.2,140.8 471.7,140.0 476.0,139.2 480.1,138.6 484.2,138.0 488.1,137.4 491.9,137.0 495.6,136.6 499.2,136.2 502.8,135.9 506.3,135.7 509.7,135.5 513.2,135.4 516.6,135.3 520.0,135.3 523.4,135.3 526.8,135.4 530.3,135.5 533.7,135.7 537.2,135.9 540.8,136.2 544.4,136.6 548.1,137.0 551.9,137.4 555.8,138.0 559.9,138.6 564.0,139.2 568.3,140.0 572.8,140.8 577.5,141.7 582.4,142.8 587.6,143.9 593.1,145.1 598.8,146.5 605.0,148.0"/>
+  <text x="100" y="168" text-anchor="middle" font-size="13">no distortion</text>
+  <text x="310" y="168" text-anchor="middle" font-size="13">barrel distortion</text>
+  <text x="520" y="168" text-anchor="middle" font-size="13">pincushion distortion</text>
+</svg>
+<figcaption>Barrel: magnification decreases away from the centre (lines bow outwards, typical of wide-angle/fisheye). Pincushion: magnification increases away from the centre (lines bow inwards, typical of telephoto).</figcaption>
+</figure>
+<div class="card tip"><b class="tag">Slide question: what causes this distortion?</b><br>Real <b>lenses</b>, not pinholes: imperfect (spherical) lens shapes and the placement of the aperture stop make magnification depend on the <b>distance r from the image centre</b>. It's symmetric around the centre, hence "radial". Straight 3D lines no longer project to straight image lines.</div>
+<h3>Radial distortion model</h3>
+<div class="math">\[ \text{Ideal: } x'=f\frac{x}{z},\ \ y'=f\frac{y}{z}\qquad \text{Distorted: } x''=\frac{1}{\lambda}x',\ \ y''=\frac{1}{\lambda}y' \]</div>
+<div class="math">\[ \lambda = 1 + k_1 r^2 + k_2 r^4 + \cdots,\qquad r^2 = x'^2+y'^2 \]</div>
+<p>The ideal image point P′ moves radially to P″ by a factor that depends only on r. \(k_1, k_2\) are the <b>distortion coefficients</b>, estimated during calibration. With this convention, \(k_1&gt;0\) pulls outer points inward (barrel) and \(k_1&lt;0\) pushes them outward (pincushion).</p>
+<div class="card ex"><b class="tag">Example</b><br>\(k_1=0.1,\ k_2=0\). Point at r = 0.5: λ = 1.025 → moved inward 2.4%. Point at r = 1: λ = 1.1 → moved inward 9%. Points near the centre (r ≈ 0) are untouched. Outer edges shrink more → barrel.</div>
+<h3>Minimising reprojection error with radial distortion</h3>
+<p>Add the distortion to the reprojection error and optimise all parameters (K, R, t, k₁, k₂…) together:</p>
+<div class="math">\[ E=\sum_i\left(u_i-\frac{1}{\lambda}\frac{\mathbf{m}_1\cdot\mathbf{P}_i}{\mathbf{m}_3\cdot\mathbf{P}_i}\right)^2+\left(v_i-\frac{1}{\lambda}\frac{\mathbf{m}_2\cdot\mathbf{P}_i}{\mathbf{m}_3\cdot\mathbf{P}_i}\right)^2 \]</div>
+<p>This is the nonlinear model the linear DLT could not handle.</p>
+<h3>Correcting radial distortion</h3>
+<p>Once k₁, k₂ are known, <b>undistort</b>: for every output pixel compute where it lands under the distortion model and sample the input image there (inverse warping). Slide "before/after": the curved door frame becomes straight.</p>
+
+<!-- ================= 24 ================= -->
+<h2 id="s24"><span class="num">24</span>Alternative: multi-plane (checkerboard) calibration</h2>
+<p>Instead of a precise 3D rig, wave a flat <b>checkerboard</b> in front of the camera and take many photos at different poses (Zhang's method; Bouguet's Camera Calibration Toolbox for Matlab, also in OpenCV).</p>
+<div class="tw"><table>
+<tr><th>Advantages</th><th>Disadvantage</th></tr>
+<tr><td>Only requires a <b>plane</b> (print a checkerboard).<br>Don't have to know positions/orientations of the board.<br>Great code available online (Matlab toolbox: vision.caltech.edu/bouguetj/calib_doc; OpenCV).</td><td>Need to solve a <b>non-linear optimisation</b> problem.</td></tr>
+</table></div>
+<h3>Step-by-step demonstration (from the slides)</h3>
+<ol>
+<li><b>Calibration images</b>: ~20 photos of the checkerboard at varied tilts and positions.</li>
+<li><b>Click the four extreme corners</b> of the rectangular pattern (click #1 = origin, then #2, #3, #4). This fixes the board's coordinate frame and correspondences.</li>
+<li><b>Extracted corners</b>: the toolbox finds every inner corner automatically, with axes O, dX, dY. Each corner has known board coordinates (X, Y, 0) since squares have known size.</li>
+<li><b>Image points (+) and reprojected grid points (o)</b>: after optimisation, the reprojected corners land on the detected ones, and the board's X, Y, Z axes are drawn. Small reprojection error = good calibration.</li>
+<li><b>Extrinsic parameters</b>: two views of the result: <i>camera-centred</i> (all 20 boards placed in front of a fixed camera) and <i>world-centred</i> (all 20 camera poses around a fixed board).</li>
+</ol>
+<div class="card tip"><b class="tag">Why a plane is enough</b><br>With Z = 0 on the board, x = K[r₁ r₂ r₃ t][X Y 0 1]ᵀ = K[r₁ r₂ t][X Y 1]ᵀ: a <b>homography</b> per image. Each homography gives 2 constraints on K (because r₁, r₂ are orthonormal), so ≥ 3 views pin down K. Then R, t per view and distortion are refined by minimising reprojection error.</div>
+
+<!-- ================= 25 ================= -->
+<h2 id="s25"><span class="num">25</span>What does it mean to "calibrate a camera"?</h2>
+<p>Many different ways to calibrate a camera:</p>
+<div class="tw"><table>
+<tr><th>Type</th><th>What it estimates</th></tr>
+<tr><td><b>Radiometric</b> calibration</td><td>mapping from scene light (radiance) to pixel values (camera response curve)</td></tr>
+<tr><td><b>Color</b> calibration</td><td>mapping from sensor RGB to a standard colour space (white balance, colour matrix)</td></tr>
+<tr><td><b>Geometric</b> calibration</td><td>K, R, t, lens distortion: <b>this lecture</b></td></tr>
+<tr><td><b>Noise</b> calibration</td><td>the sensor's noise statistics (e.g. shot/read noise vs intensity)</td></tr>
+<tr><td><b>Lens (aberration)</b> calibration</td><td>blur, vignetting, chromatic aberration of the optics</td></tr>
+</table></div>
+<p>Radiometric and colour calibration are discussed briefly in later lectures; for the rest, see 15-463/663/862 (computational photography).</p>
+
+<!-- ================= 26 ================= -->
+<h2 id="s26"><span class="num">26</span>Application: augmented reality</h2>
+<p>Slides show phone AR apps (a dominoes game on a printed gravel image, the junaio city model). Ingredients:</p>
+<ul>
+<li><b>3D locations of planar marker features are known in advance</b>: the AR tag has corners like (0,0,0) and (10,10,0).</li>
+<li><b>3D content prepared in advance</b>: e.g. a green cube living in the same coordinate frame, from (0,0,0) to (10,10,0) on the base.</li>
+</ul>
+<figure>
+<svg viewBox="0 0 620 120" role="img" aria-label="Simple AR program pipeline">
+  <rect x="10" y="30" width="180" height="60" rx="8" class="s1"/><text x="100" y="56" text-anchor="middle" font-size="13" font-weight="700">1. Correspondences</text><text x="100" y="76" text-anchor="middle" font-size="12">2D image ↔ AR tag 3D</text>
+  <line x1="192" y1="60" x2="218" y2="60" class="ln" marker-end="url(#arK)"/>
+  <rect x="220" y="30" width="180" height="60" rx="8" class="s3"/><text x="310" y="56" text-anchor="middle" font-size="13" font-weight="700">2. Estimate pose P</text><text x="310" y="76" text-anchor="middle" font-size="12">calibration / DLT</text>
+  <line x1="402" y1="60" x2="428" y2="60" class="ln" marker-end="url(#arK)"/>
+  <rect x="430" y="30" width="180" height="60" rx="8" class="s2"/><text x="520" y="56" text-anchor="middle" font-size="13" font-weight="700">3. Project content</text><text x="520" y="76" text-anchor="middle" font-size="12">x = P X_cube, draw it</text>
+</svg>
+<figcaption>Simple AR program, run on every video frame.</figcaption>
+</figure>
+<div class="card warn"><b class="tag">Note</b><br>A single flat tag is coplanar, so in practice the pose comes from the tag's homography plus known K (as in multi-plane calibration), not from the general 6-point DLT, which needs non-coplanar points.</div>
+
+<!-- ================= 27 ================= -->
+<h2 id="s27"><span class="num">27</span>Python: DLT calibration + decomposition</h2>
+<p>Tested on synthetic data with 0.3 px noise: recovered f ≈ 789/779 (true 800/780), centre (−2.015, 0.507, −6.035) (true (−2, 0.5, −6)), mean reprojection error 0.33 px.</p>
+<pre><code>import numpy as np
+from scipy.linalg import rq
+
+def calibrate_dlt(X, x):
+    &quot;&quot;&quot;X: N x 3 world points, x: N x 2 pixels. Returns 3x4 P (N &gt;= 6, non-coplanar).&quot;&quot;&quot;
+    A = []
+    for (Xw, Yw, Zw), (u, v) in zip(X, x):
+        Xh = np.array([Xw, Yw, Zw, 1.0])
+        A.append(np.hstack([Xh, np.zeros(4), -u * Xh]))   # p1.X - x&#x27; p3.X = 0
+        A.append(np.hstack([np.zeros(4), Xh, -v * Xh]))   # p2.X - y&#x27; p3.X = 0
+    _, _, Vt = np.linalg.svd(np.array(A))
+    return Vt[-1].reshape(3, 4)          # smallest singular value -&gt; last row of V^T
+
+def decompose(P):
+    &quot;&quot;&quot;P = K [R | -R c]. Returns K, R, c.&quot;&quot;&quot;
+    _, _, Vt = np.linalg.svd(P)
+    c = Vt[-1]; c = c[:3] / c[3]          # P c = 0  -&gt; camera center
+    M = P[:, :3]
+    K, R = rq(M)                           # M = K R, K upper-triangular, R orthogonal
+    S = np.diag(np.sign(np.diag(K)))       # make diag(K) positive
+    K, R = K @ S, S @ R
+    if np.linalg.det(R) &lt; 0: R = -R        # P was only known up to sign
+    return K / K[2, 2], R, c
+
+def project(P, X):
+    Xh = np.hstack([X, np.ones((len(X), 1))])
+    x = (P @ Xh.T).T
+    return x[:, :2] / x[:, 2:]
+
+# ---- synthetic test ----
+rng = np.random.default_rng(0)
+K_true = np.array([[800, 2, 320], [0, 780, 240], [0, 0, 1.0]])
+a = 0.3; R_true = np.array([[np.cos(a), 0, np.sin(a)], [0, 1, 0], [-np.sin(a), 0, np.cos(a)]])
+c_true = np.array([-2.0, 0.5, -6.0])
+P_true = K_true @ np.hstack([R_true, (-R_true @ c_true)[:, None]])
+X = rng.uniform(-1, 1, (20, 3))
+x = project(P_true, X) + rng.normal(0, 0.3, (20, 2))   # 0.3 px noise
+
+P = calibrate_dlt(X, x)
+K, R, c = decompose(P)
+print(&quot;K =\n&quot;, K.round(1)); print(&quot;c =&quot;, c.round(3))
+print(&quot;R error:&quot;, np.abs(R - R_true).max().round(4))
+print(&quot;mean reprojection error (px):&quot;, np.linalg.norm(project(P, X) - x, axis=1).mean().round(3))
+</code></pre>
+
+<!-- ================= 28 ================= -->
+<h2 id="s28"><span class="num">28</span>Cheat sheet &amp; self-test</h2>
+<div class="card">
+<ul>
+<li><b>P = KR[I | −C]</b>: K intrinsics (α<sub>x</sub>, α<sub>y</sub>, s, p<sub>x</sub>, p<sub>y</sub>), R rotation, C centre. 11 DOF. Same frames → P = K[I | 0].</li>
+<li>Perspective: (X, Y, Z) ↦ (fX/Z, fY/Z). <b>Magnification m = f/Z</b> depends on depth and focal length.</li>
+<li>Illusions (forced perspective, Ames room, arrow, 3D billboards) exploit size/depth ambiguity of a single view.</li>
+<li><b>Perspective distortion</b>: near parts magnified more than far parts. Depends on camera distance. Close + wide = big nose; far + tele = flat face.</li>
+<li><b>Dolly zoom / vertigo</b>: move camera, change f to keep f/Z<sub>subject</sub> fixed → background changes size.</li>
+<li>f → ∞ with f/Z constant → <b>weak perspective</b>: (fX/Z₀, fY/Z₀), constant magnification.</li>
+<li>Weak perspective matrix: last row of [I|0] becomes [0 0 0 Z₀]. General K → <b>affine camera</b>. Perspective with general K → <b>finite projective</b>.</li>
+<li>Weak perspective valid when ΔZ ≪ Z₀ (mountains, not road) or with a <b>telecentric lens</b> (pinhole at focal point, only axis-parallel rays pass).</li>
+<li><b>Orthographic</b>: m = 1, no shift, same frames → P = [1 0 0 0; 0 1 0 0; 0 0 0 1]. Telecentric with <b>D′ = 2f</b>.</li>
+<li>Calibration = structure known, estimate motion, 3D↔2D. Triangulation = motion known. Reconstruction = estimate both.</li>
+<li><b>DLT</b>: pᵢᵀX − p₃ᵀX·x′ = 0 rows → A (2N×12) → min‖Ap‖ s.t. ‖p‖=1 → last col of V (or eigvec of AᵀA). ≥ 6 non-coplanar points.</li>
+<li>Decompose: <b>Pc = 0</b> → c from SVD of P. <b>M = KR</b> (upper-triangular × orthogonal) → RQ ("QR") decomposition. t = −Rc.</li>
+<li>Linear: simple, closed form; but no distortion, no constraints, wrong (algebraic) error → refine by minimising <b>reprojection error</b> (geometric, nonlinear).</li>
+<li><b>Radial distortion</b>: x″ = x′/λ, λ = 1 + k₁r² + k₂r⁴…; barrel vs pincushion; caused by lenses.</li>
+<li><b>Checkerboard</b> calibration: only a plane, no known poses, nonlinear optimisation. 5 calibration types: radiometric, colour, geometric, noise, lens.</li>
+<li><b>AR</b>: correspondences → pose P → project 3D content.</li>
+</ul></div>
+
+<details><summary>Q1. A 2 m object at 40 m is photographed with f = 20 mm. How tall is its image? What changes if you double f?</summary>m = 0.02/40 = 0.0005 → 1 mm. Doubling f doubles magnification → 2 mm (same as walking to 20 m with the original lens, but with different perspective for other depths).</details>
+<details><summary>Q2. You halve f and halve the distance. Is the photo identical? Why/why not?</summary>The subject has the same size (f/Z unchanged), but objects at other depths change by different factors, so relative sizes (perspective) differ: being closer exaggerates near/far size differences.</details>
+<details><summary>Q3. Explain the Ames room in one sentence.</summary>The room is trapezoidal but built so that from the single peephole every corner lies on the same ray as a rectangular room's corner; the far person looks small, and the brain assumes both are at the same depth, so their sizes look wrong.</details>
+<details><summary>Q4. What is perspective distortion and what actually controls it?</summary>Non-uniform magnification f/Z of parts at different depths. It's controlled by camera-to-subject distance; changing focal length only crops/zooms the same perspective.</details>
+<details><summary>Q5. How do you film a dolly zoom?</summary>Move the camera along the axis while zooming the opposite way so the subject's image size (f/Z) stays constant; the background grows or shrinks.</details>
+<details><summary>Q6. Write the weak perspective camera matrix and show it gives constant magnification.</summary>P = K[1 0 0 0; 0 1 0 0; 0 0 0 Z₀] (K = diag f with p<sub>x</sub>, p<sub>y</sub>). PX = (fX + p<sub>x</sub>Z₀, fY + p<sub>y</sub>Z₀, Z₀) → (fX/Z₀ + p<sub>x</sub>, fY/Z₀ + p<sub>y</sub>): every point scaled by f/Z₀ regardless of its own Z.</details>
+<details><summary>Q7. Difference between affine, weak perspective and orthographic?</summary>Affine: general K with last row [0 0 0 Z₀]. Weak perspective: K with equal focal f and no skew. Orthographic: weak perspective with magnification 1, no principal-point shift, world = camera frame: P = [1 0 0 0; 0 1 0 0; 0 0 0 1].</details>
+<details><summary>Q8. Give two situations where the weak perspective assumption is valid.</summary>(1) The scene is far away relative to its depth range (mountains). (2) A telecentric lens is used (aperture at the focal point lets through only axis-parallel rays).</details>
+<details><summary>Q9. Why is the sensor placed at D′ = 2f for a telecentric orthographic camera?</summary>Axis-parallel rays at height h pass through the focal point at f; at distance D′ their height is −h(D′−f)/f. Unit magnification needs D′ − f = f → D′ = 2f.</details>
+<details><summary>Q10. Fill in the table: calibration, triangulation, reconstruction.</summary>Calibration: structure known, motion estimated, 3D↔2D. Triangulation: structure estimated, motion known, 2D↔2D. Reconstruction: both estimated, 2D↔2D.</details>
+<details><summary>Q11. Derive the two linear equations a single 3D↔2D match gives.</summary>x′ = p₁ᵀX/p₃ᵀX and y′ = p₂ᵀX/p₃ᵀX. Multiply out: p₁ᵀX − x′p₃ᵀX = 0 and p₂ᵀX − y′p₃ᵀX = 0. Linear in p.</details>
+<details><summary>Q12. Size of A? Minimum number of points? How is it solved?</summary>A is 2N×12. P has 11 DOF (up to scale), 2 equations per point → ≥ 6 points (non-coplanar). Minimise ‖Ap‖ s.t. ‖p‖ = 1: p = right singular vector of the smallest singular value (= eigenvector of AᵀA with smallest eigenvalue).</details>
+<details><summary>Q13. How do you get the camera centre from P?</summary>The centre projects to nothing: Pc = 0. Take the SVD of P; c is the last right singular vector; divide by its 4th entry.</details>
+<details><summary>Q14. How do you get K and R from P?</summary>M = left 3×3 of P = KR, with K upper triangular and R orthogonal → RQ (the slide says QR) decomposition; fix signs so diag(K) &gt; 0 and scale K[2,2] = 1.</details>
+<details><summary>Q15. Three disadvantages of linear calibration, and the fix?</summary>No radial distortion; hard to impose constraints like known f; minimises algebraic not geometric error. Fix: nonlinear minimisation of reprojection error (including distortion), initialised by the linear solution.</details>
+<details><summary>Q16. Is reprojection error the same as the DLT error?</summary>No. DLT error = pixel error × depth term (p₃ᵀX), an algebraic quantity; reprojection error is the actual pixel distance. They agree only when all points have equal depth.</details>
+<details><summary>Q17. Write the radial distortion model. What is barrel vs pincushion?</summary>x″ = x′/λ, y″ = y′/λ, λ = 1 + k₁r² + k₂r⁴ + …. Barrel: edges compressed, lines bow outwards (wide-angle). Pincushion: edges stretched, lines bow inwards (telephoto). Caused by real lenses.</details>
+<details><summary>Q18. Advantages of checkerboard calibration over a 3D rig?</summary>Only needs a plane, board poses don't have to be known, good free code (Matlab toolbox, OpenCV). Downside: nonlinear optimisation.</details>
+<details><summary>Q19. List the five kinds of camera calibration.</summary>Radiometric, colour, geometric, noise, lens (aberration).</details>
+<details><summary>Q20. Steps of a simple AR program?</summary>(1) Compute 2D ↔ AR-tag 3D correspondences, (2) estimate camera pose P, (3) project the pre-made 3D content with P and draw it.</details>
+
+</main>
+<footer>
+  <a href="09-camera-models.html">← Module 09: Geometric Camera Models</a>
+  <a href="index.html">Back to index</a>
+  <a href="10-two-view-geometry.html">Module 10: Two-View Geometry →</a>
+  <span>Source: 16-385 CMU, Lecture 10 "Geometric camera models (cont.)" (slides adapted from Kris Kitani 15-463 Fall 2016 &amp; Fredo Durand, MIT)</span>
+</footer>
+</body>
+</html>
